@@ -6,8 +6,31 @@ from-purple-100 via-pink-50 to-blue-100 - gradient color stops
 flex items-center justify-center - centers content
 text-2xl text-gray-800 - text size and color
 */
+
+'use client'
+
+// the useRouter function is class and the push method basically switches the page
+ /*
+{
+  push: function,      // Navigate to a page
+  replace: function,   // Replace current page
+  back: function,      // Go back one page
+  forward: function,   // Go forward one page
+  refresh: function,   // Reload current page
+  prefetch: function,  // Pre-load a page
+  // ... and more
+
+  
+
+ */
+import { useRouter } from 'next/navigation'
+import { LayoutDashboard, BrainCircuit, ChartNoAxesColumn, CircleUserRound } from "lucide-react";
+
+
 export default function Login() {
+    const router = useRouter()
   return (
+
     // Outer container - full screen gradient background
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 flex justify-center pt-20">
       
@@ -17,9 +40,9 @@ export default function Login() {
         {/* Logo section - blue box + InterviewAI text */}
         <div className="flex items-center justify-center mb-8">
           
-          {/* Blue box with "AI" text */}
-          <div className="bg-blue-600 rounded-lg w-10 h-10 flex items-center justify-center">
-            <span className="text-white font-bold text-sm">AI</span>
+          {/* Avatar */}
+             <div className="w-9 h-9 bg-blue-600 overflow-hidden rounded-lg flex items-center justify-center">
+            <BrainCircuit className="w-6 h-6 text-white-700" strokeWidth={1.5} />
           </div>
           
           {/* "InterviewAI" text */}
@@ -51,7 +74,7 @@ export default function Login() {
             className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-10">    
         </div>
         {/* Sign in button */}
-        <button className="bg-blue-600 w-100 h-12 mb-30 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all ">  
+        <button className="bg-blue-600 w-100 h-12 mb-30 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={() => router.push('/dashboard')}>  
             Sign in  →
         </button>
         <button className="ml-[3.3cm] text-sm text-black text-center font-bold mb-10 hover:underline">Continue as Guest   →</button>
