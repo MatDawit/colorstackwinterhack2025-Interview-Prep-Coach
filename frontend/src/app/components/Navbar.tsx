@@ -1,80 +1,74 @@
-// "use client";
+"use client";
 
-// import Link from "next/link";
-// import { usePathname } from "next/navigation";
-// import { LayoutDashboard, BrainCircuit, ChartNoAxesColumn, CircleUserRound } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  LayoutDashboard, 
+  BrainCircuit, 
+  ChartNoAxesColumn, 
+  CircleUserRound 
+} from "lucide-react";
 
-// export default function Navbar() {
-//   const pathname = usePathname();
-  
-//   const isDashboard = pathname?.startsWith("/dashboard");
-//   const isPractice = pathname?.startsWith("/practice");
-//   const isAnalytics = pathname?.startsWith("/analytics");
+export default function Navbar() {
+  const pathname = usePathname();
 
-//   return (
-//     <header className="relative z-40 h-16 w-full bg-black shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
-//       <div className="relative mx-auto w-full max-w-[1440px] h-16">
-//         {/* Brand icon square */}
-//         <div className="absolute top-[15px] left-[32px] h-8 w-8 rounded-[6px] bg-[#6A99F7] flex items-center justify-center">
-//           <BrainCircuit className="h-[22px] w-[22px] text-black" />
-//         </div>
+  const links = [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Practice", href: "/practice", icon: BrainCircuit },
+    { label: "Analytics", href: "/analytics", icon: ChartNoAxesColumn },
+  ];
 
-//         {/* Brand text */}
-//         <Link
-//           href="/"
-//           style={{ fontFamily: "Inter" }}
-//           className="absolute top-[21px] left-[70px] text-[20px] leading-[20px] font-bold text-[#6A99F7]"
-//         >
-//           InterviewAI
-//         </Link>
+  return (
+    <header className="fixed top-0 left-0 w-full h-16 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] z-50">
+      {/* Centered Container */}
+      <div className="mx-auto w-full max-w-360 h-full px-8 flex items-center justify-between relative">
+        
+        {/* Left Side: Brand + Links */}
+        <div className="flex items-center gap-10">
+          {/* Brand Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#3D7AF5] rounded-lg flex items-center justify-center">
+              <BrainCircuit className="text-white w-5 h-5" />
+            </div>
+            <Link href="/" className="font-bold text-[#3D7AF5] text-xl tracking-tight">
+              InterviewAI
+            </Link>
+          </div>
 
-//         {/* Dashboard */}
-//         <Link
-//           href="/dashboard"
-//           aria-label="Dashboard"
-//           style={{ fontFamily: "Inter" }}
-//           className={`absolute top-[11px] left-[198px] h-10 w-[124.65625px] px-3 inline-flex items-center justify-center text-sm leading-[22px] font-medium bg-transparent rounded-lg gap-4 ${
-//             isDashboard ? "text-[#6A99F7]" : "text-white"
-//           }`}
-//         >
-//           <LayoutDashboard className={`h-4 w-4 ${isDashboard ? "text-[#6A99F7]" : ""}`} />
-//           Dashboard
-//         </Link>
+          {/* Navigation Links Loop */}
+          <nav className="flex items-center gap-2">
+            {links.map((link) => {
+              const isActive = pathname?.startsWith(link.href);
+              const Icon = link.icon;
 
-//         {/* Practice */}
-//         <Link
-//           href="/practice"
-//           aria-label="Practice"
-//           style={{ fontFamily: "Inter" }}
-//           className={`absolute top-[11px] left-[339px] h-10 w-[109.09375px] px-3 inline-flex items-center justify-center text-sm leading-[22px] font-medium bg-transparent rounded-lg gap-4 ${
-//             isPractice ? "text-[#6A99F7]" : "text-white"
-//           }`}
-//         >
-//           <BrainCircuit className={`h-4 w-4 ${isPractice ? "text-[#6A99F7]" : ""}`} />
-//           Practice
-//         </Link>
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-label={link.label}
+                  className={`font-['Inter'] h-10 px-4 flex items-center justify-center rounded-lg gap-3 transition-all duration-200 text-sm font-medium ${
+                    isActive
+                      ? "text-[#3D7AF5] bg-[#3D7AF5]/10"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-black"
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${isActive ? "text-[#3D7AF5]" : "text-gray-500"}`} />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-//         {/* Analytics */}
-//         <Link
-//           href="/analytics"
-//           aria-label="Analytics"
-//           style={{ fontFamily: "Inter" }}
-//           className={`absolute top-[11px] left-[464px] h-10 w-[117.65625px] px-3 inline-flex items-center justify-center text-sm leading-[22px] font-medium bg-transparent rounded-lg gap-4 ${
-//             isAnalytics ? "text-[#6A99F7]" : "text-white"
-//           }`}
-//         >
-//           <ChartNoAxesColumn className={`h-4 w-4 ${isAnalytics ? "text-[#6A99F7]" : ""}`} />
-//           Analytics
-//         </Link>
+        {/* Right Side: Avatar */}
+        <div className="w-9 h-9 bg-[#F5E7F9] rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+          <CircleUserRound className="w-6 h-6 text-gray-700" strokeWidth={1.5} 
+          />
+        </div>
+      </div>
 
-//         {/* Avatar */}
-//         <div className="absolute top-[13px] left-[1372px] w-9 h-9 bg-[#E3FED8] overflow-hidden rounded-[18px] flex items-center justify-center">
-//           <CircleUserRound className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
-//         </div>
-
-//         {/* Bottom line */}
-//         <div className="absolute top-[64px] left-0 w-[1440px] border-t border-[#383838]" />
-//       </div>
-//     </header>
-//   );
-// }
+      {/* Bottom Separator Line (Full width) */}
+      <div className="absolute bottom-0 left-0 w-full border-b border-[#F4F4F4]" />
+    </header>
+  );
+}
