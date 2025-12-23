@@ -145,9 +145,7 @@ export default function AnalyticsPage() {
         {/* Filters */}
         <div className="flex justify-end items-center gap-6 mb-8">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-600">
-              Time Range
-            </span>
+            <span className="text-sm font-semibold text-black">Time Range</span>
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
@@ -160,7 +158,7 @@ export default function AnalyticsPage() {
             </select>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-600">Category</span>
+            <span className="text-sm font-semibold text-black">Category</span>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
@@ -176,6 +174,9 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Horizontal Line - Full width of the charts grid below */}
+        <div className="w-full border-b border-gray-300 mb-10" />
+
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
@@ -183,7 +184,7 @@ export default function AnalyticsPage() {
               Average Score Over Time
             </h2>
             <p className="text-gray-500 text-sm mb-6">
-              Your performance trend.
+              Trend of your average scores across practice sessions.
             </p>
             <ResponsiveContainer width="100%" height="80%">
               <LineChart data={lineChartData} margin={{ left: -34 }}>
@@ -227,7 +228,7 @@ export default function AnalyticsPage() {
               Common Interview Patterns
             </h2>
             <p className="text-gray-500 text-sm mb-6">
-              Session frequency by category.
+              Frequency of key patterns identified in your recent sessions.
             </p>
             <ResponsiveContainer width="100%" height="80%">
               <BarChart data={barChartData} margin={{ right: -43, left: -43 }}>
@@ -264,9 +265,10 @@ export default function AnalyticsPage() {
 
         {/* History Table */}
         <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-          <h2 className="text-xl font-bold text-[#1A1A1A] mb-8">
-            Session History
-          </h2>
+          <h2 className="text-xl font-bold text-[#1A1A1A]">Session History</h2>
+          <p className="text-gray-500 text-sm mb-8">
+            Detailed record of all your practice interview sessions.
+          </p>
           <div className="w-full flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
             <div className="flex items-center gap-16">
               <span className="w-32">Date</span>
