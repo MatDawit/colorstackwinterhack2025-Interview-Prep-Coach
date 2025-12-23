@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import Navbar from "../components/Navbar";
 
 export default function AnalyticsPage() {
   const [category, setCategory] = useState("All Categories");
@@ -131,185 +132,195 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F8F9FA] pt-24 pb-12 px-8">
-      <div className="mx-auto max-w-[1296px]">
-        <header className="mb-8">
-          <h1 className="text-[30px] font-bold text-[#1A1A1A]">
-            Analytics and Insights
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Track your progress and identify interview patterns.
-          </p>
-        </header>
-
-        {/* Filters */}
-        <div className="flex justify-end items-center gap-6 mb-8">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-black">Time Range</span>
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
-            >
-              <option>All Time</option>
-              <option>Last 30 Days</option>
-              <option>Last 7 Days</option>
-              <option>Last 24 Hours</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-black">Category</span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
-            >
-              <option>All Categories</option>
-              {categoriesList.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Horizontal Line - Full width of the charts grid below */}
-        <div className="w-full border-b border-gray-300 mb-10" />
-
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
-            <h2 className="text-black text-xl font-bold mb-1">
-              Average Score Over Time
-            </h2>
-            <p className="text-gray-500 text-sm mb-6">
-              Trend of your average scores across practice sessions.
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-[#F8F9FA] pt-24 pb-12 px-8">
+        <div className="mx-auto max-w-[1296px]">
+          <header className="mb-8">
+            <h1 className="text-[30px] font-bold text-[#1A1A1A]">
+              Analytics and Insights
+            </h1>
+            <p className="text-gray-500 mt-2">
+              Track your progress and identify interview patterns.
             </p>
-            <ResponsiveContainer width="100%" height="80%">
-              <LineChart data={lineChartData} margin={{ left: -34 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#F0F0F0"
-                />
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                  dy={10}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="#3B82F6"
-                  strokeWidth={3}
-                  dot={{
-                    r: 4,
-                    fill: "#3B82F6",
-                    strokeWidth: 2,
-                    stroke: "#fff",
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          </header>
 
-          <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
-            <h2 className="text-black text-xl font-bold mb-1">
-              Common Interview Patterns
-            </h2>
-            <p className="text-gray-500 text-sm mb-6">
-              Frequency of key patterns identified in your recent sessions.
-            </p>
-            <ResponsiveContainer width="100%" height="80%">
-              <BarChart data={barChartData} margin={{ right: -43, left: -43 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="#F0F0F0"
-                />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                  dy={10}
-                />
-                {/* 3. Force Whole Numbers on YAxis */}
-                <YAxis
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                />
-                <Tooltip cursor={{ fill: "#F9FAFB" }} />
-                <Bar
-                  dataKey="count"
-                  fill="#10B981"
-                  radius={[4, 4, 0, 0]}
-                  barSize={40}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* History Table */}
-        <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-          <h2 className="text-xl font-bold text-[#1A1A1A]">Session History</h2>
-          <p className="text-gray-500 text-sm mb-8">
-            Detailed record of all your practice interview sessions.
-          </p>
-          <div className="w-full flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
-            <div className="flex items-center gap-16">
-              <span className="w-32">Date</span>
-              <span>Category</span>
-            </div>
-            <div className="flex items-center gap-16">
-              <span className="w-20 text-right">Duration</span>
-              <span className="w-24 text-right">Score</span>
-            </div>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {filteredSessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-colors"
+          {/* Filters */}
+          <div className="flex justify-end items-center gap-6 mb-8">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-black">
+                Time Range
+              </span>
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
               >
-                <div className="flex items-center gap-16">
-                  <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
-                    {session.date}
-                  </span>
-                  <span className="text-[14px] text-[#1A1A1A]">
-                    {session.category}
-                  </span>
-                </div>
-                <div className="flex items-center gap-16">
-                  <span className="text-[14px] text-[#1A1A1A] w-20 text-right">
-                    {session.duration}
-                  </span>
-                  <span
-                    className={`text-[14px] font-semibold w-24 text-right ${getScoreColor(
-                      session.score
-                    )}`}
-                  >
-                    {session.score}%
-                  </span>
-                </div>
-              </div>
-            ))}
+                <option>All Time</option>
+                <option>Last 30 Days</option>
+                <option>Last 7 Days</option>
+                <option>Last 24 Hours</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold text-black">Category</span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+              >
+                <option>All Categories</option>
+                {categoriesList.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-        </section>
-      </div>
-    </main>
+
+          {/* Horizontal Line - Full width of the charts grid below */}
+          <div className="w-full border-b border-gray-300 mb-10" />
+
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
+              <h2 className="text-black text-xl font-bold mb-1">
+                Average Score Over Time
+              </h2>
+              <p className="text-gray-500 text-sm mb-6">
+                Trend of your average scores across practice sessions.
+              </p>
+              <ResponsiveContainer width="100%" height="80%">
+                <LineChart data={lineChartData} margin={{ left: -34 }}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#F0F0F0"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                    dy={10}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                  />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#3B82F6"
+                    strokeWidth={3}
+                    dot={{
+                      r: 4,
+                      fill: "#3B82F6",
+                      strokeWidth: 2,
+                      stroke: "#fff",
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
+              <h2 className="text-black text-xl font-bold mb-1">
+                Common Interview Patterns
+              </h2>
+              <p className="text-gray-500 text-sm mb-6">
+                Frequency of key patterns identified in your recent sessions.
+              </p>
+              <ResponsiveContainer width="100%" height="80%">
+                <BarChart
+                  data={barChartData}
+                  margin={{ right: -43, left: -43 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke="#F0F0F0"
+                  />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                    dy={10}
+                  />
+                  {/* 3. Force Whole Numbers on YAxis */}
+                  <YAxis
+                    allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                  />
+                  <Tooltip cursor={{ fill: "#F9FAFB" }} />
+                  <Bar
+                    dataKey="count"
+                    fill="#10B981"
+                    radius={[4, 4, 0, 0]}
+                    barSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* History Table */}
+          <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 className="text-xl font-bold text-[#1A1A1A]">
+              Session History
+            </h2>
+            <p className="text-gray-500 text-sm mb-8">
+              Detailed record of all your practice interview sessions.
+            </p>
+            <div className="w-full flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
+              <div className="flex items-center gap-16">
+                <span className="w-32">Date</span>
+                <span>Category</span>
+              </div>
+              <div className="flex items-center gap-16">
+                <span className="w-20 text-right">Duration</span>
+                <span className="w-24 text-right">Score</span>
+              </div>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {filteredSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-16">
+                    <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
+                      {session.date}
+                    </span>
+                    <span className="text-[14px] text-[#1A1A1A]">
+                      {session.category}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-16">
+                    <span className="text-[14px] text-[#1A1A1A] w-20 text-right">
+                      {session.duration}
+                    </span>
+                    <span
+                      className={`text-[14px] font-semibold w-24 text-right ${getScoreColor(
+                        session.score
+                      )}`}
+                    >
+                      {session.score}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
