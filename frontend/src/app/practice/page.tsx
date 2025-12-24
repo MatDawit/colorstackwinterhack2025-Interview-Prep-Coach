@@ -167,6 +167,25 @@ export default function Practice() {
     setAudioUrl(null);
   }
 
+  function switchMode(nextMode: Mode) {
+    if (nextMode === mode) return;
+
+    // If recording, stop it so mic/timer are not running
+    if (recordingState === "recording") stopRecording();
+
+    if (nextMode === "type") {
+      // Keep typedAnswer as-is (usually nice), but clear recording artifacts:
+      handleRerecord();
+    } else {
+      // Switching to record: clear typed answer (optional)
+      setTypedAnswer("");
+    }
+
+    setMode(nextMode);
+    setSubmitError(null);
+  }
+
+
   useEffect(() => {
     return () => {
       clearTimer();
@@ -213,57 +232,117 @@ export default function Practice() {
             <p className="mt-2 text-2xl text-center font-medium text-gray-900">{question}</p>
             </div>
 
-            {/* Timer + Status */}
-            <div className="mt-6 text-center">
-            <div className="text-4xl font-bold text-gray-900">{timeLabel}</div>
-            <div className="mt-2 text-sm text-gray-600">
-                Status: <span className="font-semibold">{recordingState}</span>
-                {micPermission === "denied" && (
-                <span className="ml-2 text-red-600">(Mic blocked)</span>
-                )}
-            </div>
+            {/* Toggle */}
+            <div className="mt-6 flex justify-center">
+              <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 w-full max-w-2xl">
+                <button
+                  type="button"
+                  onClick={() => switchMode("record")}
+                  className={[
+                    "py-2 rounded-md text-sm font-semibold transition",
+                    mode === "record"
+                      ? "bg-blue-600 text-white shadow"
+                      : "text-gray-700 hover:bg-gray-200",
+                  ].join(" ")}
+                >
+                  Record Answer
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => switchMode("type")}
+                  className={[
+                    "py-2 rounded-md text-sm font-semibold transition",
+                    mode === "type"
+                      ? "bg-blue-600 text-white shadow"
+                      : "text-gray-700 hover:bg-gray-200",
+                  ].join(" ")}
+                >
+                  Type Answer
+                </button>
+              </div>
             </div>
 
-            {/* Buttons */}
-            <div className="mt-6 flex items-center justify-center gap-3">
-            {recordingState !== "recording" ? (
-                <button
-                onClick={startRecording}
-                className="px-5 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
-                >
-                Start Recording
-                </button>
-            ) : (
-                <button
-                onClick={stopRecording}
-                className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                >
-                Stop Recording
-                </button>
+
+    {mode === "record" ? (
+      <>
+        {/* Timer + status */}
+        <div className="mt-6 text-center">
+          <div className="text-4xl font-bold text-gray-900">{timeLabel}</div>
+          <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
+            {/* You can swap this with icons later */}
+            {recordingState === "idle" && "Ready to record"}
+            {recordingState === "recording" && "Recording..."}
+            {recordingState === "stopped" && "Recording saved"}
+            {micPermission === "denied" && (
+              <span className="text-red-600">(Mic blocked)</span>
             )}
+          </div>
+        </div>
 
+        {/* Record buttons */}
+        <div className="mt-6 flex items-center justify-center gap-3">
+          {recordingState !== "recording" ? (
             <button
-                onClick={handleRerecord}
-                className="px-5 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
+              onClick={startRecording}
+              className="px-10 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
             >
-                Re-record
+              Start Recording
             </button>
-            </div>
+          ) : (
+            <button
+              onClick={stopRecording}
+              className="px-10 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
+            >
+              Stop Recording
+            </button>
+          )}
 
-            {/* Error */}
-            {submitError && (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {submitError}
-            </div>
-            )}
+          <button
+            onClick={handleRerecord}
+            className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
+          >
+            Re-record
+          </button>
+        </div>
 
-            {/* Playback */}
-            {audioUrl && (
-            <div className="mt-6">
-                <p className="text-sm text-gray-500 mb-2">Playback:</p>
-                <audio controls src={audioUrl} className="w-full" />
-            </div>
-            )}
+        {/* Playback */}
+        {audioUrl && (
+          <div className="mt-6">
+            <p className="text-sm text-gray-500 mb-2">Playback:</p>
+            <audio controls src={audioUrl} className="w-full" />
+          </div>
+        )}
+      </>
+    ) : (
+      <>
+        {/* Type answer UI */}
+        <div className="mt-6">
+          <textarea
+            value={typedAnswer}
+            onChange={(e) => setTypedAnswer(e.target.value)}
+            placeholder="Type your answer here..."
+            className="w-full min-h-45 rounded-xl border border-gray-300 p-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="mt-2 text-xs text-gray-500 flex justify-between">
+            <span>Tip: Try STAR (Situation, Task, Action, Result)</span>
+            <span>{typedAnswer.trim().split(/\s+/).filter(Boolean).length} words</span>
+          </div>
+        </div>
+      </>
+    )}   
+
+        {submitError && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {submitError}
+          </div>
+        )}
+
+        </div>
+        <div className="flex items-center justify-center mt-8">
+          <button className="bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded">
+            Submit for Analysis
+          </button>
         </div>
         </div>
     </div>
