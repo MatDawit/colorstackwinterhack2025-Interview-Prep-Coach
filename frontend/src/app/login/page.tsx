@@ -64,24 +64,29 @@ export default function Login() {
         </p>
         
         {/* Email */}
+        {/* Email */}
         <p className="ml-[0.15cm] text-sm text-black text-left font-bold mb-2">Email</p>
-        <div 
-            className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-4">    
-        </div>
+        <input 
+          type="email"
+          placeholder="Enter your email"
+          className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
+        />
 
         {/* Password */}
         <p className="ml-[0.15cm] text-sm text-black text-left font-bold mb-2">Password</p>
-        <div 
-            className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-10">    
-        </div>
+        <input 
+          type="password"
+          placeholder="Enter your password"
+          className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black"
+        />
         {/* Sign in button */}
-        <button className="bg-blue-600 w-100 h-12 mb-30 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={() => router.push('/dashboard')}>  
+        <button className="bg-blue-600 w-100 h-12 mb-25 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={() => router.push('/dashboard')}>  
             Sign in  →
         </button>
-        <button className="ml-[3.3cm] text-sm text-black text-center font-bold mb-10 hover:underline">Continue as Guest   →</button>
+        <button className="ml-[3.3cm] text-sm text-black text-center font-bold mb-7 hover:underline">Continue as Guest   →</button>
         <div className="text-centrer">
             <button 
-            className="ml-[1.76cm] text-sm text-blue-600 j font-bold hover:underline">Don't have an account? Sign up now
+            className="ml-[1.76cm] text-sm text-blue-600 j font-bold hover:underline" onClick={() => router.push('/signup')}>Don't have an account? Sign up now
             </button> 
         </div>
         
