@@ -1,0 +1,104 @@
+{
+  "questions": [
+    {
+      "id": "q1",
+      "category": "Teamwork",
+      "question": "Tell me about a time you had to work with a difficult team member.",
+      "sampleAnswers": [
+        {
+          "answer": "In my Data Structures course, I was paired with a teammate who consistently missed deadlines and didn't respond to messages. Our task was to implement a balanced binary search tree with full test coverage by the end of the semester. I scheduled a face-to-face meeting to understand his challenges - turns out he was working 30 hours a week and struggling with time management. I proposed we break the project into smaller weekly milestones and I offered to pair program during his free evenings. We met twice a week for 90-minute sessions, where we'd tackle one component at a time. I also created a shared task board so we could both see progress. By the third week, he was completing his portions on time and even suggesting optimizations. We finished the project a week early, scored 98%, and he thanked me for helping him develop better time management skills. I learned that 'difficult' people often just need different support structures."
+        }
+      ]
+    },
+    {
+      "id": "q2",
+      "category": "Leadership",
+      "question": "Describe a time when you had to lead a team through a challenging project.",
+      "sampleAnswers": [
+        {
+          "answer": "I was the team lead for a hackathon project. We had to build an app in 24 hours. I kind of told everyone what to do and we worked on it. Some people didn't really listen to my ideas but we eventually got something done. We didn't win or anything but it was an okay experience I guess. I learned that being a leader is hard."
+        }
+      ]
+    },
+    {
+      "id": "q3",
+      "category": "Failure",
+      "question": "Tell me about a time you failed at something important. What did you learn?",
+      "sampleAnswers": [
+        {
+          "answer": "I failed a midterm once because I didn't study enough. I was busy with other classes and kind of procrastinated. I felt really bad about it. After that I tried to study more and manage my time better. I learned that you have to prioritize your work and not procrastinate."
+        }
+      ]
+    },
+    {
+      "id": "q4",
+      "category": "Conflict",
+      "question": "Tell me about a time you disagreed with your manager or professor about an approach.",
+      "sampleAnswers": [
+        {
+          "answer": "In my Software Engineering course, our professor wanted us to use Waterfall methodology for our semester project, but I believed Agile would be better for our team's situation. The task was to build a course registration system with a team of 5 students over 12 weeks. The professor insisted on detailed upfront planning with no changes mid-project. Instead of just complaining, I prepared data: I researched similar student projects and found that 70% that used Waterfall missed key requirements because user needs changed mid-semester. I scheduled office hours and presented a hybrid approach - we'd do the upfront planning he wanted, but with 2-week sprints and regular check-ins to adjust if needed. I emphasized this would actually give him more visibility into our progress. He appreciated that I came with research and a compromise rather than just pushback. He approved the hybrid approach for our team as an experiment. We delivered on time, and our project was one of only two that incorporated user feedback mid-development. Our final demo scored 95%. I learned that disagreeing with authority is okay if you bring solutions, not just problems."
+        }
+      ]
+    },
+    {
+      "id": "q5",
+      "category": "Problem Solving",
+      "question": "Describe a technical problem you solved that others couldn't figure out.",
+      "sampleAnswers": [
+        {
+          "answer": "During my internship at a startup, our backend API would randomly crash during high traffic, but only in production - never in our test environment. The senior engineers had been investigating for 2 weeks with no solution. My task as an intern was officially just to fix minor bugs, but I asked if I could investigate this issue during my 20% time. I took a systematic approach: First, I analyzed our production logs and noticed the crashes correlated with specific database queries. Second, I replicated our production data volume in staging - previous testing used small datasets. Third, I discovered that one of our queries had O(n²) complexity that only became a problem with 10,000+ records. The senior engineers had been looking at infrastructure issues, not query optimization. I rewrote the query using a join instead of nested selects, bringing it to O(n log n). After deploying my fix, crashes dropped by 95%. The CEO mentioned it in our all-hands meeting and my manager gave me ownership of performance optimization going forward. I learned that sometimes fresh eyes and systematic approaches beat experience and intuition."
+        }
+      ]
+    },
+    {
+      "id": "q6",
+      "category": "Time Management",
+      "question": "Tell me about a time you had to manage multiple competing deadlines.",
+      "sampleAnswers": [
+        {
+          "answer": "Last semester I had like three projects due at the same time. It was really stressful. I just kind of worked on whatever seemed most urgent at the time and stayed up late to get everything done. I got everything in on time but I was exhausted. I guess I learned that I should probably plan better next time."
+        }
+      ]
+    },
+    {
+      "id": "q7",
+      "category": "Communication",
+      "question": "Describe a time when you had to explain a complex technical concept to a non-technical person.",
+      "sampleAnswers": [
+        {
+          "answer": "During a hackathon, I built a machine learning model that predicted bus arrival times, and I needed to pitch it to judges who were business professionals, not engineers. My task was to make them understand why our solution was valuable without drowning them in technical details. Instead of talking about neural networks and training data, I started with the problem: 'You're standing at a bus stop in the cold. The sign says the bus comes every 15 minutes, but it's been 20 minutes. Do you wait or call an Uber?' That got their attention. I explained our solution using a simple analogy: 'Our app learns patterns the same way you learn your commute - after a few weeks, you know that the 8am bus is always 5 minutes late on Mondays. Our model does this for every bus, every time, every day.' I showed them the app interface with clear visualizations - green for on-time, yellow for delayed, red for significantly late. I used real data: 'In testing, riders saved an average of 12 minutes per day by knowing when to actually leave for the bus stop.' I avoided jargon completely and focused on user benefits. We won the 'Best Pitch' award and one judge specifically mentioned that we made complex tech feel accessible."
+        }
+      ]
+    },
+    {
+      "id": "q8",
+      "category": "Receiving Feedback",
+      "question": "Tell me about a time you received difficult feedback. How did you respond?",
+      "sampleAnswers": [
+        {
+          "answer": "My manager told me my code was messy once. I didn't really agree because it worked fine, but I cleaned it up a bit anyway to make him happy. I guess some people just care a lot about style."
+        }
+      ]
+    },
+    {
+      "id": "q9",
+      "category": "Initiative",
+      "question": "Describe a time when you went above and beyond your assigned responsibilities.",
+      "sampleAnswers": [
+        {
+          "answer": "During my internship at a fintech startup, I was assigned to fix bugs in our customer dashboard. While testing my fixes, I noticed our error messages were technical jargon that confused users - things like '400: Bad Request' with no explanation. This wasn't part of my task, but I saw an opportunity to improve user experience. I proposed to my manager that I audit all error messages across the application and create user-friendly alternatives. She was hesitant about scope creep but agreed to let me spend Fridays on it. I created a spreadsheet documenting every error message, categorized them by frequency and user impact, and wrote clear alternatives. For example, instead of 'Authentication token expired,' I wrote 'Your session timed out for security. Please log in again.' I worked with the design team to create a consistent error message style guide and implemented the changes across 50+ error states. After deployment, our customer support tickets related to error confusion dropped by 35% in the first month. The CEO noticed and my project became a company-wide initiative that I led. I learned that the best engineers don't just solve assigned problems - they look for adjacent problems that impact users and take ownership of fixing them."
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "category": "Adaptability",
+      "question": "Tell me about a time you had to quickly adapt to a major change.",
+      "sampleAnswers": [
+        {
+          "answer": "My internship project got changed halfway through and I had to work on something different. It was kind of stressful because I didn't know the new technology very well. I just tried my best and asked questions when I needed help. It worked out fine in the end."
+        }
+      ]
+    }
+  ]
+}
