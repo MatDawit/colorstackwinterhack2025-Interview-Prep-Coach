@@ -1,14 +1,100 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// prisma/schema.prisma
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User authentication and profile 
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique 
+  name          String
+  passwordHash  String
+  
+  // Profile info
+  targetRole    String?   // "Software Engineer Intern", etc.
+  experienceLevel String? // "Student", "Entry-level", etc.
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  attempts      Attempt[]
+  mockInterviews MockInterview[]
+  
+  @@index([email])
+}
+
+// User's practice attempts
+model Attempt {
+  id            String    @id @default(uuid())
+  userId        String
+  questionId    String
+  
+  // User's response
+  transcription String    @db.Text  // Fadlula stores transcribed text here
+  audioUrl      String?              // Optional: link to recorded audio
+  
+  // Matthew's scoring
+  starScores    Json?     // { situation: 8.5, task: 7.0, action: 9.2, result: 6.5, overall: 7.8 }
+  
+  // Fadlula's AI feedback
+  feedback      String?   @db.Text  // Claude's feedback
+  biasPatterns  Json?     // { hedging: 3, apologizing: 1, ... }
+  
+  // Metadata
+  duration      Int?      // seconds spent answering
+  completedAt   DateTime  @default(now())
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question      Question  @relation(fields: [questionId], references: [id])
+  
+  @@index([userId])
+  @@index([questionId])
+}
+
+// Question bank (seeded from JSON)
+model Question {
+  id            String    @id @default(uuid())
+  category      String    // "Teamwork", "Leadership", "Conflict", etc.
+  question      String    @db.Text
+  
+  // For Matthew's scoring reference
+  sampleAnswers Json      // Array of sample answers from the JSON
+  
+  createdAt     DateTime  @default(now())
+  
+  // Relations
+  attempts      Attempt[]
+  
+  @@index([category])
+}
+
+// Mock interview sessions
+model MockInterview {
+  id            String    @id @default(uuid())
+  userId        String
+  
+  // Results
+  averageStarScore Float
+  questionsCompleted Int
+  totalDuration Int       // Total time in seconds
+  
+  // Summary feedback
+  overallFeedback String  @db.Text
+  strengths       Json    // ["Good use of specific examples", ...]
+  improvements    Json    // ["Add more quantifiable results", ...]
+  
+  completedAt   DateTime  @default(now())
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
 }
