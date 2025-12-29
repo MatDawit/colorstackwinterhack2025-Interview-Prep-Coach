@@ -45,7 +45,7 @@ export async function signup(email: string, password: string, name: string){
     // print hashed password so we know it worked
     console.log(hashedPW)
 
-    // create the user and store the hashes password in thge database
+    // create the user and store the hashes password in thge database, it comes with an id already we don't needa create
     const user = await prisma.user.create({
     data: {
         // What fields to save
@@ -55,8 +55,32 @@ export async function signup(email: string, password: string, name: string){
     }
     });
 
-    // create JWT the sign method create a token
-    
+    // create JWT the sign method create a token in contains the payload which is the user data 
+    const token = jwt.sign(
+        {
+            userId: user.id,
+            email: user.email
+        },
+
+        JWT_SECRET!, // the exclamation point is a promise that this exists
+
+        {
+            expiresIn: '7d'
+        }
+    )
+    // print out the token generated in console so we can see it
+    console.log('JWT token is ', token)
+
+    // return user info and email to the frontend
+    return {
+        token,  
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.name
+        }
+    };
+
 }
 
 /*
