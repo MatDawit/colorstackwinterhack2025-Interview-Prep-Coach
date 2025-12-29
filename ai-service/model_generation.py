@@ -80,5 +80,4 @@ response = client.models.generate_content(
     contents=""
 )
 
-
 print(response.text)
