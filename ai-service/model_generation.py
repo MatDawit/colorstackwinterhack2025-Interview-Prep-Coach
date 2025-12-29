@@ -73,7 +73,7 @@ You must respond with a SINGLE JSON object. Do not include markdown formatting (
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 response = client.models.generate_content(
-    model="gemini-2.5-flash",
+    model="gemini-3-pro-preview",
     config=types.GenerateContentConfig(
         system_instruction=sys_instruction
     ),
