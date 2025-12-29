@@ -34,7 +34,7 @@ export default function Signup() {
         </h1>
         
         {/* Subtitle */}
-        <p className="text-gray-600 text-center mb-10">
+        <p className="text-gray-600 text-center mb-7">
           Access your AI-powered interview practice sessions.
         </p>
         
@@ -53,11 +53,11 @@ export default function Signup() {
         placeholder="Enter your password"
         className="bg-white border-2 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
         />
-        {/* Password */}
-        <p className="ml-[0.15cm] text-sm text-black text-left font-bold mb-2">Confirm Password</p>
+        {/* User Name */}
+        <p className="ml-[0.15cm] text-sm text-black text-left font-bold mb-2">Name</p>
         <input 
-        type="password"
-        placeholder="Confirm password"
+        type="name"
+        placeholder="Enter your name"
         className="bg-white border-2 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
         />
         {/* Sign in button */}
