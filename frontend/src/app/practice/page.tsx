@@ -50,7 +50,7 @@ export default function Practice() {
 
   //this is for the timer again
   const timeLabel = useMemo(() => formatTime(elapsedTime), [elapsedTime]);
-
+  
   function clearTimer() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -65,6 +65,55 @@ export default function Practice() {
     }, 1000);
   }
 
+
+//This is the function that submits the answer to the backend
+//This is just a test at the moment
+async function submitForAnalysis() {
+  setSubmitError(null);
+  setSubmitting(true);
+
+  try {
+    const form = new FormData();
+    form.append("interviewType", interviewType);
+    form.append("questionId", qId);
+    form.append("question", question);
+    form.append("mode", mode);
+
+    if (mode === "type") {
+      form.append("answerText", typedAnswer);
+    } else {
+      if (recordingState === "recording") {
+        throw new Error("Stop the recording before submitting.");
+      }
+      if (!audioBlob) {
+        throw new Error("No audio recorded. Please record an answer first.");
+      }
+      form.append("audio", audioBlob, "answer.webm");
+    }
+
+    const res = await fetch("/api/practice/submit", {
+      method: "POST",
+      body: form,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to submit answer.");
+    }
+
+    console.log("Session:", data);
+
+    // Later:
+    // router.push(`/feedback/${data.sessionId}`);
+  } catch (error: any) {
+    setSubmitError(error.message);
+  } finally {
+    setSubmitting(false);
+  }
+}
+
+ 
   //this is to reset the audio recording
 
   async function startRecording() {
@@ -340,11 +389,12 @@ export default function Practice() {
 
         </div>
         <div className="flex items-center justify-center mt-8">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded">
+          <button onClick={submitForAnalysis} className="bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded">
             Submit for Analysis
           </button>
         </div>
         </div>
+        
     </div>
   );
 }
