@@ -1,11 +1,56 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState } from 'react' // lets you add a state variable to your components
 import { LayoutDashboard, BrainCircuit, ChartNoAxesColumn, CircleUserRound } from "lucide-react";
 
 
 export default function Signup() {
     const router = useRouter()
+
+    // create variables dor the user info and set default states
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [name, setName] = useState('')
+    const [error, setError] = useState('') // error mesaage for if sign up fails
+    const [loading, setLoading] = useState(false) // how im gonna track if the signup is ongoing
+    // 
+    /*
+    Handle Sign up:
+        rn the front end can grap the name, email and password
+        amd backend api can create users in the database,
+        this functionn is the bridege that connects the form to the backend          
+        without this emthod, we would just redirect to the dashboard without creating an account                                                                                                                  
+    */
+
+    // this won't be exported
+    const handleSignUp = async () => {
+        // grab user data
+        const userData = {
+            email: email,
+            password: password,
+            name: name
+        }
+        // send to backend
+        const response = await fetch ('http://localhost:5000/api/auth/signup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(userData)
+        })
+
+        // get the response
+        const data = await response.json()
+
+        //
+        if (response.ok){ // lets me know if the requests was successful
+            localStorage.setItem('token', data.token) // incase the user refreshes the page
+            router.push('/dashboard')
+        }
+        else{
+            setError(data.error)
+        }
+}
+
   return (
    
     // Outer container - full screen gradient background
@@ -43,6 +88,10 @@ export default function Signup() {
         <input 
         type="email"
         placeholder="Enter your email"
+        // value parameter helps us ACCESS what the user types
+        // thats how we're going to grab it and send it into the frontend
+        value = {email}
+        onChange={(e) => setEmail(e.target.value)}
         className="bg-white border-2 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
         />
 
@@ -51,6 +100,8 @@ export default function Signup() {
         <input 
         type="password"
         placeholder="Enter your password"
+        value = {password}
+        onChange={(e) => setPassword(e.target.value)}
         className="bg-white border-2 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
         />
         {/* User Name */}
@@ -58,21 +109,19 @@ export default function Signup() {
         <input 
         type="name"
         placeholder="Enter your name"
+        value = {name}
+        onChange={(e) => setName(e.target.value)}
         className="bg-white border-2 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
         />
         {/* Sign in button */}
-        <button className="bg-blue-600 w-100 h-10 mb-10 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={() => router.push('/dashboard')}>  
+        <button className="bg-blue-600 w-100 h-10 mb-10 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={handleSignUp}>  
             Sign up  →
         </button>
         <button className="ml-[3.3cm] text-sm text-black text-center font-bold mb-7 hover:underline">Continue as Guest   →</button>
-        <div className="text-centrer">
-            <button 
-            className="ml-[1.76cm] text-sm text-blue-600 j font-bold hover:underline " onClick={() => router.push('/signup')}>Don't have an account? Sign up now
-            </button> 
-        </div>
         
       </div>
       
     </div>
   )
 }
+
