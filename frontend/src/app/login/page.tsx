@@ -8,7 +8,7 @@ text-2xl text-gray-800 - text size and color
 */
 
 'use client'
-
+import { useState } from 'react';
 // the useRouter function is class and the push method basically switches the page
  /*
 {
@@ -30,6 +30,46 @@ import { LayoutDashboard, BrainCircuit, ChartNoAxesColumn, CircleUserRound } fro
 
 export default function Login() {
     const router = useRouter()
+
+        // create variables dor the user info and set default states
+        const [email, setEmail] = useState('')
+        const [password, setPassword] = useState('')
+        const [error, setError] = useState('') // error mesaage for if sign up fails
+        /*
+        Handle Sign up:
+            rn the front end can grap the name, email and password
+            amd backend api can create users in the database,
+            this functionn is the bridege that connects the form to the backend          
+            without this emthod, we would just redirect to the dashboard without creating an account                                                                                                                  
+        */
+    
+        // this won't be exported
+        const handleLogin = async () => {
+            // grab user data
+            const userData = {
+                email: email,
+                password: password,
+            }
+            // send to backend
+            const response = await fetch ('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(userData)
+            })
+    
+            // get the response
+            const data = await response.json()
+    
+            //
+            if (response.ok){ // lets me know if the requests was successful
+                localStorage.setItem('token', data.token) // incase the user refreshes the page
+                router.push('/dashboard')
+            }
+            else{
+                setError(data.error)
+            }
+    }
+    
   return (
 
     // Outer container - full screen gradient background
@@ -69,6 +109,8 @@ export default function Login() {
         <input 
           type="email"
           placeholder="Enter your email"
+          value = {email}
+          onChange={(e) => setEmail(e.target.value)}
           className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
         />
 
@@ -77,10 +119,12 @@ export default function Login() {
         <input 
           type="password"
           placeholder="Enter your password"
+          value = {password}
+          onChange={(e) => setPassword(e.target.value)}
           className="bg-white border-3 rounded-lg border-grey-500 w-100 h-12 mb-10 px-4 text-black"
         />
         {/* Sign in button */}
-        <button className="bg-blue-600 w-100 h-12 mb-25 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={() => router.push('/dashboard')}>  
+        <button className="bg-blue-600 w-100 h-12 mb-25 rounded-lg shadow-xl font-bold hover:bg-blue-700 hover:scale-105 transition-all " onClick={handleLogin}>  
             Sign in  →
         </button>
         <button className="ml-[3.3cm] text-sm text-black text-center font-bold mb-7 hover:underline">Continue as Guest   →</button>

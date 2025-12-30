@@ -25,7 +25,7 @@ const JWT_SECRET = process.env.JWT_SECRET
 export async function signup(email: string, password: string, name: string){ 
     // STEP 1: VALIDATE
 
-    // Your code here - check if email, password, name exist
+    // check if email, password, name exist
     if (!email || !password || !name){
         throw new Error('Fill out all the fields')
     } 
@@ -111,3 +111,45 @@ text.toUpperCase()             // "HELLO WORLD"
 // Split into array
 text.split(" ")               // ["Hello", "World"]
 */
+
+export async function login(email: string, password: string){
+
+    // all boxes are filled
+    if (!email || !password){
+        throw new Error('FIll in all the boxes')
+    }
+    // doesn't matter to check for beingg greater than 6 because they just need to match with the users email
+    // find user and check if the user exists
+    const user = await prisma.user.findUnique({
+        where: {email}
+    })
+    if (!user)
+    {
+        throw new Error("invalid email")
+    }
+
+    // verify the user password
+    const validPW = await bcrypt.compare(password, user.passwordHash)
+    if(!validPW){
+        throw new Error('Password not found in database')
+    }
+    // generate the token
+    const token = jwt.sign(
+        {
+            userId: user.id,
+            email: user.email
+        },
+        JWT_SECRET!,
+        {expiresIn: '7d'}
+    )
+    
+    // 
+    return{
+        token,  
+        user: {
+            id: user.id,
+            email: user.email,
+            name: user.name
+        }
+    }
+}

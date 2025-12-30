@@ -13,8 +13,6 @@ export default function Signup() {
     const [password, setPassword] = useState('')
     const [name, setName] = useState('')
     const [error, setError] = useState('') // error mesaage for if sign up fails
-    const [loading, setLoading] = useState(false) // how im gonna track if the signup is ongoing
-    // 
     /*
     Handle Sign up:
         rn the front end can grap the name, email and password
