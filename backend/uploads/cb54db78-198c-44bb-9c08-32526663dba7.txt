@@ -1,0 +1,11 @@
+sessionId: cb54db78-198c-44bb-9c08-32526663dba7
+timestamp: 2025-12-31T02:11:32.056Z
+interviewType: interview
+questionId: q1_failed_01
+mode: record
+
+question:
+Tell me about a time when you had failed.
+
+answer:
+Um I failed a long time ago.

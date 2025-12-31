@@ -1,0 +1,11 @@
+sessionId: e5cc6877-7967-4858-aecc-72a33cd31af2
+timestamp: 2025-12-31T02:37:27.416Z
+interviewType: interview
+questionId: q1_failed_01
+mode: record
+
+question:
+Tell me about a time when you had failed.
+
+answer:
+I'm not sure if you guys see

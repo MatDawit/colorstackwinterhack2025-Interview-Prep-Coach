@@ -1,0 +1,136 @@
+{
+  "questions": [
+    {
+      "id": "q1_teamwork_01",
+      "category": "Teamwork",
+      "question": "Tell me about a time you worked on a team project.",
+      "sampleAnswers": {
+        "situation": "During my software engineering course, I worked with 3 teammates to build a full-stack web application for managing student organizations",
+        "task": "We needed to deliver a working MVP with user authentication, database integration, and a responsive UI within 8 weeks",
+        "action": "I took ownership of the backend API, set up weekly standups to track progress, and helped teammates debug their frontend code when they got stuck",
+        "result": "We delivered on time with all core features working. Our project received the highest grade in the class, and the professor showcased it to next year's students"
+      }
+    },
+    {
+      "id": "q2_teamwork_02",
+      "category": "Teamwork",
+      "question": "Describe a time you had to resolve a conflict with a teammate.",
+      "sampleAnswers": {
+        "situation": "During a hackathon, my teammate and I disagreed about which tech stack to use - they wanted React while I preferred Vue",
+        "task": "We had only 24 hours and couldn't afford to waste time arguing",
+        "action": "I suggested we each list pros/cons, then vote based on team familiarity. When React won, I supported the decision and learned React basics quickly",
+        "result": "We built a working prototype and won 2nd place. I also learned React which helped me in future projects"
+      }
+    },
+    {
+      "id": "q3_leadership_01",
+      "category": "Leadership",
+      "question": "Describe a time when you led a project or initiative.",
+      "sampleAnswers": {
+        "situation": "I noticed our computer science club didn't have any hands-on workshops, just guest speakers",
+        "task": "I wanted to create monthly coding workshops for beginners",
+        "action": "I pitched the idea to club leadership, recruited 3 other experienced students as co-instructors, and organized the first workshop on Git/GitHub",
+        "result": "45 students attended the first workshop. We've now run 6 workshops with 200+ total attendees, and it's become a regular club program"
+      }
+    },
+    {
+      "id": "q4_leadership_02",
+      "category": "Leadership",
+      "question": "Tell me about a time you had to motivate others.",
+      "sampleAnswers": {
+        "situation": "During finals week, my project team was burnt out and considering submitting an incomplete project",
+        "task": "I needed to re-energize the team to finish our capstone project",
+        "action": "I organized a working session with food, broke remaining tasks into small 30-min chunks, and celebrated each completed feature",
+        "result": "Team morale improved, we finished the project, and received an A. Two teammates thanked me for keeping them motivated"
+      }
+    },
+    {
+      "id": "q5_problem_01",
+      "category": "Problem-Solving",
+      "question": "Tell me about a difficult technical problem you solved.",
+      "sampleAnswers": {
+        "situation": "In my research lab, our ML model was taking 6 hours to train, making iteration extremely slow",
+        "task": "I needed to speed up training time without sacrificing accuracy",
+        "action": "I profiled the code, found bottlenecks in data loading, implemented parallel data preprocessing, and switched to mixed-precision training",
+        "result": "Training time dropped to 45 minutes (8x faster), allowing us to run more experiments and improve model accuracy by 12%"
+      }
+    },
+    {
+      "id": "q6_problem_02",
+      "category": "Problem-Solving",
+      "question": "Describe a time when you had to debug a complex issue.",
+      "sampleAnswers": {
+        "situation": "Our web app worked perfectly in development but crashed randomly in production",
+        "task": "I had to find the bug before our demo to potential investors",
+        "action": "I added detailed logging, reproduced the issue locally by mimicking production data, and discovered a race condition in our async code",
+        "result": "Fixed the bug by adding proper synchronization. App has been stable for 3 months with zero crashes in production"
+      }
+    },
+    {
+      "id": "q7_failure_01",
+      "category": "Failure",
+      "question": "Tell me about a time when you failed.",
+      "sampleAnswers": {
+        "situation": "In my first internship, I was assigned to add a new feature to the mobile app",
+        "task": "I confidently estimated it would take 1 week",
+        "action": "I started coding immediately without fully understanding the existing architecture. After 3 weeks, I was still stuck on edge cases",
+        "result": "I learned to spend time understanding codebases before estimating. I now break tasks into smaller pieces and pad estimates by 50%. My estimates are now accurate within 20%"
+      }
+    },
+    {
+      "id": "q8_failure_02",
+      "category": "Failure",
+      "question": "Describe a time you made a mistake and how you handled it.",
+      "sampleAnswers": {
+        "situation": "I accidentally pushed broken code to the main branch that failed all tests, blocking my entire team",
+        "task": "I needed to fix it immediately without making things worse",
+        "action": "I immediately notified the team, reverted my commit, fixed the tests locally, and re-pushed. Then I set up pre-commit hooks to prevent this in the future",
+        "result": "Downtime was only 15 minutes. Team appreciated my quick response and transparency. Now all team members use the same pre-commit hooks"
+      }
+    },
+    {
+      "id": "q9_communication_01",
+      "category": "Communication",
+      "question": "Describe a time you had to explain something technical to a non-technical person.",
+      "sampleAnswers": {
+        "situation": "My professor asked me to present my machine learning research to business school students who had no CS background",
+        "task": "I needed to explain how neural networks work in 15 minutes without using jargon",
+        "action": "I used the analogy of the brain's neurons, created simple visual diagrams showing data flow, and demonstrated with a real example of image recognition",
+        "result": "Students engaged actively, asked great questions, and one student said it was the first time they actually understood what AI does. Professor invited me back for next semester"
+      }
+    },
+    {
+      "id": "q10_communication_02",
+      "category": "Communication",
+      "question": "Tell me about a time you had to give difficult feedback.",
+      "sampleAnswers": {
+        "situation": "A teammate on my project was consistently missing deadlines and not responding to messages",
+        "task": "I needed to address this without damaging our working relationship",
+        "action": "I scheduled a 1-on-1, asked if they were facing challenges, listened to their concerns about being overwhelmed, and we created a plan to redistribute work",
+        "result": "They appreciated the direct but kind approach. We finished the project successfully, and they improved their communication going forward"
+      }
+    },
+    {
+      "id": "q11_initiative_01",
+      "category": "Initiative",
+      "question": "Tell me about a time you went above and beyond.",
+      "sampleAnswers": {
+        "situation": "During my internship, I noticed our team was manually testing the same features every sprint",
+        "task": "This wasn't my assigned work, but I saw an opportunity to help",
+        "action": "I spent evenings learning Selenium, wrote automated tests for the most common workflows, and presented them to the team",
+        "result": "Testing time reduced from 4 hours to 30 minutes per sprint. My manager was impressed and gave me a return offer for next summer"
+      }
+    },
+    {
+      "id": "q12_initiative_02",
+      "category": "Initiative",
+      "question": "Describe a project you started independently.",
+      "sampleAnswers": {
+        "situation": "I kept forgetting about assignment deadlines and wanted a better solution than calendar reminders",
+        "task": "Build a tool that would help me and other students stay organized",
+        "action": "I built a Chrome extension that scrapes Canvas/Blackboard for deadlines, sends notifications, and integrates with Google Calendar. I posted it online for others to use",
+        "result": "Over 500 students downloaded it. Got great feedback and feature requests. Still maintaining it 2 years later"
+      }
+    }
+  ]
+}

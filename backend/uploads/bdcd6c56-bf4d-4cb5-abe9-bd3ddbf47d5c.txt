@@ -1,0 +1,11 @@
+sessionId: bdcd6c56-bf4d-4cb5-abe9-bd3ddbf47d5c
+timestamp: 2025-12-31T02:17:55.708Z
+interviewType: interview
+questionId: q1_failed_01
+mode: record
+
+question:
+Tell me about a time when you had failed.
+
+answer:
+I don't really fail that often.
