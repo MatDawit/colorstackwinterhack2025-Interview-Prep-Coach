@@ -14,11 +14,11 @@ export async function POST(request: Request) {
 
   const sessionId = crypto.randomUUID();
 
-  // ✅ Find repo root (because Next runs from /frontend)
+  // Find repo root (because Next runs from /frontend)
   const repoRoot = path.resolve(process.cwd(), ".."); // frontend -> repo root
   const uploadsDir = path.join(repoRoot, "backend", "uploads");
 
-  // ✅ Make sure backend/uploads exists
+  // Make sure backend/uploads exists
   await fs.mkdir(uploadsDir, { recursive: true });
 
   // This will hold the final text we want to save
