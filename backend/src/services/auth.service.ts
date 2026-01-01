@@ -14,11 +14,10 @@ JWT gives each user a unique token for their account that lets us know if they'r
 }
 */
 
-import { PrismaClient } from '../../generated/prisma';
+import { prisma } from "../db_connection";  // Import prisma client
 import bcrypt from 'bcryptjs';  // For hashing passwords
 import jwt from 'jsonwebtoken';  // For creating tokens
 
-const prisma = new PrismaClient()
 const JWT_SECRET = process.env.JWT_SECRET
 
 // create the sign up function
