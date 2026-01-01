@@ -8,6 +8,12 @@ import { useRouter } from "next/navigation";
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
 type MicPermission = "granted" | "denied" | "unknown";
+type Question = {
+  id: string;
+  category: string;
+  question: string;
+  sampleAnswers?: any;
+};
 
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
@@ -19,10 +25,13 @@ function formatTime(seconds: number) {
 
 export default function Practice() {
   const router = useRouter();
-  const [interviewType, setInterviewType] = useState("interview");
+  const [interviewType, setInterviewType] = useState("Software Engineering Interview");
   //Right now, the question ID and question are hardcoded. In the future, we will fetch these from the database
-  const [qId, setQId] = useState("q1_failed_01");
-  const [question, setQuestion] = useState("Tell me about a time when you had failed.");
+  const [qId, setQId] = useState("");
+  const [question, setQuestion] = useState("");
+
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
   //sets mode and your answer
   const [mode, setMode] = useState<Mode>("record");
@@ -51,6 +60,13 @@ export default function Practice() {
   //this is for the timer again
   const timeLabel = useMemo(() => formatTime(elapsedTime), [elapsedTime]);
   
+  const interviewTypeToCategories: Record<string, string[]> = {
+    "Software Engineering Interview": ["Teamwork", "Problem-Solving", "Failure", "Initiative"],
+    "Product Management Interview": ["Communication", "Leadership", "Teamwork", "Initiative"],
+    "Data Science Interview": ["Problem-Solving", "Communication", "Failure", "Teamwork"],
+  };
+
+
   function clearTimer() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -65,53 +81,66 @@ export default function Practice() {
     }, 1000);
   }
 
-
-//This is the function that submits the answer to the backend
-//This is just a test at the moment
-async function submitForAnalysis() {
-  setSubmitError(null);
-  setSubmitting(true);
-
-  try {
-    const form = new FormData();
-    form.append("interviewType", interviewType);
-    form.append("questionId", qId);
-    form.append("question", question);
-    form.append("mode", mode);
-
-    if (mode === "type") {
-      form.append("answerText", typedAnswer);
-    } else {
-      if (recordingState === "recording") {
-        throw new Error("Stop the recording before submitting.");
-      }
-      if (!audioBlob) {
-        throw new Error("No audio recorded. Please record an answer first.");
-      }
-      form.append("audio", audioBlob, "answer.webm");
+  function pickRandomN<T>(arr: T[], n: number) {
+    const copy = [...arr];
+    // Fisher–Yates shuffle
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-
-    const res = await fetch("/api/practice/submit", {
-      method: "POST",
-      body: form,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to submit answer.");
-    }
-
-    console.log("Session:", data);
-
-    // Later:
-    // router.push(`/feedback/${data.sessionId}`);
-  } catch (error: any) {
-    setSubmitError(error.message);
-  } finally {
-    setSubmitting(false);
+    return copy.slice(0, Math.min(n, copy.length));
   }
-}
+
+  function pickRandomOne<T>(arr: T[]) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  //This is the function that submits the answer to the backend
+  //This is just a test at the moment
+  async function submitForAnalysis() {
+    setSubmitError(null);
+    setSubmitting(true);
+
+    try {
+      const form = new FormData();
+      form.append("interviewType", interviewType);
+      form.append("questionId", qId);
+      form.append("question", question);
+      form.append("mode", mode);
+
+      if (mode === "type") {
+        form.append("answerText", typedAnswer);
+      } else {
+        if (recordingState === "recording") {
+          throw new Error("Stop the recording before submitting.");
+        }
+        if (!audioBlob) {
+          throw new Error("No audio recorded. Please record an answer first.");
+        }
+        form.append("audio", audioBlob, "answer.webm");
+      }
+
+      const res = await fetch("/api/practice/submit", {
+        method: "POST",
+        body: form,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit answer.");
+      }
+
+      console.log("Session:", data);
+
+      // Later:
+      // router.push(`/feedback/${data.sessionId}`);
+    } catch (error: any) {
+      setSubmitError(error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
  
   //this is to reset the audio recording
@@ -243,6 +272,51 @@ async function submitForAnalysis() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]);
+
+  useEffect(() => {
+    async function loadQuestions() {
+      try {
+        const res = await fetch("/api/questions");
+        const data = await res.json(); // { questions: [...] }
+        setQuestions(data.questions ?? []);
+      } catch (err) {
+        console.error("Failed to load questions:", err);
+      }
+    }
+
+    loadQuestions();
+  }, []);
+
+
+  useEffect(() => {
+    if (questions.length === 0) return;
+
+    // 1) Get allowed categories for this interviewType
+    const allowed = interviewTypeToCategories[interviewType] ?? [];
+
+    // 2) Randomly choose 3 categories
+    const chosenCategories = pickRandomN(allowed, 3);
+
+    // 3) Filter questions to those categories
+    const pool = questions.filter((q) => chosenCategories.includes(q.category));
+
+    // 4) If pool is empty (mapping mismatch), fall back to all questions
+    const finalPool = pool.length > 0 ? pool : questions;
+
+    // 5) Pick 1 random question
+    const picked = pickRandomOne(finalPool);
+
+    // 6) Update state so UI renders it
+    setCurrentQuestion(picked);
+    setQId(picked.id);
+    setQuestion(picked.question);
+
+    // Optional: reset the user's input when question changes
+    setTypedAnswer("");
+    handleRerecord(); // clears recording, timer, audio playback
+    setSubmitError(null);
+  }, [interviewType, questions]);
+
 
   return (
     <div className="min-h-screen bg-white">
