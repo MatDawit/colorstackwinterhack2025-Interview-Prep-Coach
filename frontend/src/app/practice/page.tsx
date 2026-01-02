@@ -100,7 +100,7 @@ export default function Practice() {
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
-
+    // 
     try {
       const form = new FormData();
       form.append("interviewType", interviewType);
