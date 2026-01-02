@@ -1,0 +1,50 @@
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import authRoutes from "./routes/auth.routes";
+import sessionRoutes from "./routes/session.routes";
+import practiceRoutes from "./routes/practice.routes";
+import questionsRouter from "./routes/questions.routes";
+import feedbackRouter from "./routes/feedback.routes";
+
+// read the env file
+dotenv.config();
+// create the express app
+const app = express();
+
+// define the port we'll be running on
+const PORT = 5000;
+
+// middleware are fxn that run before the routes
+app.use(cors()); // allows the frontend to make requests to the backend while they are on diff ports
+app.use(express.json()); // parses the json from requests body
+
+// register the auth routes give them all a starting name
+// sign up url will be /api/auth/signup
+app.use("/api/auth", authRoutes);
+
+// register session routes
+// all session routes will be prefixed with /api/session
+app.use("/api/session", sessionRoutes);
+
+// register practice routes
+app.use("/api/practice", practiceRoutes);
+
+// register questions routes
+app.use("/api/questions", questionsRouter);
+
+// register feedback routes
+app.use("/api/feedback", feedbackRouter);
+
+// check if backend is running
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", message: "Backend is running!" });
+});
+
+// start the server and make it listen on PORT 5000
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Auth endpoints:`);
+  console.log(`POST http://localhost:${PORT}/api/auth/signup`);
+});

@@ -1,19 +1,31 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Check, X, RotateCcw, ArrowRight, Home, Loader2 } from "lucide-react";
-import Navbar from "../../components/Navbar"; // Adjust path if needed
+import {
+  Check,
+  X,
+  RotateCcw,
+  ArrowRight,
+  Home,
+  Loader2,
+  BarChart3,
+} from "lucide-react"; // Added BarChart3 icon
+import Navbar from "../../components/Navbar";
 import { useParams, useRouter } from "next/navigation";
 
-// 1. Define the shape of data we expect from the backend
+// 1. Updated Data Interface
 interface AttemptData {
   id: string;
   sessionId: string;
   score: number;
   transcription: string;
-  feedback: string; // Maps to analysis_highlighting
+  feedback: string;
   improvedVersion?: string;
   actionableFeedback?: string;
+  // New fields from backend
+  isLastQuestion?: boolean;
+  attemptCount?: number;
+
   checklist: {
     specific_examples: boolean;
     no_negative_language: boolean;
@@ -36,14 +48,13 @@ const PracticeFeedback = () => {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // 2. Fetch Data on Load
   useEffect(() => {
     if (!attemptId) return;
 
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/practice/attempt/${attemptId}`
+          `http://localhost:5000/api/feedback/attempt/${attemptId}`
         );
         if (!res.ok) throw new Error("Failed to load results");
 
@@ -60,7 +71,6 @@ const PracticeFeedback = () => {
     fetchData();
   }, [attemptId]);
 
-  // 3. Loading & Error States
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
@@ -79,11 +89,9 @@ const PracticeFeedback = () => {
 
   const cleanText = (text: string) => {
     if (!text) return "";
-    // Regex to replace any text between < and > with empty string
     return text.replace(/<[^>]*>/g, "");
   };
 
-  // 2. STYLES tags for "Transcript Analysis" (Converts <green> to classes)
   const formatTranscript = (text: string) => {
     if (!text) return "";
     return text
@@ -99,8 +107,6 @@ const PracticeFeedback = () => {
       .replace(/<\/red>/g, "</span>");
   };
 
-  // 4. Map Database JSON to UI Checklist
-  // We use the keys from your AI output to decide status
   const checklistMapping = [
     {
       key: "specific_examples",
@@ -139,20 +145,25 @@ const PracticeFeedback = () => {
     setIsGenerating(true);
 
     try {
-      // 1. Notify backend to generate the NEXT question for this session
       const res = await fetch(`http://localhost:5000/api/practice/next`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: data.sessionId }),
       });
 
+      const result = await res.json();
+
+      if (data.isLastQuestion || result.message === "Session completed") {
+        router.push("/analytics"); // Redirect to Analytics
+        return;
+      }
+
       if (!res.ok) throw new Error("Failed to generate next question");
 
-      // 2. Navigate to the practice page (which will now fetch the NEW question)
       router.push(`/practice?sessionId=${data.sessionId}`);
     } catch (err) {
       console.error(err);
-      alert("Error loading next question. Please try again.");
+      alert("Error processing request.");
       setIsGenerating(false);
     }
   };
@@ -168,7 +179,7 @@ const PracticeFeedback = () => {
               Feedback Result
             </h1>
             <p className="text-gray-500 mt-2 text-lg">
-              Question:{" "}
+              Question {data.attemptCount || 1} of 4:{" "}
               <span className="text-gray-800 font-medium">
                 {data.question.question}
               </span>
@@ -248,7 +259,6 @@ const PracticeFeedback = () => {
                         <h4 className="text-[15px] font-bold text-[#1A1A1A]">
                           {item.label}
                         </h4>
-                        {/* Dynamic Message based on Success/Failure */}
                         <p className="text-gray-500 text-[13px]">
                           {isSuccess ? item.successMsg : item.errorMsg}
                         </p>
@@ -260,7 +270,7 @@ const PracticeFeedback = () => {
             </div>
           </div>
 
-          {/* 3. Transcript Analysis Card (Keeps Highlights) */}
+          {/* 3. Transcript Analysis Card */}
           <section className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm mt-8">
             <h2 className="text-lg font-bold text-[#1A1A1A] mb-1">
               Transcript Analysis
@@ -311,7 +321,7 @@ const PracticeFeedback = () => {
           {/* Navigation Buttons */}
           <div className="flex flex-col items-center gap-8 mt-12">
             <div className="flex items-center justify-center gap-4 w-full">
-              {/* RETRY BUTTON (Stays on current question) */}
+              {/* RETRY BUTTON */}
               <button
                 onClick={() =>
                   router.push(`/practice?sessionId=${data.sessionId}`)
@@ -323,23 +333,32 @@ const PracticeFeedback = () => {
                 Retry Question
               </button>
 
-              {/* NEXT QUESTION BUTTON (Triggers new question generation) */}
+              {/* NEXT / FINISH BUTTON */}
               <button
                 onClick={handleNextQuestion}
                 disabled={isGenerating}
-                className={`flex items-center gap-2 px-8 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-[14px] hover:bg-blue-700 transition-all shadow-md shadow-blue-100 ${
-                  isGenerating ? "opacity-75 cursor-not-allowed" : ""
-                }`}
+                className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
+                  // IF LAST QUESTION: Green Color
+                  data.isLastQuestion
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100"
+                    : // ELSE: Blue Color
+                      "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
+                } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
               >
                 {isGenerating ? (
                   <>
                     <Loader2 size={18} className="animate-spin" />
-                    Preparing...
+                    Processing...
                   </>
                 ) : (
                   <>
-                    Next Question
-                    <ArrowRight size={18} />
+                    {/* IF LAST QUESTION: "Go to Analytics" + Chart Icon */}
+                    {data.isLastQuestion ? "Go to Analytics" : "Next Question"}
+                    {data.isLastQuestion ? (
+                      <BarChart3 size={18} />
+                    ) : (
+                      <ArrowRight size={18} />
+                    )}
                   </>
                 )}
               </button>
