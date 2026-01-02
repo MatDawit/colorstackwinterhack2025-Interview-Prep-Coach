@@ -79,15 +79,39 @@ router.post("/end", async (req: Request, res: Response) => {
 
     if (!sessionId) return res.status(400).json({ error: "Missing sessionId" });
 
-    // Calculate average score
-    const aggregate = await prisma.sessionAttempt.aggregate({
+    // 1. Get ALL attempts for this session (score + questionId)
+    const attempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
-      _avg: { score: true },
+      select: { questionId: true, score: true },
     });
 
-    const finalScore = aggregate._avg.score || 0;
+    if (attempts.length === 0) {
+      return res.json({ success: true, finalScore: 0 });
+    }
 
-    // Update Session to COMPLETED
+    // 2. LOGIC: Best Answer wins
+    // We use a Map to store the max score for each unique question
+    const bestScores = new Map<string, number>();
+
+    attempts.forEach((attempt) => {
+      const currentMax = bestScores.get(attempt.questionId) || 0;
+      // If this attempt is better than what we have saved, update it
+      if ((attempt.score || 0) > currentMax) {
+        bestScores.set(attempt.questionId, attempt.score || 0);
+      }
+    });
+
+    // 3. Calculate Average of the BEST scores
+    let totalScore = 0;
+    bestScores.forEach((score) => {
+      totalScore += score;
+    });
+
+    // Avoid division by zero
+    const finalScore =
+      bestScores.size > 0 ? Math.round(totalScore / bestScores.size) : 0;
+
+    // 4. Update Session Status
     await prisma.session.update({
       where: { id: sessionId },
       data: {
@@ -99,6 +123,7 @@ router.post("/end", async (req: Request, res: Response) => {
 
     return res.json({ success: true, finalScore });
   } catch (error: any) {
+    console.error("Error ending session:", error);
     return res.status(500).json({ error: error.message });
   }
 });
