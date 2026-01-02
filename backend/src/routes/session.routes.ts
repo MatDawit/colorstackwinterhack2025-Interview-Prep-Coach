@@ -42,6 +42,27 @@ router.post("/start", async (req: Request, res: Response) => {
       },
     });
 
+    // A. Count total questions available
+    const count = await prisma.question.count();
+
+    if (count > 0) {
+      // B. Pick a random offset
+      const skip = Math.floor(Math.random() * count);
+
+      // C. Fetch the random question
+      const firstQuestion = await prisma.question.findFirst({
+        skip: skip,
+      });
+
+      // D. Save it to the session ("Bookmark" it)
+      if (firstQuestion) {
+        await prisma.session.update({
+          where: { id: session.id },
+          data: { currentQuestionId: firstQuestion.id },
+        });
+      }
+    }
+
     console.log("New Session Started:", session.id);
     res.json({ sessionId: session.id });
   } catch (error: any) {
