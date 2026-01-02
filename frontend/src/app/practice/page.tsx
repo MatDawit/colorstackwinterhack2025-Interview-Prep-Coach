@@ -4,7 +4,7 @@
 //useState stores values that change over time, useRef saves values between renders, useEffect runs code after rendering, useMemo caches expensive computations
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
 type MicPermission = "granted" | "denied" | "unknown";
@@ -25,7 +25,10 @@ function formatTime(seconds: number) {
 
 export default function Practice() {
   const router = useRouter();
-  const [interviewType, setInterviewType] = useState("Software Engineering Interview");
+  const [interviewType, setInterviewType] = useState(
+    "Software Engineering Interview"
+  );
+  const [sessionId, setSessionId] = useState<string | null>(null);
   //Right now, the question ID and question are hardcoded. In the future, we will fetch these from the database
   const [qId, setQId] = useState("");
   const [question, setQuestion] = useState("");
@@ -59,13 +62,27 @@ export default function Practice() {
 
   //this is for the timer again
   const timeLabel = useMemo(() => formatTime(elapsedTime), [elapsedTime]);
-  
-  const interviewTypeToCategories: Record<string, string[]> = {
-    "Software Engineering Interview": ["Teamwork", "Problem-Solving", "Failure", "Initiative"],
-    "Product Management Interview": ["Communication", "Leadership", "Teamwork", "Initiative"],
-    "Data Science Interview": ["Problem-Solving", "Communication", "Failure", "Teamwork"],
-  };
 
+  const interviewTypeToCategories: Record<string, string[]> = {
+    "Software Engineering Interview": [
+      "Teamwork",
+      "Problem-Solving",
+      "Failure",
+      "Initiative",
+    ],
+    "Product Management Interview": [
+      "Communication",
+      "Leadership",
+      "Teamwork",
+      "Initiative",
+    ],
+    "Data Science Interview": [
+      "Problem-Solving",
+      "Communication",
+      "Failure",
+      "Teamwork",
+    ],
+  };
 
   function clearTimer() {
     if (timerRef.current) {
@@ -95,6 +112,55 @@ export default function Practice() {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
+  const searchParams = useSearchParams();
+
+  const existingSessionId = searchParams.get("sessionId");
+  if (existingSessionId) {
+    setSessionId(existingSessionId); // Don't create a new one, use the existing one
+  }
+
+  // This effect starts a new session whenever the Interview Type changes
+  // OR uses the existing session if passed via URL (e.g. ?sessionId=123)
+  useEffect(() => {
+    const initSession = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("No token found - User should login first");
+        // router.push("/login"); // Optional: Force login
+        return;
+      }
+
+      // Check if we are continuing an existing session loop
+      const existingSessionId = searchParams.get("sessionId");
+      if (existingSessionId) {
+        setSessionId(existingSessionId);
+        return;
+      }
+
+      // Otherwise, start a FRESH session
+      try {
+        const res = await fetch("http://localhost:5000/api/session/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ interviewType }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setSessionId(data.sessionId);
+          console.log("✅ Session Started:", data.sessionId);
+        }
+      } catch (err) {
+        console.error("Failed to start session:", err);
+      }
+    };
+
+    initSession();
+  }, [interviewType, searchParams]); // Re-run if type changes
+
   //This is the function that submits the answer to the backend
   //This is just a test at the moment
   async function submitForAnalysis() {
@@ -102,13 +168,20 @@ export default function Practice() {
     setSubmitting(true);
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Please log in to submit.");
+      if (!sessionId)
+        throw new Error("Session not initialized. Please refresh.");
+
       const form = new FormData();
-      form.append("interviewType", interviewType);
+      // Required fields for Backend
+      form.append("sessionId", sessionId); // <--- LINK TO SESSION
       form.append("questionId", qId);
       form.append("question", question);
       form.append("mode", mode);
 
       if (mode === "type") {
+        if (!typedAnswer.trim()) throw new Error("Answer cannot be empty.");
         form.append("answerText", typedAnswer);
       } else {
         if (recordingState === "recording") {
@@ -120,8 +193,12 @@ export default function Practice() {
         form.append("audio", audioBlob, "answer.webm");
       }
 
-      const res = await fetch("/api/practice/submit", {
+      // Send to Express Backend (Port 5000)
+      const res = await fetch("http://localhost:5000/api/practice/submit", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: form,
       });
 
@@ -131,18 +208,19 @@ export default function Practice() {
         throw new Error(data.error || "Failed to submit answer.");
       }
 
-      console.log("Session:", data);
+      console.log("Analysis Complete:", data);
 
-      // Later:
-      // router.push(`/feedback/${data.sessionId}`);
+      // Redirect to Feedback Page
+      // We assume the Feedback page has a button to come back here
+      router.push(`/feedback/${data.attemptId}`);
     } catch (error: any) {
+      console.error(error);
       setSubmitError(error.message);
     } finally {
       setSubmitting(false);
     }
   }
 
- 
   //this is to reset the audio recording
 
   async function startRecording() {
@@ -263,7 +341,6 @@ export default function Practice() {
     setSubmitError(null);
   }
 
-
   useEffect(() => {
     return () => {
       clearTimer();
@@ -286,7 +363,6 @@ export default function Practice() {
 
     loadQuestions();
   }, []);
-
 
   useEffect(() => {
     if (questions.length === 0) return;
@@ -317,158 +393,173 @@ export default function Practice() {
     setSubmitError(null);
   }, [interviewType, questions]);
 
-
   return (
     <div className="min-h-screen bg-white">
-        <Navbar />
-        <div className="max-w-4xl mt-12 mx-auto px-4 pt-8">
+      <Navbar />
+      <div className="max-w-4xl mt-12 mx-auto px-4 pt-8">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-            <h2 className="text-base font-semibold text-gray-900">Interview Settings</h2>
-            <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-base font-semibold text-gray-900">
+            Interview Settings
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
             Select your interview type and preferences.
-            </p>
+          </p>
 
-            <div className="mt-4">
+          <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-                Interview Type
+              Interview Type
             </label>
             <select
-                value={interviewType}
-                onChange={(e) => setInterviewType(e.target.value)}
-                className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={interviewType}
+              onChange={(e) => setInterviewType(e.target.value)}
+              className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-                <option value="Software Engineering Interview">Software Engineering Interview</option>
-                <option value="Product Management Interview">Product Management Interview</option>
-                <option value="Data Science Interview">Data Science Interview</option>
+              <option value="Software Engineering Interview">
+                Software Engineering Interview
+              </option>
+              <option value="Product Management Interview">
+                Product Management Interview
+              </option>
+              <option value="Data Science Interview">
+                Data Science Interview
+              </option>
             </select>
-            </div>
+          </div>
         </div>
-        </div>
+      </div>
 
-
-        <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-
-            {/* Question display */}
-            <div className="mt-4 rounded-lg border border-gray-200 p-4">
+          {/* Question display */}
+          <div className="mt-4 rounded-lg border border-gray-200 p-4">
             <p className="text-sm text-gray-500 text-center">Your Question:</p>
-            <p className="mt-2 text-2xl text-center font-medium text-gray-900">{question}</p>
+            <p className="mt-2 text-2xl text-center font-medium text-gray-900">
+              {question}
+            </p>
+          </div>
+
+          {/* Toggle */}
+          <div className="mt-6 flex justify-center">
+            <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 w-full max-w-2xl">
+              <button
+                type="button"
+                onClick={() => switchMode("record")}
+                className={[
+                  "py-2 rounded-md text-sm font-semibold transition",
+                  mode === "record"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-700 hover:bg-gray-200",
+                ].join(" ")}
+              >
+                Record Answer
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchMode("type")}
+                className={[
+                  "py-2 rounded-md text-sm font-semibold transition",
+                  mode === "type"
+                    ? "bg-blue-600 text-white shadow"
+                    : "text-gray-700 hover:bg-gray-200",
+                ].join(" ")}
+              >
+                Type Answer
+              </button>
             </div>
+          </div>
 
-            {/* Toggle */}
-            <div className="mt-6 flex justify-center">
-              <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 w-full max-w-2xl">
-                <button
-                  type="button"
-                  onClick={() => switchMode("record")}
-                  className={[
-                    "py-2 rounded-md text-sm font-semibold transition",
-                    mode === "record"
-                      ? "bg-blue-600 text-white shadow"
-                      : "text-gray-700 hover:bg-gray-200",
-                  ].join(" ")}
-                >
-                  Record Answer
-                </button>
+          {mode === "record" ? (
+            <>
+              {/* Timer + status */}
+              <div className="mt-6 text-center">
+                <div className="text-4xl font-bold text-gray-900">
+                  {timeLabel}
+                </div>
+                <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
+                  {/* You can swap this with icons later */}
+                  {recordingState === "idle" && "Ready to record"}
+                  {recordingState === "recording" && "Recording..."}
+                  {recordingState === "stopped" && "Recording saved"}
+                  {micPermission === "denied" && (
+                    <span className="text-red-600">(Mic blocked)</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Record buttons */}
+              <div className="mt-6 flex items-center justify-center gap-3">
+                {recordingState !== "recording" ? (
+                  <button
+                    onClick={startRecording}
+                    className="px-10 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
+                  >
+                    Start Recording
+                  </button>
+                ) : (
+                  <button
+                    onClick={stopRecording}
+                    className="px-10 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
+                  >
+                    Stop Recording
+                  </button>
+                )}
 
                 <button
-                  type="button"
-                  onClick={() => switchMode("type")}
-                  className={[
-                    "py-2 rounded-md text-sm font-semibold transition",
-                    mode === "type"
-                      ? "bg-blue-600 text-white shadow"
-                      : "text-gray-700 hover:bg-gray-200",
-                  ].join(" ")}
+                  onClick={handleRerecord}
+                  className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
                 >
-                  Type Answer
+                  Re-record
                 </button>
               </div>
-            </div>
 
-
-    {mode === "record" ? (
-      <>
-        {/* Timer + status */}
-        <div className="mt-6 text-center">
-          <div className="text-4xl font-bold text-gray-900">{timeLabel}</div>
-          <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
-            {/* You can swap this with icons later */}
-            {recordingState === "idle" && "Ready to record"}
-            {recordingState === "recording" && "Recording..."}
-            {recordingState === "stopped" && "Recording saved"}
-            {micPermission === "denied" && (
-              <span className="text-red-600">(Mic blocked)</span>
-            )}
-          </div>
-        </div>
-
-        {/* Record buttons */}
-        <div className="mt-6 flex items-center justify-center gap-3">
-          {recordingState !== "recording" ? (
-            <button
-              onClick={startRecording}
-              className="px-10 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
-            >
-              Start Recording
-            </button>
+              {/* Playback */}
+              {audioUrl && (
+                <div className="mt-6">
+                  <p className="text-sm text-gray-500 mb-2">Playback:</p>
+                  <audio controls src={audioUrl} className="w-full" />
+                </div>
+              )}
+            </>
           ) : (
-            <button
-              onClick={stopRecording}
-              className="px-10 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
-            >
-              Stop Recording
-            </button>
+            <>
+              {/* Type answer UI */}
+              <div className="mt-6">
+                <textarea
+                  value={typedAnswer}
+                  onChange={(e) => setTypedAnswer(e.target.value)}
+                  placeholder="Type your answer here..."
+                  className="w-full min-h-45 rounded-xl border border-gray-300 p-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                  <span>Tip: Try STAR (Situation, Task, Action, Result)</span>
+                  <span>
+                    {typedAnswer.trim().split(/\s+/).filter(Boolean).length}{" "}
+                    words
+                  </span>
+                </div>
+              </div>
+            </>
           )}
 
-          <button
-            onClick={handleRerecord}
-            className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
-          >
-            Re-record
-          </button>
-        </div>
-
-        {/* Playback */}
-        {audioUrl && (
-          <div className="mt-6">
-            <p className="text-sm text-gray-500 mb-2">Playback:</p>
-            <audio controls src={audioUrl} className="w-full" />
-          </div>
-        )}
-      </>
-    ) : (
-      <>
-        {/* Type answer UI */}
-        <div className="mt-6">
-          <textarea
-            value={typedAnswer}
-            onChange={(e) => setTypedAnswer(e.target.value)}
-            placeholder="Type your answer here..."
-            className="w-full min-h-45 rounded-xl border border-gray-300 p-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <div className="mt-2 text-xs text-gray-500 flex justify-between">
-            <span>Tip: Try STAR (Situation, Task, Action, Result)</span>
-            <span>{typedAnswer.trim().split(/\s+/).filter(Boolean).length} words</span>
-          </div>
-        </div>
-      </>
-    )}   
-
-        {submitError && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {submitError}
-          </div>
-        )}
-
+          {submitError && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {submitError}
+            </div>
+          )}
         </div>
         <div className="flex items-center justify-center mt-8">
-          <button onClick={submitForAnalysis} className="bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded">
-            Submit for Analysis
+          <button
+            onClick={submitForAnalysis}
+            disabled={submitting}
+            className={`bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded ${
+              submitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+          >
+            {submitting ? "Analyzing..." : "Submit for Analysis"}
           </button>
         </div>
-        </div>
-        
+      </div>
     </div>
   );
 }
