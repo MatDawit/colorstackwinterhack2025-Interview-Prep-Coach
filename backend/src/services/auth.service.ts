@@ -22,8 +22,6 @@ const JWT_SECRET = process.env.JWT_SECRET
 
 // create the sign up function
 export async function signup(email: string, password: string, name: string){ 
-    // STEP 1: VALIDATE
-
     // check if email, password, name exist
     if (!email || !password || !name){
         throw new Error('Fill out all the fields')

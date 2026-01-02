@@ -227,62 +227,51 @@ export default function Practice() {
   //This is the function that submits the answer to the backend
   //This is just a test at the moment
   async function submitForAnalysis() {
-    setSubmitError(null);
-    setSubmitting(true);
-    //
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Please log in to submit.");
-      if (!sessionId)
-        throw new Error("Session not initialized. Please refresh.");
+  setSubmitError(null);
+  setSubmitting(true);
 
-      const form = new FormData();
-      // Required fields for Backend
-      form.append("sessionId", sessionId); // <--- LINK TO SESSION
-      form.append("questionId", qId);
-      form.append("question", question);
-      form.append("mode", mode);
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Please log in to submit.");
+    if (!sessionId) throw new Error("Session not initialized. Please refresh.");
 
-      if (mode === "type") {
-        if (!typedAnswer.trim()) throw new Error("Answer cannot be empty.");
-        form.append("answerText", typedAnswer);
-      } else {
-        if (recordingState === "recording") {
-          throw new Error("Stop the recording before submitting.");
-        }
-        if (!audioBlob) {
-          throw new Error("No audio recorded. Please record an answer first.");
-        }
-        form.append("audio", audioBlob, "answer.webm");
+    const form = new FormData();
+    form.append("sessionId", sessionId);
+    form.append("questionId", qId);
+    form.append("question", question);
+    form.append("mode", mode);
+
+    if (mode === "type") {
+      if (!typedAnswer.trim()) throw new Error("Answer cannot be empty.");
+      form.append("answerText", typedAnswer);
+    } else {
+      if (recordingState === "recording") {
+        throw new Error("Stop the recording before submitting.");
       }
-
-      // Send to Express Backend (Port 5000)
-      const res = await fetch("http://localhost:5000/api/practice/submit", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: form,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to submit answer.");
+      if (!audioBlob) {
+        throw new Error("No audio recorded.");
       }
-
-      console.log("Analysis Complete:", data);
-
-      // Redirect to Feedback Page
-      // We assume the Feedback page has a button to come back here
-      router.push(`/feedback/${data.attemptId}`);
-    } catch (error: any) {
-      console.error(error);
-      setSubmitError(error.message);
-    } finally {
-      setSubmitting(false);
+      form.append("audio", audioBlob, "answer.webm");
     }
+
+    const res = await fetch("http://localhost:5000/api/practice/submit", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: form,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Submission failed.");
+
+    router.push(`/feedback/${data.attemptId}`);
+  } catch (err: any) {
+    setSubmitError(err.message);
+  } finally {
+    setSubmitting(false);
   }
+}
 
   //this is to reset the audio recording
 

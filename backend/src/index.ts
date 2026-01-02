@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import sessionRoutes from "./routes/session.routes";
 import practiceRoutes from "./routes/practice.routes";
+=======
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.routes';
+import attemptRoutes from './routes/attempts.routes';  
+
+>>>>>>> dd904c4 (frontend practice fix)
 
 // read the env file
 dotenv.config();
@@ -19,6 +28,7 @@ app.use(express.json()); // parses the json from requests body›
 
 // register the auth routes give them all a starting name
 // sign up url will be /api/auth/signup
+<<<<<<< HEAD
 app.use("/api/auth", authRoutes);
 
 // register session routes
@@ -27,6 +37,11 @@ app.use("/api/session", sessionRoutes);
 
 // register practice routes
 app.use("/api/practice", practiceRoutes);
+=======
+app.use('/api/auth', authRoutes)
+app.use('/api/attempts', attemptRoutes); 
+
+>>>>>>> dd904c4 (frontend practice fix)
 
 // check if backend is running
 app.get("/health", (req, res) => {
