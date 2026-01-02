@@ -6,6 +6,7 @@ import sessionRoutes from "./routes/session.routes";
 import practiceRoutes from "./routes/practice.routes";
 import questionsRouter from "./routes/questions.routes";
 import feedbackRouter from "./routes/feedback.routes";
+import analyticsRouter from "./routes/analytics.routes";
 
 // read the env file
 dotenv.config();
@@ -35,6 +36,9 @@ app.use("/api/questions", questionsRouter);
 
 // register feedback routes
 app.use("/api/feedback", feedbackRouter);
+
+// register analytics routes
+app.use("/api/analytics", analyticsRouter);
 
 // check if backend is running
 app.get("/health", (req, res) => {
