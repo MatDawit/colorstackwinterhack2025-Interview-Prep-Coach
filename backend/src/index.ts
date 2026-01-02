@@ -6,6 +6,7 @@ import sessionRoutes from "./routes/session.routes";
 import practiceRoutes from "./routes/practice.routes";
 import attemptRoutes from "./routes/attempts.routes";
 import questionsRouter from "./routes/questions.routes";
+import feedbackRouter from "./routes/feedback.routes";
 
 // read the env file
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/api/session", sessionRoutes);
 app.use("/api/practice", practiceRoutes);
 app.use("/api/attempts", attemptRoutes);
 app.use("/api/questions", questionsRouter);
+app.use("/api/feedback", feedbackRouter);
 
 // check if backend is running
 app.get("/health", (req, res) => {
