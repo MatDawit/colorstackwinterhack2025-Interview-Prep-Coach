@@ -20,8 +20,13 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       select: { questionId: true },
     });
 
-    // OPTIONAL: Limit to 4 questions per session
-    if (existingAttempts.length >= 4) {
+    // 2. Get UNIQUE questions answered so far
+    const uniqueQuestionIds = new Set(
+      existingAttempts.map((a) => a.questionId)
+    );
+
+    // 3. Check limit based on UNIQUE questions
+    if (uniqueQuestionIds.size >= 4) {
       await prisma.session.update({
         where: { id: sessionId },
         data: { status: "COMPLETED", endedAt: new Date() },
@@ -30,8 +35,8 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 2. Find a random question NOT already attempted
-    const attemptedIds = existingAttempts.map((a) => a.questionId);
+    // 4. Filter out questions we've already done
+    const attemptedIds = Array.from(uniqueQuestionIds);
 
     const unattemptedCount = await prisma.question.count({
       where: { id: { notIn: attemptedIds } },
@@ -42,7 +47,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 3. Pick a random offset
+    // 5. Pick random next question
     const skip = Math.floor(Math.random() * unattemptedCount);
     const nextQuestions = await prisma.question.findMany({
       where: { id: { notIn: attemptedIds } },
@@ -52,7 +57,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
 
     const nextQuestion = nextQuestions[0];
 
-    // 4. Update the Session with the new "Bookmark"
+    // 6. Update Session Bookmark
     await prisma.session.update({
       where: { id: sessionId },
       data: {
