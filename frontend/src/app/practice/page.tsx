@@ -166,7 +166,7 @@ export default function Practice() {
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
-
+    // 
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Please log in to submit.");
