@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import sessionRoutes from "./routes/session.routes";
 import practiceRoutes from "./routes/practice.routes";
-import attemptRoutes from './routes/attempts.routes';  
-
+import attemptRoutes from "./routes/attempts.routes";
+import questionsRouter from "./routes/questions.routes";
 
 // read the env file
 dotenv.config();
@@ -29,9 +29,8 @@ app.use("/api/session", sessionRoutes);
 
 // register practice routes
 app.use("/api/practice", practiceRoutes);
-app.use('/api/auth', authRoutes)
-app.use('/api/attempts', attemptRoutes); 
-
+app.use("/api/attempts", attemptRoutes);
+app.use("/api/questions", questionsRouter);
 
 // check if backend is running
 app.get("/health", (req, res) => {
