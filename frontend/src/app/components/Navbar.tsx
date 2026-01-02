@@ -46,7 +46,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   aria-label={link.label}
-                  className={`font-['Inter'] h-10 px-4 flex items-center justify-center rounded-lg gap-3 transition-all duration-200 text-sm font-medium ${
+                  className={`h-10 px-4 flex items-center justify-center rounded-lg gap-3 transition-all duration-200 text-sm font-medium ${
                     isActive
                       ? "text-[#3D7AF5] bg-[#3D7AF5]/10"
                       : "text-gray-600 hover:bg-gray-50 hover:text-black"
@@ -61,10 +61,14 @@ export default function Navbar() {
         </div>
 
         {/* Right Side: Avatar */}
-        <div className="w-9 h-9 bg-[#F5E7F9] rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
-          <CircleUserRound className="w-6 h-6 text-gray-700" strokeWidth={1.5} 
-          />
-        </div>
+      <Link
+        href="/profile"
+        aria-label="Profile"
+        className="w-9 h-9 bg-[#F5E7F9] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+      >
+        <CircleUserRound className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
+      </Link>
+
       </div>
 
       {/* Bottom Separator Line (Full width) */}
