@@ -5,6 +5,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react"; // Added for loading state
+
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
 type MicPermission = "granted" | "denied" | "unknown";
@@ -25,16 +27,21 @@ function formatTime(seconds: number) {
 
 export default function Practice() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const existingSessionId = searchParams.get("sessionId");
+
   const [interviewType, setInterviewType] = useState(
     "Software Engineering Interview"
   );
   const [sessionId, setSessionId] = useState<string | null>(null);
+
   //Right now, the question ID and question are hardcoded. In the future, we will fetch these from the database
   const [qId, setQId] = useState("");
   const [question, setQuestion] = useState("");
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [loadingQuestion, setLoadingQuestion] = useState(true); // Added loading state
 
   //sets mode and your answer
   const [mode, setMode] = useState<Mode>("record");
@@ -112,61 +119,117 @@ export default function Practice() {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  const searchParams = useSearchParams();
-
-  const existingSessionId = searchParams.get("sessionId");
-  if (existingSessionId) {
-    setSessionId(existingSessionId); // Don't create a new one, use the existing one
-  }
-
-  // This effect starts a new session whenever the Interview Type changes
-  // OR uses the existing session if passed via URL (e.g. ?sessionId=123)
+  // Load questions once on mount
   useEffect(() => {
-    const initSession = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.warn("No token found - User should login first");
-        // router.push("/login"); // Optional: Force login
-        return;
-      }
-
-      // Check if we are continuing an existing session loop
-      const existingSessionId = searchParams.get("sessionId");
-      if (existingSessionId) {
-        setSessionId(existingSessionId);
-        return;
-      }
-
-      // Otherwise, start a FRESH session
+    async function loadQuestions() {
       try {
-        const res = await fetch("http://localhost:5000/api/session/start", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ interviewType }),
-        });
+        const res = await fetch("/api/questions");
+        const data = await res.json(); // { questions: [...] }
+        setQuestions(data.questions ?? []);
+      } catch (err) {
+        console.error("Failed to load questions:", err);
+      }
+    }
 
-        if (res.ok) {
-          const data = await res.json();
-          setSessionId(data.sessionId);
-          console.log("✅ Session Started:", data.sessionId);
+    loadQuestions();
+  }, []);
+
+  // This effect handles Session Syncing.
+  // Instead of picking a random question every time, it asks the backend: "What is the active question?"
+  useEffect(() => {
+    if (questions.length === 0) return;
+
+    const syncSession = async () => {
+      setLoadingQuestion(true);
+      const token = localStorage.getItem("token");
+
+      try {
+        // 1. If we have a Session ID in the URL, check with the backend
+        if (existingSessionId) {
+          setSessionId(existingSessionId);
+
+          const res = await fetch(
+            `http://localhost:5000/api/practice/session/${existingSessionId}`
+          );
+          if (res.ok) {
+            const sessionData = await res.json();
+
+            // If the backend has a specific "Next Question" bookmarked, use it
+            if (sessionData.currentQuestionId) {
+              const savedQ = questions.find(
+                (q) => q.id === sessionData.currentQuestionId
+              );
+              if (savedQ) {
+                // Update all necessary state
+                setCurrentQuestion(savedQ);
+                setQId(savedQ.id);
+                setQuestion(savedQ.question);
+                setLoadingQuestion(false);
+                return; // Exit here, we are synced
+              }
+            }
+          }
+        }
+
+        // 2. If no Session ID or no bookmark, fall back to Random Logic
+        // This runs if it's the very first time starting
+        const allowed = interviewTypeToCategories[interviewType] ?? [];
+        const chosenCategories = pickRandomN(allowed, 3);
+        const pool = questions.filter((q) =>
+          chosenCategories.includes(q.category)
+        );
+        const finalPool = pool.length > 0 ? pool : questions;
+        const picked = pickRandomOne(finalPool);
+
+        // Update UI
+        setCurrentQuestion(picked);
+        setQId(picked.id);
+        setQuestion(picked.question);
+
+        // If we don't have a session yet, start one in the background
+        if (!existingSessionId && token) {
+          const startRes = await fetch(
+            "http://localhost:5000/api/session/start",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ interviewType }),
+            }
+          );
+
+          if (startRes.ok) {
+            const data = await startRes.json();
+            setSessionId(data.sessionId);
+            // Update URL silently
+            router.replace(`/practice?sessionId=${data.sessionId}`);
+          }
         }
       } catch (err) {
-        console.error("Failed to start session:", err);
+        console.error("Session Sync Error:", err);
+      } finally {
+        setLoadingQuestion(false);
       }
     };
 
-    initSession();
-  }, [interviewType, searchParams]); // Re-run if type changes
+    syncSession();
+
+    // Reset user input when question changes
+    setTypedAnswer("");
+    handleRerecord();
+    setSubmitError(null);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewType, questions, existingSessionId]);
 
   //This is the function that submits the answer to the backend
   //This is just a test at the moment
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
-    // 
+    //
     try {
       const token = localStorage.getItem("token");
       if (!token) throw new Error("Please log in to submit.");
@@ -350,49 +413,6 @@ export default function Practice() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]);
 
-  useEffect(() => {
-    async function loadQuestions() {
-      try {
-        const res = await fetch("/api/questions");
-        const data = await res.json(); // { questions: [...] }
-        setQuestions(data.questions ?? []);
-      } catch (err) {
-        console.error("Failed to load questions:", err);
-      }
-    }
-
-    loadQuestions();
-  }, []);
-
-  useEffect(() => {
-    if (questions.length === 0) return;
-
-    // 1) Get allowed categories for this interviewType
-    const allowed = interviewTypeToCategories[interviewType] ?? [];
-
-    // 2) Randomly choose 3 categories
-    const chosenCategories = pickRandomN(allowed, 3);
-
-    // 3) Filter questions to those categories
-    const pool = questions.filter((q) => chosenCategories.includes(q.category));
-
-    // 4) If pool is empty (mapping mismatch), fall back to all questions
-    const finalPool = pool.length > 0 ? pool : questions;
-
-    // 5) Pick 1 random question
-    const picked = pickRandomOne(finalPool);
-
-    // 6) Update state so UI renders it
-    setCurrentQuestion(picked);
-    setQId(picked.id);
-    setQuestion(picked.question);
-
-    // Optional: reset the user's input when question changes
-    setTypedAnswer("");
-    handleRerecord(); // clears recording, timer, audio playback
-    setSubmitError(null);
-  }, [interviewType, questions]);
-
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -430,135 +450,152 @@ export default function Practice() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-          {/* Question display */}
-          <div className="mt-4 rounded-lg border border-gray-200 p-4">
-            <p className="text-sm text-gray-500 text-center">Your Question:</p>
-            <p className="mt-2 text-2xl text-center font-medium text-gray-900">
-              {question}
-            </p>
-          </div>
-
-          {/* Toggle */}
-          <div className="mt-6 flex justify-center">
-            <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 w-full max-w-2xl">
-              <button
-                type="button"
-                onClick={() => switchMode("record")}
-                className={[
-                  "py-2 rounded-md text-sm font-semibold transition",
-                  mode === "record"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-gray-700 hover:bg-gray-200",
-                ].join(" ")}
-              >
-                Record Answer
-              </button>
-
-              <button
-                type="button"
-                onClick={() => switchMode("type")}
-                className={[
-                  "py-2 rounded-md text-sm font-semibold transition",
-                  mode === "type"
-                    ? "bg-blue-600 text-white shadow"
-                    : "text-gray-700 hover:bg-gray-200",
-                ].join(" ")}
-              >
-                Type Answer
-              </button>
+          {loadingQuestion || !currentQuestion ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+              <p className="text-gray-500">Loading your question...</p>
             </div>
-          </div>
-
-          {mode === "record" ? (
+          ) : (
             <>
-              {/* Timer + status */}
-              <div className="mt-6 text-center">
-                <div className="text-4xl font-bold text-gray-900">
-                  {timeLabel}
+              {/* Question display */}
+              <div className="mt-4 rounded-lg border border-gray-200 p-4">
+                <p className="text-sm text-gray-500 text-center">
+                  Your Question:
+                </p>
+                <p className="mt-2 text-2xl text-center font-medium text-gray-900">
+                  {question}
+                </p>
+              </div>
+
+              {/* Toggle */}
+              <div className="mt-6 flex justify-center">
+                <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 w-full max-w-2xl">
+                  <button
+                    type="button"
+                    onClick={() => switchMode("record")}
+                    className={[
+                      "py-2 rounded-md text-sm font-semibold transition",
+                      mode === "record"
+                        ? "bg-blue-600 text-white shadow"
+                        : "text-gray-700 hover:bg-gray-200",
+                    ].join(" ")}
+                  >
+                    Record Answer
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => switchMode("type")}
+                    className={[
+                      "py-2 rounded-md text-sm font-semibold transition",
+                      mode === "type"
+                        ? "bg-blue-600 text-white shadow"
+                        : "text-gray-700 hover:bg-gray-200",
+                    ].join(" ")}
+                  >
+                    Type Answer
+                  </button>
                 </div>
-                <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
-                  {/* You can swap this with icons later */}
-                  {recordingState === "idle" && "Ready to record"}
-                  {recordingState === "recording" && "Recording..."}
-                  {recordingState === "stopped" && "Recording saved"}
-                  {micPermission === "denied" && (
-                    <span className="text-red-600">(Mic blocked)</span>
+              </div>
+
+              {mode === "record" ? (
+                <>
+                  {/* Timer + status */}
+                  <div className="mt-6 text-center">
+                    <div className="text-4xl font-bold text-gray-900">
+                      {timeLabel}
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
+                      {/* You can swap this with icons later */}
+                      {recordingState === "idle" && "Ready to record"}
+                      {recordingState === "recording" && "Recording..."}
+                      {recordingState === "stopped" && "Recording saved"}
+                      {micPermission === "denied" && (
+                        <span className="text-red-600">(Mic blocked)</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Record buttons */}
+                  <div className="mt-6 flex items-center justify-center gap-3">
+                    {recordingState !== "recording" ? (
+                      <button
+                        onClick={startRecording}
+                        className="px-10 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
+                      >
+                        Start Recording
+                      </button>
+                    ) : (
+                      <button
+                        onClick={stopRecording}
+                        className="px-10 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
+                      >
+                        Stop Recording
+                      </button>
+                    )}
+
+                    <button
+                      onClick={handleRerecord}
+                      className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
+                    >
+                      Re-record
+                    </button>
+                  </div>
+
+                  {/* Playback */}
+                  {audioUrl && (
+                    <div className="mt-6">
+                      <p className="text-sm text-gray-500 mb-2">Playback:</p>
+                      <audio controls src={audioUrl} className="w-full" />
+                    </div>
                   )}
-                </div>
-              </div>
+                </>
+              ) : (
+                <>
+                  {/* Type answer UI */}
+                  <div className="mt-6">
+                    <textarea
+                      value={typedAnswer}
+                      onChange={(e) => setTypedAnswer(e.target.value)}
+                      placeholder="Type your answer here..."
+                      className="w-full min-h-45 rounded-xl border border-gray-300 p-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                      <span>
+                        Tip: Try STAR (Situation, Task, Action, Result)
+                      </span>
+                      <span>
+                        {typedAnswer.trim().split(/\s+/).filter(Boolean).length}{" "}
+                        words
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              {/* Record buttons */}
-              <div className="mt-6 flex items-center justify-center gap-3">
-                {recordingState !== "recording" ? (
-                  <button
-                    onClick={startRecording}
-                    className="px-10 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
-                  >
-                    Start Recording
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopRecording}
-                    className="px-10 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                  >
-                    Stop Recording
-                  </button>
-                )}
-
-                <button
-                  onClick={handleRerecord}
-                  className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
-                >
-                  Re-record
-                </button>
-              </div>
-
-              {/* Playback */}
-              {audioUrl && (
-                <div className="mt-6">
-                  <p className="text-sm text-gray-500 mb-2">Playback:</p>
-                  <audio controls src={audioUrl} className="w-full" />
+              {submitError && (
+                <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {submitError}
                 </div>
               )}
             </>
-          ) : (
-            <>
-              {/* Type answer UI */}
-              <div className="mt-6">
-                <textarea
-                  value={typedAnswer}
-                  onChange={(e) => setTypedAnswer(e.target.value)}
-                  placeholder="Type your answer here..."
-                  className="w-full min-h-45 rounded-xl border border-gray-300 p-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="mt-2 text-xs text-gray-500 flex justify-between">
-                  <span>Tip: Try STAR (Situation, Task, Action, Result)</span>
-                  <span>
-                    {typedAnswer.trim().split(/\s+/).filter(Boolean).length}{" "}
-                    words
-                  </span>
-                </div>
-              </div>
-            </>
           )}
+        </div>
 
-          {submitError && (
-            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {submitError}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center justify-center mt-8">
-          <button
-            onClick={submitForAnalysis}
-            disabled={submitting}
-            className={`bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded ${
-              submitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-          >
-            {submitting ? "Analyzing..." : "Submit for Analysis"}
-          </button>
-        </div>
+        {/* Only show button if not loading */}
+        {!loadingQuestion && (
+          <div className="flex items-center justify-center mt-8">
+            <button
+              onClick={submitForAnalysis}
+              disabled={submitting}
+              className={`bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded ${
+                submitting ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {submitting ? "Analyzing..." : "Submit for Analysis"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
