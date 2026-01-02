@@ -139,26 +139,20 @@ const PracticeFeedback = () => {
     setIsGenerating(true);
 
     try {
+      // 1. Notify backend to generate the NEXT question for this session
       const res = await fetch(`http://localhost:5000/api/practice/next`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: data.sessionId }),
       });
 
-      const result = await res.json();
+      if (!res.ok) throw new Error("Failed to generate next question");
 
-      if (result.message === "Session completed") {
-        // Redirect to a summary page or dashboard if finished
-        router.push(`/dashboard`);
-      } else if (res.ok) {
-        // Navigate to the practice page to load the new question
-        router.push(`/practice?sessionId=${data.sessionId}`);
-      } else {
-        throw new Error("Failed to load next question");
-      }
+      // 2. Navigate to the practice page (which will now fetch the NEW question)
+      router.push(`/practice?sessionId=${data.sessionId}`);
     } catch (err) {
       console.error(err);
-      alert("Error loading next question.");
+      alert("Error loading next question. Please try again.");
       setIsGenerating(false);
     }
   };
