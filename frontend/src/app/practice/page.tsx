@@ -144,50 +144,10 @@ export default function Practice() {
       const token = localStorage.getItem("token");
 
       try {
-        // 1. If we have a Session ID in the URL, check with the backend
-        if (existingSessionId) {
-          setSessionId(existingSessionId);
+        let activeSessionId = existingSessionId;
 
-          const res = await fetch(
-            `http://localhost:5000/api/practice/session/${existingSessionId}`
-          );
-          if (res.ok) {
-            const sessionData = await res.json();
-
-            // If the backend has a specific "Next Question" bookmarked, use it
-            if (sessionData.currentQuestionId) {
-              const savedQ = questions.find(
-                (q) => q.id === sessionData.currentQuestionId
-              );
-              if (savedQ) {
-                // Update all necessary state
-                setCurrentQuestion(savedQ);
-                setQId(savedQ.id);
-                setQuestion(savedQ.question);
-                setLoadingQuestion(false);
-                return; // Exit here, we are synced
-              }
-            }
-          }
-        }
-
-        // 2. If no Session ID or no bookmark, fall back to Random Logic
-        // This runs if it's the very first time starting
-        const allowed = interviewTypeToCategories[interviewType] ?? [];
-        const chosenCategories = pickRandomN(allowed, 3);
-        const pool = questions.filter((q) =>
-          chosenCategories.includes(q.category)
-        );
-        const finalPool = pool.length > 0 ? pool : questions;
-        const picked = pickRandomOne(finalPool);
-
-        // Update UI
-        setCurrentQuestion(picked);
-        setQId(picked.id);
-        setQuestion(picked.question);
-
-        // If we don't have a session yet, start one in the background
-        if (!existingSessionId && token) {
+        // A. If NO Session ID, create one (The backend will pick the question)
+        if (!activeSessionId && token) {
           const startRes = await fetch(
             "http://localhost:5000/api/session/start",
             {
@@ -202,9 +162,35 @@ export default function Practice() {
 
           if (startRes.ok) {
             const data = await startRes.json();
-            setSessionId(data.sessionId);
-            // Update URL silently
-            router.replace(`/practice?sessionId=${data.sessionId}`);
+            activeSessionId = data.sessionId;
+            setSessionId(activeSessionId);
+            // Update URL silently without reloading
+            router.replace(`/practice?sessionId=${activeSessionId}`);
+          }
+        }
+
+        // B. Fetch the Session Status to get the Bookmarked Question
+        //    (This works for New Sessions AND Retries)
+        if (activeSessionId) {
+          setSessionId(activeSessionId);
+
+          const res = await fetch(
+            `http://localhost:5000/api/practice/session/${activeSessionId}`
+          );
+          if (res.ok) {
+            const sessionData = await res.json();
+
+            // The Backend NOW guarantees currentQuestionId is set!
+            if (sessionData.currentQuestionId) {
+              const savedQ = questions.find(
+                (q) => q.id === sessionData.currentQuestionId
+              );
+              if (savedQ) {
+                setCurrentQuestion(savedQ);
+                setQId(savedQ.id);
+                setQuestion(savedQ.question);
+              }
+            }
           }
         }
       } catch (err) {
@@ -216,7 +202,6 @@ export default function Practice() {
 
     syncSession();
 
-    // Reset user input when question changes
     setTypedAnswer("");
     handleRerecord();
     setSubmitError(null);
