@@ -81,6 +81,7 @@ model Question {
   
   // Relations
   attempts      SessionAttempt[]
+  currentInSessions Session[]
   
   @@index([category])
 }
@@ -114,6 +115,7 @@ model Session {
   // Metadata
   interviewType String        // "Software Engineering", "Product Mgmt"
   status        SessionStatus @default(IN_PROGRESS)
+  currentQuestionId String?
   
   // Aggregate Stats (Filled when completed)
   overallScore  Float?        // Average score of attempts
@@ -125,6 +127,7 @@ model Session {
   // Relations
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   attempts      SessionAttempt[]
+  currentQuestion   Question?  @relation(fields: [currentQuestionId], references: [id])
 
   @@index([userId])
 }
@@ -143,8 +146,9 @@ model SessionAttempt {
   // AI Scoring & Feedback
   score         Int?      // 0-100
   checklist     Json?     // { specific_examples: true... }
-  feedback      String?   @db.Text 
-  biasPatterns  Json?     // { hedging: 3, apologizing: 1... }
+  feedback      String?   @db.Text
+  improvedVersion    String?   @db.Text
+  actionableFeedback String?   @db.Text 
 
   createdAt     DateTime  @default(now())
 
