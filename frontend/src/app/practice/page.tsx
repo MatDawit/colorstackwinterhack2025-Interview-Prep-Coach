@@ -255,7 +255,7 @@ export default function Practice() {
         form.append("audio", audioBlob, "answer.webm");
       }
 
-      const res = await fetch("http://localhost:5000/api/practice/submit", {
+      const res = await fetch("http://localhost:5000/api/feedback/submit", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
