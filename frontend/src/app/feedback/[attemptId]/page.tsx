@@ -54,7 +54,7 @@ const PracticeFeedback = () => {
     const fetchData = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/practice/attempt/${attemptId}`
+          `http://localhost:5000/api/feedback/attempt/${attemptId}`
         );
         if (!res.ok) throw new Error("Failed to load results");
 
