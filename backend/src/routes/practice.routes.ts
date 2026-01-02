@@ -101,7 +101,7 @@ router.post(
         const base64Audio = fileBuffer.toString("base64");
 
         const transResult = await transcription_ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-2.5-flash-lite",
           contents: [
             { text: "Transcribe verbatim." },
             { inlineData: { mimeType: "audio/webm", data: base64Audio } },
@@ -119,7 +119,7 @@ router.post(
 
       // 3. AI ANALYSIS
       const analysis = await generation_ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-2.5-flash-lite",
         config: {
           systemInstruction: sysInstruction,
           responseMimeType: "application/json",
@@ -129,7 +129,23 @@ router.post(
         ],
       });
 
-      const aiData = JSON.parse(analysis.text || "{}");
+      let rawText = analysis.text || "{}";
+
+      // 1. Remove Markdown code blocks (```json ... ```)
+      rawText = rawText
+        .replace(/```json/g, "")
+        .replace(/```/g, "")
+        .trim();
+
+      // 2. Parse safely
+      let aiData;
+      try {
+        aiData = JSON.parse(rawText);
+      } catch (parseError) {
+        console.error("JSON Parse Failed. Raw Text from AI:", rawText);
+        // Fallback or re-throw depending on preference
+        throw new Error("AI returned invalid JSON format. Please try again.");
+      }
 
       // 4. SAVE TO DB (The "Saving Logic")
 
@@ -148,7 +164,7 @@ router.post(
       // Create the SessionAttempt
       const attempt = await prisma.sessionAttempt.create({
         data: {
-          sessionId: sessionId, // <--- Key Link!
+          sessionId: sessionId,
           questionId: questionId,
           transcription: finalAnswerText,
           audioUrl: audioUrlPath,
@@ -172,34 +188,6 @@ router.post(
       });
     } catch (error: any) {
       console.error("Submit Error:", error);
-      res.status(500).json({ error: error.message });
-    }
-  }
-);
-
-// GET /api/practice/attempt/:id
-// Retrieves the results for a specific attempt
-router.get(
-  "/attempt/:id",
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { id } = req.params;
-
-      const attempt = await prisma.sessionAttempt.findUnique({
-        where: { id: id },
-        include: {
-          question: true,
-        },
-      });
-
-      if (!attempt) {
-        res.status(404).json({ error: "Attempt not found" });
-        return;
-      }
-
-      res.json(attempt);
-    } catch (error: any) {
-      console.error("Error fetching attempt:", error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -294,6 +282,46 @@ router.get(
       res.json(session);
     } catch (error: any) {
       console.error("Error fetching session:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// GET /api/practice/attempt/:id
+// Retrieves the results for a specific attempt AND checks if it's the last one
+router.get(
+  "/attempt/:id",
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // 1. Fetch the specific attempt
+      const attempt = await prisma.sessionAttempt.findUnique({
+        where: { id: id },
+        include: {
+          question: true,
+        },
+      });
+
+      if (!attempt) {
+        res.status(404).json({ error: "Attempt not found" });
+        return;
+      }
+
+      // 2. NEW LOGIC: Count total attempts in this session so far
+      // This tells us if this is question #1, #2, #3, or #4
+      const attemptCount = await prisma.sessionAttempt.count({
+        where: { sessionId: attempt.sessionId },
+      });
+
+      // 3. Send the calculated fields to the frontend
+      res.json({
+        ...attempt,
+        attemptCount: attemptCount, // "Question X..."
+        isLastQuestion: attemptCount >= 4, // "... of 4" (Triggers Green Button)
+      });
+    } catch (error: any) {
+      console.error("Error fetching attempt:", error);
       res.status(500).json({ error: error.message });
     }
   }
