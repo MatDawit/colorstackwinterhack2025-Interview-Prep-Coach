@@ -216,17 +216,28 @@ router.get(
         return;
       }
 
-      // 2. NEW LOGIC: Count total attempts in this session so far
+      // 2. Count total attempts in this session so far
       // This tells us if this is question #1, #2, #3, or #4
-      const attemptCount = await prisma.sessionAttempt.count({
+      const allAttempts = await prisma.sessionAttempt.findMany({
         where: { sessionId: attempt.sessionId },
+        orderBy: { createdAt: "asc" },
+        select: { questionId: true },
       });
 
-      // 3. Send the calculated fields to the frontend
+      // 3. Extract UNIQUE question IDs in order of appearance
+      //    Example: [Q1, Q1, Q2, Q2, Q2] -> becomes -> [Q1, Q2]
+      const uniqueQuestionIds = Array.from(
+        new Set(allAttempts.map((a) => a.questionId))
+      );
+
+      // 4. Find which number the current question is
+      //    If current question is Q1, index is 0. We add 1 to display "Question 1".
+      const questionNumber = uniqueQuestionIds.indexOf(attempt.questionId) + 1;
+
       res.json({
         ...attempt,
-        attemptCount: attemptCount, // "Question X..."
-        isLastQuestion: attemptCount >= 4, // "... of 4" (Triggers Green Button)
+        attemptCount: questionNumber, // Returns 1 (even if you retried Q1 5 times)
+        isLastQuestion: questionNumber >= 4, // Only turns true when you reach the 4th UNIQUE question
       });
     } catch (error: any) {
       console.error("Error fetching attempt:", error);
