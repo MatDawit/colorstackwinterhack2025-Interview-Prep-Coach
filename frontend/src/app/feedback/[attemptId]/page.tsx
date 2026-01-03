@@ -140,9 +140,13 @@ const PracticeFeedback = () => {
     },
   ];
 
-  const handleNextQuestion = async () => {
+  const handleNavigation = async (targetDestination: string) => {
     if (!data) return;
-    setIsGenerating(true);
+
+    if (!data.isLastQuestion && targetDestination === "/dashboard") {
+      router.push("/dashboard");
+      return;
+    }
 
     try {
       const res = await fetch(`http://localhost:5000/api/practice/next`, {
@@ -153,14 +157,15 @@ const PracticeFeedback = () => {
 
       const result = await res.json();
 
-      if (data.isLastQuestion || result.message === "Session completed") {
-        router.push("/analytics"); // Redirect to Analytics
-        return;
-      }
-
       if (!res.ok) throw new Error("Failed to generate next question");
 
-      router.push(`/practice?sessionId=${data.sessionId}`);
+      if (data.isLastQuestion || result.message === "Session completed") {
+        // Session is Done. Go to where the user clicked (Analytics or Dashboard)
+        router.push(targetDestination);
+      } else {
+        // Session Continues. Loop back to Practice page.
+        router.push(`/practice?sessionId=${data.sessionId}`);
+      }
     } catch (err) {
       console.error(err);
       alert("Error processing request.");
@@ -335,7 +340,7 @@ const PracticeFeedback = () => {
 
               {/* NEXT / FINISH BUTTON */}
               <button
-                onClick={handleNextQuestion}
+                onClick={() => handleNavigation("/analytics")}
                 disabled={isGenerating}
                 className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
                   // IF LAST QUESTION: Green Color
@@ -365,7 +370,7 @@ const PracticeFeedback = () => {
 
               {/* DASHBOARD BUTTON */}
               <button
-                onClick={() => router.push("/dashboard")}
+                onClick={() => handleNavigation("/dashboard")}
                 disabled={isGenerating}
                 className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A1A] font-bold text-[14px] transition-all ml-4 disabled:opacity-50"
               >
