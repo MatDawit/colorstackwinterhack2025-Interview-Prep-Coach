@@ -21,6 +21,13 @@ interface SessionData {
   category: string;
   duration: string;
   score: number;
+  checklistCounts: {
+    fillerWords: number;
+    negativeLanguage: number;
+    noDetail: number;
+    vague: number;
+    badLength: number;
+  };
 }
 
 interface BarData {
@@ -128,6 +135,40 @@ export default function AnalyticsPage() {
       </div>
     );
   }
+
+  const getDynamicBarData = () => {
+    // 1. Initialize totals
+    let totals = {
+      fillerWords: 0,
+      negativeLanguage: 0,
+      noDetail: 0,
+      vague: 0,
+      badLength: 0,
+    };
+
+    // 2. Loop through ONLY the filtered sessions
+    filteredSessions.forEach((session) => {
+      if (session.checklistCounts) {
+        totals.fillerWords += session.checklistCounts.fillerWords;
+        totals.negativeLanguage += session.checklistCounts.negativeLanguage;
+        totals.noDetail += session.checklistCounts.noDetail;
+        totals.vague += session.checklistCounts.vague;
+        totals.badLength += session.checklistCounts.badLength;
+      }
+    });
+
+    // 3. Return format for Recharts
+    return [
+      { name: "Filler Words", count: totals.fillerWords },
+      { name: "Apologizing", count: totals.negativeLanguage },
+      { name: "Lack of Detail", count: totals.noDetail },
+      { name: "Vague Answers", count: totals.vague },
+      { name: "Too Concise", count: totals.badLength },
+    ];
+  };
+
+  // Calculate it immediately (Derived State)
+  const dynamicBarData = getDynamicBarData();
 
   return (
     <>
@@ -245,7 +286,7 @@ export default function AnalyticsPage() {
 
               <ResponsiveContainer width="100%" height="80%">
                 <BarChart
-                  data={barData} // <--- Using real backend data
+                  data={dynamicBarData}
                   margin={{ right: 0, left: -30, bottom: 20 }}
                 >
                   <CartesianGrid
