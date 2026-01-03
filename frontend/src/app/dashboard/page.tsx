@@ -1,7 +1,12 @@
 // prince dashboard page
+"use client";
+
 import Navbar from "../components/Navbar";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter();
+
   return (
     <>
       <Navbar />
@@ -18,14 +23,17 @@ export default function Dashboard() {
               actionable feedback.
             </div>
             <div className="bg-blue-500 rounded-lg w-47 h-10 flex items-center justify-center shadow-xl mt-2">
-              <button className="text-white font-bold text-sm">
+              <button 
+                onClick={() => router.push("/practice")}
+                className="text-white font-bold text-sm"
+              >
                 Start Practice
               </button>
             </div>
           </div>
 
           {/*3 boxes for user updates and progressions*/}
-          <div className="flex flex-row gap-5 ml-[250px] mt-6">
+          <div className="flex flex-row gap-5 ml-[250px] mt-12">
             {/* Recent Sessions Box */}
             <div className="bg-white shadow-xl rounded-xl h-100 w-80 p-6 space-y-4">
               <div className="flex justify-between items-center">
@@ -109,13 +117,19 @@ export default function Dashboard() {
                 </div>
 
                 {/* Profile Settings Link */}
-                <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                <div 
+                  onClick={() => router.push("/profile")}
+                  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                >
                   <div className="text-blue-600">👤</div>
                   <span className="text-sm text-black">Profile Settings</span>
                 </div>
 
                 {/* App Settings Link */}
-                <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                <div 
+                  onClick={() => router.push("/profile")}
+                  className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                >
                   <div className="text-blue-600">⚙️</div>
                   <span className="text-sm text-black">App Settings</span>
                 </div>
