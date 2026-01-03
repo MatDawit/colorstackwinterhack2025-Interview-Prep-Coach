@@ -237,16 +237,21 @@ export default function AnalyticsPage() {
                       dataKey="date"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "##0A0D10)", fontSize: 12 }}
+                      tick={{ fill: "#0A0D10", fontSize: 12 }}
                       dy={10}
                     />
                     <YAxis
                       domain={[0, 100]}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "##0A0D10)", fontSize: 12 }}
+                      tick={{ fill: "#0A0D10", fontSize: 12 }}
                     />
-                    <Tooltip />
+                    <Tooltip
+                      labelStyle={{
+                        color: "#000000",
+                        marginBottom: "4px",
+                      }}
+                    />
                     <Line
                       type="monotone"
                       dataKey="score"
@@ -291,7 +296,7 @@ export default function AnalyticsPage() {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "##0A0D10)", fontSize: 11 }}
+                    tick={{ fill: "#0A0D10", fontSize: 11 }}
                     interval={0}
                     dy={10}
                   />
@@ -299,9 +304,15 @@ export default function AnalyticsPage() {
                     allowDecimals={false}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "##0A0D10)", fontSize: 12 }}
+                    tick={{ fill: "#0A0D10", fontSize: 12 }}
                   />
-                  <Tooltip cursor={{ fill: "#F9FAFB" }} />
+                  <Tooltip
+                    cursor={{ fill: "#F9FAFB" }}
+                    labelStyle={{
+                      color: "#000000",
+                      marginBottom: "4px",
+                    }}
+                  />
                   <Bar
                     dataKey="count"
                     fill="#10B981" // Green to indicate these are areas to improve
