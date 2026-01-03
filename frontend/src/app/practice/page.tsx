@@ -226,6 +226,7 @@ export default function Practice() {
       form.append("questionId", qId);
       form.append("question", question);
       form.append("mode", mode);
+      form.append("duration", String(elapsedTime));
 
       if (mode === "type") {
         if (!typedAnswer.trim()) throw new Error("Answer cannot be empty.");
