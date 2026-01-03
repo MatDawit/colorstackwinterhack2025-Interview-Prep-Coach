@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Navbar from "../components/Navbar";
-import { Loader2 } from "lucide-react"; // Make sure to install: npm install lucide-react
+import { Loader2 } from "lucide-react";
 
 // Types matching your Backend Response
 interface SessionData {
