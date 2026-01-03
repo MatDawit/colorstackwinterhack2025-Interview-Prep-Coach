@@ -52,24 +52,31 @@ router.get("/", async (req: Request, res: Response) => {
 
     // 4. Process Sessions
     const formattedSessions = sessions.map((session) => {
-      // OPTIMIZATION: Read Score/Duration directly from Session Table
-      // (We calculated these in the /next route)
       const finalScore = Math.round(session.overallScore || 0);
       const displayDuration = formatDuration(session.totalDuration || 0);
 
-      // We still loop attempts ONLY to count checklist errors for the Bar Chart
+      // Initialize counts for THIS SPECIFIC session
+      let sessionChecklistCounts = {
+        fillerWords: 0,
+        negativeLanguage: 0,
+        noDetail: 0,
+        vague: 0,
+        badLength: 0,
+      };
+
       session.attempts.forEach((attempt) => {
         const check = attempt.checklist as any;
         if (check) {
           if (check.no_filler_words_detected === false)
-            checklistCounts.fillerWords++;
+            sessionChecklistCounts.fillerWords++;
           if (check.no_negative_language_detected === false)
-            checklistCounts.negativeLanguage++;
+            sessionChecklistCounts.negativeLanguage++;
           if (check.technical_detail_present === false)
-            checklistCounts.noDetail++;
+            sessionChecklistCounts.noDetail++;
           if (check.specific_examples_provided === false)
-            checklistCounts.vague++;
-          if (check.appropriate_length === false) checklistCounts.badLength++;
+            sessionChecklistCounts.vague++;
+          if (check.appropriate_length === false)
+            sessionChecklistCounts.badLength++;
         }
       });
 
@@ -77,23 +84,14 @@ router.get("/", async (req: Request, res: Response) => {
         id: session.id,
         date: session.createdAt,
         category: session.interviewType,
-        duration: displayDuration, // Uses the saved total
-        score: finalScore, // Uses the saved average
+        duration: displayDuration,
+        score: finalScore,
+        checklistCounts: sessionChecklistCounts,
       };
     });
 
-    // 5. Format Bar Chart Data
-    const barChartData = [
-      { name: "Filler Words", count: checklistCounts.fillerWords },
-      { name: "Apologizing", count: checklistCounts.negativeLanguage },
-      { name: "Lack of Detail", count: checklistCounts.noDetail },
-      { name: "Vague Answers", count: checklistCounts.vague },
-      { name: "Too Concise", count: checklistCounts.badLength },
-    ];
-
     res.json({
       sessions: formattedSessions,
-      barChartData: barChartData,
     });
   } catch (error: any) {
     console.error("Analytics Error:", error);
