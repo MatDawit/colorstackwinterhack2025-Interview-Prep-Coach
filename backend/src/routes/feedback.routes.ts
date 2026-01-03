@@ -86,7 +86,8 @@ router.post(
     try {
       // 1. GET DATA
       // We strictly need sessionId now!
-      const { sessionId, questionId, question, mode, answerText } = req.body;
+      const { sessionId, questionId, question, mode, answerText, duration } =
+        req.body;
 
       if (!sessionId) {
         res.status(400).json({ error: "Missing sessionId" });
@@ -170,8 +171,7 @@ router.post(
           questionId: questionId,
           transcription: finalAnswerText,
           audioUrl: audioUrlPath,
-
-          // Save Scores
+          duration: parseInt(duration) || 0,
           score: aiData.score,
           feedback: aiData.analysis_highlighting,
           improvedVersion: aiData.improved_version,
