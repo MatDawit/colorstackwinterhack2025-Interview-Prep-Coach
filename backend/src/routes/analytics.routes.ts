@@ -41,16 +41,7 @@ router.get("/", async (req: Request, res: Response) => {
       orderBy: { createdAt: "desc" },
     });
 
-    // 3. Stats Aggregation (For the Bar Chart)
-    let checklistCounts = {
-      fillerWords: 0,
-      negativeLanguage: 0,
-      noDetail: 0,
-      vague: 0,
-      badLength: 0,
-    };
-
-    // 4. Process Sessions
+    // 3. Process Sessions
     const formattedSessions = sessions.map((session) => {
       const finalScore = Math.round(session.overallScore || 0);
       const displayDuration = formatDuration(session.totalDuration || 0);
