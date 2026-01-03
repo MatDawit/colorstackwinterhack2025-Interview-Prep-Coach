@@ -30,18 +30,12 @@ interface SessionData {
   };
 }
 
-interface BarData {
-  name: string;
-  count: number;
-}
-
 export default function AnalyticsPage() {
   const [category, setCategory] = useState("All Categories");
   const [timeRange, setTimeRange] = useState("All Time");
 
   // 1. State for Real Data
   const [sessions, setSessions] = useState<SessionData[]>([]);
-  const [barData, setBarData] = useState<BarData[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 2. Fetch Data from Backend on Mount
@@ -63,7 +57,6 @@ export default function AnalyticsPage() {
           const data = await res.json();
           // The backend returns { sessions: [...], barChartData: [...] }
           setSessions(data.sessions);
-          setBarData(data.barChartData);
         } else {
           console.error("Failed to fetch analytics");
         }
