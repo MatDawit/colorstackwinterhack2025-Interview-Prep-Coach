@@ -26,7 +26,6 @@ type ProfileForm = {
 };
 
 export default function ProfilePage() {
-  // ✅ TEMP: replace later with real auth check
   const isSignedIn = true;
 
   // Form state (what user edits)
@@ -45,9 +44,7 @@ export default function ProfilePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  // -----------------------------
-  // Guest view (you already had)
-  // -----------------------------
+  // Guest view UI
   if (!isSignedIn) {
     return (
       <div className="min-h-screen bg-white">
@@ -80,9 +77,7 @@ export default function ProfilePage() {
     );
   }
 
-  // -----------------------------
-  // Signed-in view (screenshot UI)
-  // -----------------------------
+  // Signed-in view
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
