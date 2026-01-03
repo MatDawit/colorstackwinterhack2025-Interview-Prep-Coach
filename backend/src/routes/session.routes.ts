@@ -82,7 +82,7 @@ router.post("/end", async (req: Request, res: Response) => {
     // 1. Get ALL attempts for this session (score + questionId)
     const attempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
-      select: { questionId: true, score: true },
+      select: { questionId: true, score: true, duration: true },
     });
 
     if (attempts.length === 0) {
@@ -93,7 +93,10 @@ router.post("/end", async (req: Request, res: Response) => {
     // We use a Map to store the max score for each unique question
     const bestScores = new Map<string, number>();
 
+    let totalSessionDuration = 0;
+
     attempts.forEach((attempt) => {
+      totalSessionDuration += (attempt.duration || 0);
       const currentMax = bestScores.get(attempt.questionId) || 0;
       // If this attempt is better than what we have saved, update it
       if ((attempt.score || 0) > currentMax) {
@@ -117,6 +120,7 @@ router.post("/end", async (req: Request, res: Response) => {
       data: {
         status: "COMPLETED",
         overallScore: finalScore,
+        totalDuration: totalSessionDuration,
         endedAt: new Date(),
       },
     });
