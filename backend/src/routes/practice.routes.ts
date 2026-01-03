@@ -17,7 +17,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
     // 1. Check if the session is already completed or full
     const existingAttempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
-      select: { questionId: true },
+      select: { questionId: true, score: true, duration: true },
     });
 
     // 2. Get UNIQUE questions answered so far
@@ -27,9 +27,36 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
 
     // 3. Check limit based on UNIQUE questions
     if (uniqueQuestionIds.size >= 4) {
+      let totalSessionDuration = 0;
+      existingAttempts.forEach(
+        (a) => (totalSessionDuration += a.duration || 0)
+      );
+
+      // B. Calculate Best Scores per Question
+      const bestScores = new Map<string, number>();
+      existingAttempts.forEach((attempt) => {
+        const currentMax = bestScores.get(attempt.questionId) || 0;
+        if ((attempt.score || 0) > currentMax) {
+          bestScores.set(attempt.questionId, attempt.score || 0);
+        }
+      });
+
+      // C. Average the Best Scores
+      let totalScore = 0;
+      bestScores.forEach((score) => (totalScore += score));
+      const finalScore =
+        bestScores.size > 0 ? Math.round(totalScore / bestScores.size) : 0;
+      // ---------------------------------
+
+      // D. Update Session (Status + Stats)
       await prisma.session.update({
         where: { id: sessionId },
-        data: { status: "COMPLETED", endedAt: new Date() },
+        data: {
+          status: "COMPLETED",
+          endedAt: new Date(),
+          overallScore: finalScore,
+          totalDuration: totalSessionDuration,
+        },
       });
       res.json({ ok: false, message: "Session completed" });
       return;
