@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -12,100 +12,91 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import Navbar from "../components/Navbar";
+import { Loader2 } from "lucide-react"; // Make sure to install: npm install lucide-react
+
+// Types matching your Backend Response
+interface SessionData {
+  id: string;
+  date: string;
+  category: string;
+  duration: string;
+  score: number;
+}
+
+interface BarData {
+  name: string;
+  count: number;
+}
 
 export default function AnalyticsPage() {
   const [category, setCategory] = useState("All Categories");
   const [timeRange, setTimeRange] = useState("All Time");
 
-  const sessions = [
-    {
-      id: 1,
-      date: "2024-06-01",
-      category: "Leadership",
-      duration: "19:00",
-      score: 95,
-    },
-    {
-      id: 2,
-      date: "2024-06-05",
-      category: "Behavioral",
-      duration: "25:30",
-      score: 80,
-    },
-    {
-      id: 3,
-      date: "2024-06-08",
-      category: "Problem Solving",
-      duration: "18:40",
-      score: 75,
-    },
-    {
-      id: 4,
-      date: "2024-06-12",
-      category: "Technical",
-      duration: "30:00",
-      score: 92,
-    },
-    {
-      id: 5,
-      date: "2024-06-15",
-      category: "Behavioral",
-      duration: "22:15",
-      score: 88,
-    },
-    {
-      id: 6,
-      date: "2024-06-20",
-      category: "Technical",
-      duration: "28:10",
-      score: 70,
-    },
-    {
-      id: 7,
-      date: "2025-12-20",
-      category: "Technical",
-      duration: "22:10",
-      score: 50,
-    },
-    {
-      id: 8,
-      date: "2025-12-10",
-      category: "Behavioral",
-      duration: "26:10",
-      score: 96,
-    },
-  ];
+  // 1. State for Real Data
+  const [sessions, setSessions] = useState<SessionData[]>([]);
+  const [barData, setBarData] = useState<BarData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 1. Sort sessions from most recent to oldest
-  const sortedSessions = [...sessions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  // 2. Fetch Data from Backend on Mount
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        // Optional: Redirect to login if no token
+        setLoading(false);
+        return;
+      }
 
-  // 2. Updated Filtering Logic
-  const filteredSessions = sortedSessions.filter((session) => {
+      try {
+        const res = await fetch("http://localhost:5000/api/analytics", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // The backend returns { sessions: [...], barChartData: [...] }
+          setSessions(data.sessions);
+          setBarData(data.barChartData);
+        } else {
+          console.error("Failed to fetch analytics");
+        }
+      } catch (err) {
+        console.error("Error loading analytics:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  // 3. Filter Real Sessions (Client-Side Filtering)
+  const filteredSessions = sessions.filter((session) => {
+    // Category Match
     const categoryMatch =
       category === "All Categories" || session.category === category;
+
+    // Time Match
     const sessionDate = new Date(session.date);
     const now = new Date();
     let timeMatch = true;
 
     if (timeRange === "Last 24 Hours") {
-      const oneDayAgo = new Date();
-      oneDayAgo.setHours(now.getHours() - 24);
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       timeMatch = sessionDate >= oneDayAgo;
     } else if (timeRange === "Last 7 Days") {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(now.getDate() - 7);
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       timeMatch = sessionDate >= sevenDaysAgo;
     } else if (timeRange === "Last 30 Days") {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(now.getDate() - 30);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       timeMatch = sessionDate >= thirtyDaysAgo;
     }
+
     return categoryMatch && timeMatch;
   });
 
-  // Chart Data Formatting
+  // 4. Format Data for Line Chart (Oldest -> Newest)
+  // We reverse strictly for the chart display so time flows Left->Right
   const lineChartData = [...filteredSessions].reverse().map((s) => ({
     date: new Date(s.date).toLocaleDateString("en-US", {
       month: "short",
@@ -114,22 +105,29 @@ export default function AnalyticsPage() {
     score: s.score,
   }));
 
-  const categoriesList = [
-    "Behavioral",
-    "Technical",
-    "Leadership",
-    "Problem Solving",
-  ];
-  const barChartData = categoriesList.map((cat) => ({
-    name: cat,
-    count: filteredSessions.filter((s) => s.category === cat).length,
-  }));
+  // Helper: Get unique categories dynamically from the data
+  const availableCategories = Array.from(
+    new Set([
+      "Software Engineering Interview",
+      "Product Management Interview",
+      "Data Science Interview",
+      ...sessions.map((s) => s.category),
+    ])
+  );
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-emerald-500";
-    if (score >= 80) return "text-orange-400";
+    if (score >= 70) return "text-orange-400";
     return "text-red-400";
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -170,7 +168,7 @@ export default function AnalyticsPage() {
                 className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
               >
                 <option>All Categories</option>
-                {categoriesList.map((cat) => (
+                {availableCategories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -179,11 +177,12 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Horizontal Line - Full width of the charts grid below */}
+          {/* Horizontal Line */}
           <div className="w-full border-b border-gray-300 mb-10" />
 
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Line Chart */}
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
               <h2 className="text-black text-xl font-bold mb-1">
                 Average Score Over Time
@@ -191,54 +190,63 @@ export default function AnalyticsPage() {
               <p className="text-gray-500 text-sm mb-6">
                 Trend of your average scores across practice sessions.
               </p>
-              <ResponsiveContainer width="100%" height="80%">
-                <LineChart data={lineChartData} margin={{ left: -34 }}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                    stroke="#F0F0F0"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                    dy={10}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
-                  />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#3B82F6"
-                    strokeWidth={3}
-                    dot={{
-                      r: 4,
-                      fill: "#3B82F6",
-                      strokeWidth: 2,
-                      stroke: "#fff",
-                    }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+
+              {lineChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="80%">
+                  <LineChart data={lineChartData} margin={{ left: -34 }}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="#F0F0F0"
+                    />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "##0A0D10)", fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: "##0A0D10)", fontSize: 12 }}
+                    />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#3B82F6"
+                      strokeWidth={3}
+                      dot={{
+                        r: 4,
+                        fill: "#3B82F6",
+                        strokeWidth: 2,
+                        stroke: "#fff",
+                      }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-gray-400 pb-10">
+                  No session data available.
+                </div>
+              )}
             </div>
 
+            {/* Bar Chart - NOW USING REAL 'Areas for Improvement' DATA */}
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
               <h2 className="text-black text-xl font-bold mb-1">
-                Common Interview Patterns
+                Areas for Improvement
               </h2>
               <p className="text-gray-500 text-sm mb-6">
-                Frequency of key patterns identified in your recent sessions.
+                Frequency of issues identified in your answers
               </p>
+
               <ResponsiveContainer width="100%" height="80%">
                 <BarChart
-                  data={barChartData}
-                  margin={{ right: -43, left: -43 }}
+                  data={barData} // <--- Using real backend data
+                  margin={{ right: 0, left: -30, bottom: 20 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -249,20 +257,20 @@ export default function AnalyticsPage() {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                    tick={{ fill: "##0A0D10)", fontSize: 11 }}
+                    interval={0}
                     dy={10}
                   />
-                  {/* 3. Force Whole Numbers on YAxis */}
                   <YAxis
                     allowDecimals={false}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#9CA3AF", fontSize: 12 }}
+                    tick={{ fill: "##0A0D10)", fontSize: 12 }}
                   />
                   <Tooltip cursor={{ fill: "#F9FAFB" }} />
                   <Bar
                     dataKey="count"
-                    fill="#10B981"
+                    fill="#10B981" // Green to indicate these are areas to improve
                     radius={[4, 4, 0, 0]}
                     barSize={40}
                   />
@@ -290,33 +298,39 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <div className="divide-y divide-gray-50">
-              {filteredSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-16">
-                    <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
-                      {session.date}
-                    </span>
-                    <span className="text-[14px] text-[#1A1A1A]">
-                      {session.category}
-                    </span>
+              {filteredSessions.length > 0 ? (
+                filteredSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-16">
+                      <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
+                        {new Date(session.date).toLocaleDateString()}
+                      </span>
+                      <span className="text-[14px] text-[#1A1A1A]">
+                        {session.category}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-16">
+                      <span className="text-[14px] text-[#1A1A1A] w-20 text-right">
+                        {session.duration}
+                      </span>
+                      <span
+                        className={`text-[14px] font-semibold w-24 text-right ${getScoreColor(
+                          session.score
+                        )}`}
+                      >
+                        {session.score}%
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-16">
-                    <span className="text-[14px] text-[#1A1A1A] w-20 text-right">
-                      {session.duration}
-                    </span>
-                    <span
-                      className={`text-[14px] font-semibold w-24 text-right ${getScoreColor(
-                        session.score
-                      )}`}
-                    >
-                      {session.score}%
-                    </span>
-                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  No sessions found matching your filters.
                 </div>
-              ))}
+              )}
             </div>
           </section>
         </div>
