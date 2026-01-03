@@ -25,7 +25,7 @@ export default function Dashboard() {
           </div>
 
           {/*3 boxes for user updates and progressions*/}
-          <div className="flex flex-row gap-5 ml-[250px] mt-6">
+          <div className="flex flex-row gap-5 ml-[250px] mt-12">
             {/* Recent Sessions Box */}
             <div className="bg-white shadow-xl rounded-xl h-100 w-80 p-6 space-y-4">
               <div className="flex justify-between items-center">
