@@ -96,7 +96,7 @@ router.post("/end", async (req: Request, res: Response) => {
     let totalSessionDuration = 0;
 
     attempts.forEach((attempt) => {
-      totalSessionDuration += (attempt.duration || 0);
+      totalSessionDuration += attempt.duration || 0;
       const currentMax = bestScores.get(attempt.questionId) || 0;
       // If this attempt is better than what we have saved, update it
       if ((attempt.score || 0) > currentMax) {
@@ -158,31 +158,59 @@ router.get("/stats", async (req: Request, res: Response) => {
         userId: userId,
         status: "COMPLETED",
         overallScore: {
-          not: null
-        }
+          not: null,
+        },
       },
       select: {
-        overallScore: true
-      }
+        overallScore: true,
+      },
     });
 
     // 3. CALCULATE STATS
     const totalSessions = sessions.length;
-    
+
     let averageScore = 0;
     if (totalSessions > 0) {
-      const totalScore = sessions.reduce((sum, session) => sum + (session.overallScore || 0), 0);
+      const totalScore = sessions.reduce(
+        (sum, session) => sum + (session.overallScore || 0),
+        0
+      );
       averageScore = Math.round(totalScore / totalSessions);
     }
 
     // 4. RETURN RESULTS
     res.json({
       averageScore,
-      totalSessions
+      totalSessions,
     });
-
   } catch (error: any) {
     console.error("Error fetching session stats:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/session/:id/attempts
+// Usage: Get all attempts for a specific session (For the Session Review page)
+router.get("/:id/attempts", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const attempts = await prisma.sessionAttempt.findMany({
+      where: { sessionId: id },
+      include: {
+        question: {
+          select: {
+            question: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    res.json({ attempts });
+  } catch (error: any) {
+    console.error("Error fetching session attempts:", error);
     res.status(500).json({ error: error.message });
   }
 });
