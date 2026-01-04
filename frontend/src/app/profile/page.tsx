@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import ReactCropper from "react-easy-crop";
+import "react-easy-crop/react-easy-crop.css";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
 import {
@@ -27,137 +28,196 @@ type ProfileForm = {
 };
 
 export default function ProfilePage() {
-    // Form state (what user edits)
-    const [form, setForm] = useState<ProfileForm>({
-        name: "",
-        email: "",
-        displayName: "",
-        location: "",
-        bio: "",
-    });
+  const [form, setForm] = useState<ProfileForm>({
+    name: "",
+    email: "",
+    displayName: "",
+    location: "",
+    bio: "",
+  });
 
-    const [avatarShape, setAvatarShape] = useState<"circle" | "square">("circle");
-    const [borderColor, setBorderColor] = useState<"blue" | "green">("blue");
+  const [avatarShape, setAvatarShape] = useState<"circle" | "square">("circle");
+  const [borderColor, setBorderColor] = useState<"blue" | "green">("blue");
 
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-    //This state checks if the user is signed in or not
-    const [isSignedIn, setIsSignedIn] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    useEffect(() => {
+  // This is the final chosen avatar (cropped result). If you save it to backend, it persists.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Crop modal state
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
     const token = localStorage.getItem("token");
     setIsSignedIn(!!token);
-    }, []);
+  }, []);
 
-    useEffect(() => {
-        async function loadProfile() {
-            const token = localStorage.getItem("token");
-            if (!token) {
-            setLoading(false);
-            return;
-            }
-
-            try {
-            const res = await fetch("http://localhost:5000/api/profile", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            const raw = await res.text();
-            let data: any;
-            try {
-                data = JSON.parse(raw);
-            } catch {
-                console.error("Non-JSON response:", raw);
-                throw new Error("Backend returned non-JSON");
-            }
-
-            if (!res.ok) throw new Error(data.error || "Failed to load profile.");
-
-            setForm({
-                name: data.user.name ?? "",
-                email: data.user.email ?? "",
-                displayName: data.user.displayName ?? "",
-                location: data.user.location ?? "",
-                bio: data.user.bio ?? "",
-            });
-
-            setAvatarShape((data.user.avatarShape as "circle" | "square") ?? "circle");
-            setBorderColor((data.user.avatarBorder === "green" ? "green" : "blue") as "blue" | "green");
-            } catch (e) {
-            console.error(e);
-            } finally {
-            setLoading(false);
-            }
-        }
-
-        loadProfile();
-    }, []);
-
-
-
-    function updateField<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    }
-
-    async function saveProfile() {
-    setSaveStatus("saving");
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-        setSaveStatus("error");
+  useEffect(() => {
+    async function loadProfile() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
         return;
-    }
+      }
 
-    try {
+      try {
         const res = await fetch("http://localhost:5000/api/profile", {
-        method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-            name: form.name,
-            displayName: form.displayName,
-            location: form.location,
-            bio: form.bio,
-            avatarShape,
-            avatarBorder: borderColor,
-        }),
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const raw = await res.text();
         let data: any;
         try {
-        data = JSON.parse(raw);
+          data = JSON.parse(raw);
         } catch {
-        console.error("Non-JSON response:", raw);
-        throw new Error("Backend returned non-JSON");
+          console.error("Non-JSON response:", raw);
+          throw new Error("Backend returned non-JSON");
         }
 
-        if (!res.ok) throw new Error(data.error || "Failed to save profile.");
+        if (!res.ok) throw new Error(data.error || "Failed to load profile.");
 
-        setSaveStatus("saved");
-        setTimeout(() => setSaveStatus("idle"), 1500);
-    } catch (e) {
+        setForm({
+          name: data.user.name ?? "",
+          email: data.user.email ?? "",
+          displayName: data.user.displayName ?? "",
+          location: data.user.location ?? "",
+          bio: data.user.bio ?? "",
+        });
+
+        setAvatarShape((data.user.avatarShape as "circle" | "square") ?? "circle");
+        setBorderColor((data.user.avatarBorder === "green" ? "green" : "blue") as "blue" | "green");
+
+        // ✅ Load avatar from backend if your API returns it
+        // You need backend to return user.avatarUrl (string) OR null
+        setAvatarUrl(data.user.avatarUrl ?? null);
+      } catch (e) {
         console.error(e);
-        setSaveStatus("error");
-    }
+      } finally {
+        setLoading(false);
+      }
     }
 
+    loadProfile();
+  }, []);
 
-  //loading state
-    if (loading) {
+  function updateField<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function saveProfile() {
+    setSaveStatus("saving");
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setSaveStatus("error");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: form.name,
+          displayName: form.displayName,
+          location: form.location,
+          bio: form.bio,
+          avatarShape,
+          avatarBorder: borderColor,
+
+          // Persist avatar if backend supports it
+          avatarUrl,
+        }),
+      });
+
+const contentType = res.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed");
+    } else {
+    const raw = await res.text();
+    console.error("Non-JSON response:", raw);
+    throw new Error("Backend returned non-JSON");
+    }
+
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch (e) {
+      console.error(e);
+      setSaveStatus("error");
+    }
+  }
+
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setSelectedImageUrl(url);
+    setIsCropOpen(true);
+
+    // allow re-selecting same file later
+    e.target.value = "";
+  }
+
+  function onCropComplete(_: any, croppedPixels: any) {
+    setCroppedAreaPixels(croppedPixels);
+  }
+
+  async function applyCrop() {
+    if (!selectedImageUrl || !croppedAreaPixels) {
+      setIsCropOpen(false);
+      return;
+    }
+
+    const croppedDataUrl = await getCroppedImageDataUrl(selectedImageUrl, croppedAreaPixels);
+    setAvatarUrl(croppedDataUrl);
+
+    // close modal + cleanup object url
+    setIsCropOpen(false);
+    try {
+      URL.revokeObjectURL(selectedImageUrl);
+    } catch {}
+    setSelectedImageUrl(null);
+  }
+
+  // loading state
+  if (loading) {
     return (
-        <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="pt-24 px-4 max-w-3xl mx-auto text-sm text-gray-600">
-            Loading profile...
+          Loading profile...
         </div>
-        </div>
+      </div>
     );
-    }
-
+  }
 
   // Guest view UI
   if (!isSignedIn) {
@@ -166,12 +226,8 @@ export default function ProfilePage() {
         <Navbar />
         <div className="pt-24 px-4">
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-              Profile
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage your account details and preferences.
-            </p>
+            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Profile</h1>
+            <p className="mt-2 text-sm text-gray-600">Manage your account details and preferences.</p>
 
             <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <p className="text-sm font-semibold text-gray-900">Guest User</p>
@@ -193,227 +249,333 @@ export default function ProfilePage() {
   }
 
   // Signed-in view
-// Signed-in view
-return (
-  <div className="min-h-screen bg-gray-50">
-    <Navbar />
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
 
-    {/* Page layout */}
-    <div className="pt-16">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-          
-          {/* Sidebar */}
-          <aside className="lg:sticky lg:top-24 h-fit">
-            <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
-              <div className="px-3 pt-2 pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Navigation
+      <div className="pt-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+            {/* Sidebar */}
+            <aside className="lg:sticky lg:top-24 h-fit">
+              <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+                <div className="px-3 pt-2 pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Navigation
+                </div>
+
+                <nav className="flex flex-col gap-1">
+                  <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} />
+
+                  <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />}>
+                    <SidebarSubLink label="Shortcuts" icon={<Keyboard className="h-4 w-4" />} />
+                    <SidebarSubLink label="Account" icon={<User className="h-4 w-4" />} />
+                    <SidebarSubLink label="Personal" active icon={<UserCircle2 className="h-4 w-4" />} />
+                  </SidebarGroup>
+
+                  <div className="my-3 h-px bg-gray-100" />
+
+                  <SidebarLink href="/practice" label="Practice" icon={<BrainCircuit className="h-4 w-4" />} />
+                  <SidebarLink href="/analytics" label="Analytics" icon={<ChartNoAxesColumn className="h-4 w-4" />} />
+                </nav>
               </div>
+            </aside>
 
-              <nav className="flex flex-col gap-1">
-                <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} />
+            {/* Main content */}
+            <main className="min-w-0">
+              <div className="max-w-4xl">
+                {/* Header card */}
+                <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      {/* Avatar preview */}
+                      <div
+                        className={[
+                          "h-14 w-14 bg-gray-100 flex items-center justify-center overflow-hidden",
+                          avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                          borderColor === "blue" ? "ring-2 ring-blue-500" : "ring-2 ring-green-500",
+                        ].join(" ")}
+                      >
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-gray-600 font-semibold">
+                            {(form.name || "User")
+                              .split(" ")
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((p) => p[0]?.toUpperCase())
+                              .join("") || "U"}
+                          </span>
+                        )}
+                      </div>
 
-                <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />}>
-                  <SidebarSubLink label="Shortcuts" icon={<Keyboard className="h-4 w-4" />} />
-                  <SidebarSubLink label="Account" icon={<User className="h-4 w-4" />} />
-                  <SidebarSubLink label="Personal" active icon={<UserCircle2 className="h-4 w-4" />} />
-                </SidebarGroup>
-
-                <div className="my-3 h-px bg-gray-100" />
-
-                <SidebarLink href="/practice" label="Practice" icon={<BrainCircuit className="h-4 w-4" />} />
-                <SidebarLink href="/analytics" label="Analytics" icon={<ChartNoAxesColumn className="h-4 w-4" />} />
-              </nav>
-            </div>
-          </aside>
-
-          {/* Main content */}
-          <main className="min-w-0">
-            <div className="max-w-4xl">
-              {/* Header card (modern look) */}
-              <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    {/* Avatar preview */}
-                    <div
-                      className={[
-                        "h-14 w-14 bg-gray-100 flex items-center justify-center overflow-hidden",
-                        avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
-                        borderColor === "blue" ? "ring-2 ring-blue-500" : "ring-2 ring-green-500",
-                      ].join(" ")}
-                    >
-                      <span className="text-gray-600 font-semibold">
-                        {(form.name || "User")
-                          .split(" ")
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .map((p) => p[0]?.toUpperCase())
-                          .join("") || "U"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-500">Profile Settings</p>
-                      <h1 className="mt-1 text-xl font-semibold text-gray-900 tracking-tight">
-                        Manage Your Profile
-                      </h1>
-                      <p className="mt-1 text-sm text-gray-600">
-                        {form.email || "Signed in"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Top right actions */}
-                  <div className="flex items-center gap-2">
-                    <button className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
-                      Cancel
-                    </button>
-                    <button
-                    onClick={saveProfile}
-                    disabled={saveStatus === "saving"}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
-                    >
-                    {saveStatus === "saving" ? "Saving..." : "Save Changes"}
-                    </button>
-
-                  </div>
-                </div>
-              </section>
-
-              {/* Basic Info */}
-              <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h2 className="text-sm font-semibold text-gray-900">Basic Information</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Update your personal details and contact information.
-                </p>
-
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Name"
-                    icon={<User className="h-4 w-4 text-gray-400" />}
-                    value={form.name}
-                    onChange={(v) => updateField("name", v)}
-                    placeholder="Your name"
-                  />
-
-                  <Input
-                    label="Email"
-                    icon={<Mail className="h-4 w-4 text-gray-400" />}
-                    value={form.email}
-                    readOnly
-                  />
-
-                  <Input
-                    label="Display Name"
-                    icon={<AtSign className="h-4 w-4 text-gray-400" />}
-                    value={form.displayName}
-                    onChange={(v) => updateField("displayName", v)}
-                    placeholder="e.g. John Doe"
-                  />
-
-                  <Input
-                    label="Location"
-                    icon={<MapPin className="h-4 w-4 text-gray-400" />}
-                    value={form.location}
-                    onChange={(v) => updateField("location", v)}
-                    placeholder="City, State"
-                  />
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio
-                  </label>
-                  <textarea
-                    value={form.bio}
-                    onChange={(e) => updateField("bio", e.target.value)}
-                    placeholder="Tell us a little about yourself..."
-                    className="w-full min-h-[110px] rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </section>
-
-              {/* Avatar */}
-              <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-sm font-semibold text-gray-900">Avatar</h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Upload a profile picture and customize its appearance.
-                    </p>
-                  </div>
-
-                  <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
-                    <Upload className="h-4 w-4" />
-                    Upload
-                  </button>
-                </div>
-
-                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Shape</p>
-                    <div className="mt-2 flex gap-2">
-                      <ToggleButton
-                        active={avatarShape === "circle"}
-                        onClick={() => setAvatarShape("circle")}
-                        label="Circle"
-                      />
-                      <ToggleButton
-                        active={avatarShape === "square"}
-                        onClick={() => setAvatarShape("square")}
-                        label="Square"
-                      />
-                    </div>
-
-                    <div className="mt-5">
-                      <p className="text-sm font-medium text-gray-700">Border Color</p>
-                      <div className="mt-2 flex gap-2">
-                        <ColorDot
-                          active={borderColor === "blue"}
-                          onClick={() => setBorderColor("blue")}
-                          className="bg-blue-500"
-                        />
-                        <ColorDot
-                          active={borderColor === "green"}
-                          onClick={() => setBorderColor("green")}
-                          className="bg-green-500"
-                        />
+                      <div>
+                        <p className="text-sm text-gray-500">Profile Settings</p>
+                        <h1 className="mt-1 text-xl font-semibold text-gray-900 tracking-tight">
+                          Manage Your Profile
+                        </h1>
+                        <p className="mt-1 text-sm text-gray-600">{form.email || "Signed in"}</p>
                       </div>
                     </div>
+
+                    {/* Top right actions */}
+                    <div className="flex items-center gap-2">
+                      <button className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={saveProfile}
+                        disabled={saveStatus === "saving"}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                      >
+                        {saveStatus === "saving" ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Basic Info */}
+                <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-sm font-semibold text-gray-900">Basic Information</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Update your personal details and contact information.
+                  </p>
+
+                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Name"
+                      icon={<User className="h-4 w-4 text-gray-400" />}
+                      value={form.name}
+                      onChange={(v) => updateField("name", v)}
+                      placeholder="Your name"
+                    />
+
+                    <Input label="Email" icon={<Mail className="h-4 w-4 text-gray-400" />} value={form.email} readOnly />
+
+                    <Input
+                      label="Display Name"
+                      icon={<AtSign className="h-4 w-4 text-gray-400" />}
+                      value={form.displayName}
+                      onChange={(v) => updateField("displayName", v)}
+                      placeholder="e.g. John Doe"
+                    />
+
+                    <Input
+                      label="Location"
+                      icon={<MapPin className="h-4 w-4 text-gray-400" />}
+                      value={form.location}
+                      onChange={(v) => updateField("location", v)}
+                      placeholder="City, State"
+                    />
                   </div>
 
-                  {/* Preview */}
-                  <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 p-6">
-                    <div
-                      className={[
-                        "h-24 w-24 bg-white flex items-center justify-center overflow-hidden shadow-sm",
-                        avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
-                        borderColor === "blue" ? "ring-4 ring-blue-500" : "ring-4 ring-green-500",
-                      ].join(" ")}
-                    >
-                      <span className="text-gray-600 font-semibold text-lg">
-                        {(form.name || "User")
-                          .split(" ")
-                          .filter(Boolean)
-                          .slice(0, 2)
-                          .map((p) => p[0]?.toUpperCase())
-                          .join("") || "U"}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm text-gray-500">Preview</p>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                    <textarea
+                      value={form.bio}
+                      onChange={(e) => updateField("bio", e.target.value)}
+                      placeholder="Tell us a little about yourself..."
+                      className="w-full min-h-[110px] rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                </div>
-              </section>
-            </div>
-          </main>
+                </section>
+
+                {/* Avatar */}
+                <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-sm font-semibold text-gray-900">Avatar</h2>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Upload a profile picture and customize its appearance.
+                      </p>
+                    </div>
+
+                    <>
+                      <button
+                        type="button"
+                        onClick={openFilePicker}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload
+                      </button>
+
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={onFileChange}
+                      />
+                    </>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Shape</p>
+                      <div className="mt-2 flex gap-2">
+                        <ToggleButton
+                          active={avatarShape === "circle"}
+                          onClick={() => setAvatarShape("circle")}
+                          label="Circle"
+                        />
+                        <ToggleButton
+                          active={avatarShape === "square"}
+                          onClick={() => setAvatarShape("square")}
+                          label="Square"
+                        />
+                      </div>
+
+                      <div className="mt-5">
+                        <p className="text-sm font-medium text-gray-700">Border Color</p>
+                        <div className="mt-2 flex gap-2">
+                          <ColorDot
+                            active={borderColor === "blue"}
+                            onClick={() => setBorderColor("blue")}
+                            className="bg-blue-500"
+                          />
+                          <ColorDot
+                            active={borderColor === "green"}
+                            onClick={() => setBorderColor("green")}
+                            className="bg-green-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                      <div
+                        className={[
+                          "h-24 w-24 bg-white flex items-center justify-center overflow-hidden shadow-sm",
+                          avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                          borderColor === "blue" ? "ring-4 ring-blue-500" : "ring-4 ring-green-500",
+                        ].join(" ")}
+                      >
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-gray-600 font-semibold text-lg">
+                            {(form.name || "User")
+                              .split(" ")
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((p) => p[0]?.toUpperCase())
+                              .join("") || "U"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-3 text-sm text-gray-500">Preview</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </main>
+          </div>
         </div>
       </div>
+
+      {/* ✅ Crop Modal */}
+      {isCropOpen && selectedImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900">Crop your avatar</p>
+              <button
+                type="button"
+                onClick={() => setIsCropOpen(false)}
+                className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="relative h-[320px] bg-gray-100">
+              <ReactCropper 
+                image={selectedImageUrl}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            <div className="p-4 flex items-center justify-between gap-3">
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-full"
+              />
+
+              <button
+                type="button"
+                onClick={applyCrop}
+                className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
-
-
+  );
 }
+
+async function getCroppedImageDataUrl(
+  imageSrc: string,
+  cropPixels: { x: number; y: number; width: number; height: number }
+): Promise<string> {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.crossOrigin = "anonymous";
+    img.src = imageSrc;
+  });
+
+  // cap output size so base64 is small
+  const MAX = 512;
+  const scale = Math.min(MAX / cropPixels.width, MAX / cropPixels.height, 1);
+
+  const outW = Math.round(cropPixels.width * scale);
+  const outH = Math.round(cropPixels.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get canvas context");
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  ctx.drawImage(
+    image,
+    cropPixels.x,
+    cropPixels.y,
+    cropPixels.width,
+    cropPixels.height,
+    0,
+    0,
+    outW,
+    outH
+  );
+
+  // JPEG is much smaller than PNG
+  return canvas.toDataURL("image/jpeg", 0.8);
+}
+
+
+/*  Small UI helpers (yours unchanged below)  */
+// ... keep SidebarLink, SidebarGroup, SidebarSubLink, Input, ToggleButton, ColorDot as-is
 
 /*  Small UI helpers  */
 
