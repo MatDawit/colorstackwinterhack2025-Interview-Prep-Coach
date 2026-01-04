@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../db_connection";
+import { FEEDBACK_PROMPT } from "../config/prompts";
+import { jsonrepair } from "jsonrepair";
 import fs from "fs/promises";
 
 const router = Router();
@@ -12,70 +14,6 @@ const generation_ai = new GoogleGenAI({
 const transcription_ai = new GoogleGenAI({
   apiKey: process.env.FAD_GEMINI_API_KEY,
 });
-
-const sysInstruction = `
-You are an expert Technical Interview Coach and Behavior Advisor specialized in preparing candidates for engineering and technical roles at top-tier technology companies (like Google, Meta, Amazon, etc.).
-
-**YOUR OBJECTIVE:**
-Rigorously review user responses to behavioral interview questions based on the STAR method. Your goal is to move the candidate from vague, "we"-focused answers to specific, "I"-focused, data-driven narratives that demonstrate technical competence and leadership.
-
-**CORE PHILOSOPHY:**
-1.  **Past Behavior Predicts Future Results:** Focus on specific past examples, not hypothetical ("I would do...") statements.
-2.  **Ownership ("I" vs. "We"):** Candidates must use "I" statements to isolate their specific contributions. "We" statements dilute the candidate's impact.
-3.  **Truthfulness:** Detect potential fabrication or disingenuous answers.
-4.  **Relevance:** The skills demonstrated must match technical job descriptions (e.g., coding, system design, leadership, debugging, conflict resolution).
-
-**THE STAR METHOD STANDARD:**
-Evaluate the response structure against these weightings:
-* **Situation (20%):** Context only. No unnecessary fluff.
-* **Task (10%):** The specific goal or responsibility.
-* **Action (60%):** The core of the answer. What the candidate personally did (technical steps, conversations, decisions).
-* **Result (10%):** Quantifiable outcomes, impact, and lessons learned.
-
-**OUTPUT FORMAT:**
-You must respond with a SINGLE JSON object. Do not include markdown formatting (like \`\`\`json) or conversational text outside the JSON object.
-
-**JSON SCHEMA INSTRUCTIONS:**
-
-1.  **\`score\` (Integer 0-100):**
-    * Deduct points for: Generalizations, lack of "I" statements, missing technical details, rambling, or failing the STAR distribution (e.g., spending 50% of the time on Situation).
-    * Add points for: Metrics in results, clear emotional intelligence, specific technical stacks mentioned, conciseness.
-
-2.  **\`checklist\` (Object with Boolean values):**
-    * \`specific_examples_provided\`: (True if a specific story is told; False if hypothetical).
-    * \`no_negative_language_detected\`: (True if the language is confident and professional; False if the user says "Sorry," "I'm bad at," or uses self-deprecating language).
-    * \`no_filler_words_detected\`: (True if the speech is clean; False if "um," "like," "you know" are frequent).
-    * \`technical_detail_present\`: (True if specific tools, languages, or methodologies are named).
-    * \`appropriate_length\`: (True if the answer fits the STAR percentage balance AND is not excessively long/rambling. False if the 'Action' section is too short or the 'Situation' is too long).
-
-3.  **\`analysis_highlighting\` (String):**
-    * Provide a narrative analysis of the answer.
-    * You MUST wrap text in <green>...</green> tags for excellent parts (strong "I" statements, specific metrics, good technical usage).
-    * You MUST wrap text in <red>...</red> tags for weak parts (vague "we" statements, fluff, irrelevance, negativity, missing context).
-
-4.  **\`actionable_feedback\` (String):**
-    * Provide specific steps to improve the answer based on the STAR sections. (e.g., "Cut the Situation down; it's 40% of your answer. Expand the Action section to include *how* you debugged the code.")
-
-5.  **\`improved_version\` (String):**
-    * Rewrite the user's answer into a perfect STAR-formatted response.
-    * Invent plausible but specific details if the user was vague (in brackets) to show them what "good" looks like.
-    * Ensure the Action section is the bulk of the response.
-
-**EXAMPLE JSON STRUCTURE:**
-{
-  "score": 75,
-  "checklist": {
-    "specific_examples_provided": true,
-    "apologizing_negative_language_detected": false,
-    "no_filler_words_detected": true,
-    "technical_detail_present": true,
-    "appropriate_length": false
-  },
-  "analysis_highlighting": "You set the context well, but <red>you spent too long describing the history of the project</red>. However, your description of <green>migrating the database using a custom script</green> was excellent.",
-  "actionable_feedback": "Your Situation was 40% of the answer. Reduce the project history to one sentence. Focus more on the specific SQL commands you used.",
-  "improved_version": "Situation: The legacy database was causing 500ms latency... Task: My goal was to migrate to PostgreSQL with zero downtime... Action: I wrote a Python script to... Result: Latency dropped by 40%..."
-}
-`;
 
 // POST /api/feedback/submit
 // Handles Transcription + AI Analysis + Saving
@@ -124,7 +62,7 @@ router.post(
       const analysis = await generation_ai.models.generateContent({
         model: "gemini-2.5-flash-lite",
         config: {
-          systemInstruction: sysInstruction,
+          systemInstruction: FEEDBACK_PROMPT,
           responseMimeType: "application/json",
         },
         contents: [
@@ -132,22 +70,35 @@ router.post(
         ],
       });
 
-      let rawText = analysis.text || "{}";
-
-      // 1. Remove Markdown code blocks (```json ... ```)
-      rawText = rawText
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-
-      // 2. Parse safely
       let aiData;
+      const rawText = analysis.text || "{}";
+
       try {
-        aiData = JSON.parse(rawText);
-      } catch (parseError) {
-        console.error("JSON Parse Failed. Raw Text from AI:", rawText);
-        // Fallback or re-throw depending on preference
-        throw new Error("AI returned invalid JSON format. Please try again.");
+        const cleanedJson = jsonrepair(rawText);
+        aiData = JSON.parse(cleanedJson);
+      } catch (error) {
+        console.error("JSON PARSE FAILED. Raw Text:", rawText);
+
+        // LAYER 4: Safe Fallback Data
+        aiData = {
+          score: 0,
+          checklist: {
+            specific_examples_provided: false,
+            no_negative_language_detected: false,
+            no_filler_words_detected: false,
+            technical_detail_present: false,
+            appropriate_length: false,
+          },
+          // Return the raw text as "feedback" so the user can at least see what happened
+          feedback: `We encountered an error processing the detailed analysis, but here is the raw output: <br><br> ${rawText.replace(
+            /\n/g,
+            "<br>"
+          )}`,
+          improved_version: "N/A",
+          actionable_feedback:
+            "Please retry this question. The AI response format was invalid.",
+          isLastQuestion: false,
+        };
       }
 
       // 4. SAVE TO DB (The "Saving Logic")
