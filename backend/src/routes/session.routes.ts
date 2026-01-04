@@ -132,4 +132,59 @@ router.post("/end", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/session/stats
+// Usage: Get user's session statistics for dashboard
+router.get("/stats", async (req: Request, res: Response) => {
+  try {
+    // 1. VERIFY TOKEN & GET USER ID
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    let userId: string;
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+      userId = decoded.userId;
+    } catch (err) {
+      return res.status(401).json({ error: "Unauthorized: Invalid token" });
+    }
+
+    // 2. GET ALL COMPLETED SESSIONS WITH SCORES
+    const sessions = await prisma.session.findMany({
+      where: {
+        userId: userId,
+        status: "COMPLETED",
+        overallScore: {
+          not: null
+        }
+      },
+      select: {
+        overallScore: true
+      }
+    });
+
+    // 3. CALCULATE STATS
+    const totalSessions = sessions.length;
+    
+    let averageScore = 0;
+    if (totalSessions > 0) {
+      const totalScore = sessions.reduce((sum, session) => sum + (session.overallScore || 0), 0);
+      averageScore = Math.round(totalScore / totalSessions);
+    }
+
+    // 4. RETURN RESULTS
+    res.json({
+      averageScore,
+      totalSessions
+    });
+
+  } catch (error: any) {
+    console.error("Error fetching session stats:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
