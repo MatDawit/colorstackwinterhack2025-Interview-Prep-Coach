@@ -117,58 +117,22 @@ export default function Practice() {
     }, 1000);
   }
 
-  function pickRandomN<T>(arr: T[], n: number) {
-    const copy = [...arr];
-    // Fisher–Yates shuffle
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy.slice(0, Math.min(n, copy.length));
-  }
-
-  function pickRandomOne<T>(arr: T[]) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  // Load questions once on mount
-  useEffect(() => {
-    async function loadQuestions() {
-      try {
-        const res = await fetch("http://localhost:5000/api/questions");
-        const data = await res.json(); // { questions: [...] }
-
-        if (isMounted.current) {
-          setQuestions(data.questions ?? []);
-        }
-      } catch (err) {
-        console.error("Failed to load questions:", err);
-      }
-    }
-
-    loadQuestions();
-  }, []);
-
   // This effect handles Session Syncing.
   // Instead of picking a random question every time, it asks the backend: "What is the active question?"
   useEffect(() => {
-    // Wait until questions are loaded
-    if (questions.length === 0) return;
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-    const syncSession = async () => {
-      const token = localStorage.getItem("token");
-
-      // Determine which ID we should use.
-      // If we have one in the URL, prioritize that (page refresh case).
-      // If not, check our local state (we just created one).
+    const initSession = async () => {
       let activeId = existingSessionId || sessionId;
 
-      // CASE A: Create New Session (Initial Entry)
-      if (!activeId && token) {
-        // STOPPER: If we are already creating a session, do not start another one.
+      // 1. Create New Session if needed
+      if (!activeId) {
         if (isCreatingSession.current) return;
-        isCreatingSession.current = true; // Lock
-
+        isCreatingSession.current = true;
         try {
           if (isMounted.current) setLoadingQuestion(true);
 
@@ -184,76 +148,61 @@ export default function Practice() {
             }
           );
 
-          if (!isMounted.current) return;
-
-          if (startRes.ok) {
+          if (isMounted.current && startRes.ok) {
             const data = await startRes.json();
-            const newId = data.sessionId;
-
-            // 1. Set state immediately (Fast UI)
-            setSessionId(newId);
-
-            // 2. Update URL silently (Background) so user can copy/paste link if needed
-            // The { scroll: false } prevents page jumping
-            router.replace(`/practice?sessionId=${newId}`, { scroll: false });
-
-            // 3. Fetch the question IMMEDIATELY using the new ID.
-            // We do this here instead of waiting for the effect to re-run
-            // to avoid the visual "flash" or "reload" feeling.
-            await fetchSessionDetails(newId);
+            activeId = data.sessionId;
+            setSessionId(activeId);
+            router.replace(`/practice?sessionId=${activeId}`, {
+              scroll: false,
+            });
           }
         } catch (err) {
           console.error("Failed to start session", err);
         } finally {
-          isCreatingSession.current = false; // Unlock
-          setLoadingQuestion(false);
+          isCreatingSession.current = false;
         }
       }
-      // CASE B: Existing Session (Refresh or Navigation)
-      else if (activeId) {
-        // Only fetch if we haven't loaded this question yet OR if the ID changed
-        if (!currentQuestion || sessionId !== activeId) {
-          setSessionId(activeId);
-          setLoadingQuestion(true);
-          await fetchSessionDetails(activeId);
-          setLoadingQuestion(false);
-        }
-      }
-    };
 
-    // Helper to fetch session details (Moved inside the effect for cleaner closure access)
-    const fetchSessionDetails = async (id: string) => {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/practice/session/${id}`
-        );
-        if (res.ok) {
-          const sessionData = await res.json();
-          if (sessionData.currentQuestionId) {
-            const savedQ = questions.find(
-              (q) => q.id === sessionData.currentQuestionId
-            );
-            if (savedQ) {
-              setCurrentQuestion(savedQ);
-              setQId(savedQ.id);
-              setQuestion(savedQ.question);
+      // 2. Fetch Session State (Which now includes the Question!)
+      if (activeId) {
+        setSessionId(activeId);
+        setLoadingQuestion(true);
+        try {
+          const res = await fetch(
+            `http://localhost:5000/api/practice/session/${activeId}`
+          );
+          if (res.ok) {
+            const sessionData = await res.json();
+
+            // FIX: We read the question directly from the backend response
+            // No more searching through a "questions" array
+            if (sessionData.currentQuestion) {
+              setCurrentQuestion(sessionData.currentQuestion);
+              setQId(sessionData.currentQuestion.id);
+              setQuestion(sessionData.currentQuestion.question);
+            }
+
+            if (sessionData.status === "COMPLETED") {
+              router.push("/analytics");
             }
           }
+        } catch (error) {
+          console.error("Error fetching session:", error);
+        } finally {
+          setLoadingQuestion(false);
         }
-      } catch (error) {
-        console.error("Error fetching session details:", error);
       }
     };
 
-    syncSession();
+    initSession();
 
-    // Reset UI for new question
+    // Reset UI on question change
     setTypedAnswer("");
     handleRerecord();
     setSubmitError(null);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions, existingSessionId, interviewType]);
+    // Dependency array is much cleaner now
+  }, [existingSessionId, interviewType]);
 
   //This is the function that submits the answer to the backend
   //This is just a test at the moment
