@@ -113,6 +113,13 @@ router.get(
           id: true,
           status: true,
           currentQuestionId: true,
+          currentQuestion: {
+            select: {
+              id: true,
+              question: true,
+              category: true,
+            },
+          },
         },
       });
 
