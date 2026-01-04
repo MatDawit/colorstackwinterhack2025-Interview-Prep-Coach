@@ -67,6 +67,8 @@ export default function Practice() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const isCreatingSession = useRef(false);
+
   //this is for the timer again
   const timeLabel = useMemo(() => formatTime(elapsedTime), [elapsedTime]);
 
@@ -137,17 +139,25 @@ export default function Practice() {
   // This effect handles Session Syncing.
   // Instead of picking a random question every time, it asks the backend: "What is the active question?"
   useEffect(() => {
+    // Wait until questions are loaded
     if (questions.length === 0) return;
 
     const syncSession = async () => {
-      setLoadingQuestion(true);
       const token = localStorage.getItem("token");
 
-      try {
-        let activeSessionId = existingSessionId;
+      // Determine which ID we should use.
+      // If we have one in the URL, prioritize that (page refresh case).
+      // If not, check our local state (we just created one).
+      let activeId = existingSessionId || sessionId;
 
-        // A. If NO Session ID, create one (The backend will pick the question)
-        if (!activeSessionId && token) {
+      // CASE A: Create New Session (Initial Entry)
+      if (!activeId && token) {
+        // STOPPER: If we are already creating a session, do not start another one.
+        if (isCreatingSession.current) return;
+        isCreatingSession.current = true; // Lock
+
+        try {
+          setLoadingQuestion(true);
           const startRes = await fetch(
             "http://localhost:5000/api/session/start",
             {
@@ -162,52 +172,72 @@ export default function Practice() {
 
           if (startRes.ok) {
             const data = await startRes.json();
-            activeSessionId = data.sessionId;
-            setSessionId(activeSessionId);
-            // Update URL silently without reloading
-            router.replace(`/practice?sessionId=${activeSessionId}`);
+            const newId = data.sessionId;
+
+            // 1. Set state immediately (Fast UI)
+            setSessionId(newId);
+
+            // 2. Update URL silently (Background) so user can copy/paste link if needed
+            // The { scroll: false } prevents page jumping
+            router.replace(`/practice?sessionId=${newId}`, { scroll: false });
+
+            // 3. Fetch the question IMMEDIATELY using the new ID.
+            // We do this here instead of waiting for the effect to re-run
+            // to avoid the visual "flash" or "reload" feeling.
+            await fetchSessionDetails(newId);
           }
+        } catch (err) {
+          console.error("Failed to start session", err);
+        } finally {
+          isCreatingSession.current = false; // Unlock
+          setLoadingQuestion(false);
         }
+      }
+      // CASE B: Existing Session (Refresh or Navigation)
+      else if (activeId) {
+        // Only fetch if we haven't loaded this question yet OR if the ID changed
+        if (!currentQuestion || sessionId !== activeId) {
+          setSessionId(activeId);
+          setLoadingQuestion(true);
+          await fetchSessionDetails(activeId);
+          setLoadingQuestion(false);
+        }
+      }
+    };
 
-        // B. Fetch the Session Status to get the Bookmarked Question
-        //    (This works for New Sessions AND Retries)
-        if (activeSessionId) {
-          setSessionId(activeSessionId);
-
-          const res = await fetch(
-            `http://localhost:5000/api/practice/session/${activeSessionId}`
-          );
-          if (res.ok) {
-            const sessionData = await res.json();
-
-            // The Backend NOW guarantees currentQuestionId is set!
-            if (sessionData.currentQuestionId) {
-              const savedQ = questions.find(
-                (q) => q.id === sessionData.currentQuestionId
-              );
-              if (savedQ) {
-                setCurrentQuestion(savedQ);
-                setQId(savedQ.id);
-                setQuestion(savedQ.question);
-              }
+    // Helper to fetch session details (Moved inside the effect for cleaner closure access)
+    const fetchSessionDetails = async (id: string) => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/practice/session/${id}`
+        );
+        if (res.ok) {
+          const sessionData = await res.json();
+          if (sessionData.currentQuestionId) {
+            const savedQ = questions.find(
+              (q) => q.id === sessionData.currentQuestionId
+            );
+            if (savedQ) {
+              setCurrentQuestion(savedQ);
+              setQId(savedQ.id);
+              setQuestion(savedQ.question);
             }
           }
         }
-      } catch (err) {
-        console.error("Session Sync Error:", err);
-      } finally {
-        setLoadingQuestion(false);
+      } catch (error) {
+        console.error("Error fetching session details:", error);
       }
     };
 
     syncSession();
 
+    // Reset UI for new question
     setTypedAnswer("");
     handleRerecord();
     setSubmitError(null);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interviewType, questions, existingSessionId]);
+  }, [questions, existingSessionId, interviewType]);
 
   //This is the function that submits the answer to the backend
   //This is just a test at the moment
