@@ -22,43 +22,54 @@ router.post(
   upload.single("audio"),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      // 1. GET DATA
-      // We strictly need sessionId now!
-      const { sessionId, questionId, question, mode, answerText, duration } =
-        req.body;
+      const { sessionId, questionId, mode, answerText, duration } = req.body;
 
-      if (!sessionId) {
-        res.status(400).json({ error: "Missing sessionId" });
+      // 1. Validation
+      if (!sessionId || !questionId) {
+        res.status(400).json({ error: "Missing sessionId or questionId" });
         return;
       }
 
-      let finalAnswerText = "";
+      // 2. Fetch Trusted Question
+      const questionRecord = await prisma.question.findUnique({
+        where: { id: questionId },
+      });
+
+      if (!questionRecord) {
+        res.status(404).json({ error: "Question not found" });
+        return;
+      }
+
+      // 3. Handle Audio (Transcription)
+      let finalAnswerText = answerText || "";
       let audioUrlPath = null;
 
-      // 2. HANDLE AUDIO / TEXT (Same logic as before)
       if (mode === "record" && req.file) {
-        const filePath = req.file.path;
-        const fileBuffer = await fs.readFile(filePath);
+        const fileBuffer = await fs.readFile(req.file.path);
         const base64Audio = fileBuffer.toString("base64");
 
         const transResult = await transcription_ai.models.generateContent({
           model: "gemini-2.5-flash-lite",
           contents: [
-            { text: "Transcribe verbatim." },
-            { inlineData: { mimeType: "audio/webm", data: base64Audio } },
+            {
+              role: "user",
+              parts: [
+                { text: "Transcribe verbatim." },
+                { inlineData: { mimeType: "audio/webm", data: base64Audio } },
+              ],
+            },
           ],
         });
-        finalAnswerText = (transResult.text ?? "").trim();
 
-        // Save file permanently
-        const fileName = `${req.file.filename}.webm`;
-        audioUrlPath = `/uploads/${fileName}`;
-        // (Optional: Rename req.file.path to uploads/fileName here if needed)
-      } else {
-        finalAnswerText = answerText || "";
+        // SIMPLIFIED: Just call .text()
+        // The ? handles cases where the model refuses to answer (safety)
+        finalAnswerText = transResult.text || "";
+        finalAnswerText = finalAnswerText.trim();
+
+        audioUrlPath = `/uploads/${req.file.filename}.webm`;
       }
 
-      // 3. AI ANALYSIS
+      // 4. Generate AI Feedback
       const analysis = await generation_ai.models.generateContent({
         model: "gemini-2.5-flash-lite",
         config: {
@@ -66,79 +77,50 @@ router.post(
           responseMimeType: "application/json",
         },
         contents: [
-          { text: `Question: ${question}\nAnswer: ${finalAnswerText}` },
+          {
+            role: "user",
+            parts: [
+              {
+                text: `Question: ${questionRecord.question}\nAnswer: ${finalAnswerText}`,
+              },
+            ],
+          },
         ],
       });
 
-      let aiData;
+      // 5. Parse AI Response
+      // SIMPLIFIED: Just call .text()
       const rawText = analysis.text || "{}";
 
+      let aiData;
       try {
-        const cleanedJson = jsonrepair(rawText);
-        aiData = JSON.parse(cleanedJson);
+        aiData = JSON.parse(jsonrepair(rawText));
       } catch (error) {
-        console.error("JSON PARSE FAILED. Raw Text:", rawText);
-
-        // LAYER 4: Safe Fallback Data
+        console.error("JSON Parse Error:", rawText);
         aiData = {
           score: 0,
-          checklist: {
-            specific_examples_provided: false,
-            no_negative_language_detected: false,
-            no_filler_words_detected: false,
-            technical_detail_present: false,
-            appropriate_length: false,
-          },
-          // Return the raw text as "feedback" so the user can at least see what happened
-          feedback: `We encountered an error processing the detailed analysis, but here is the raw output: <br><br> ${rawText.replace(
-            /\n/g,
-            "<br>"
-          )}`,
-          improved_version: "N/A",
-          actionable_feedback:
-            "Please retry this question. The AI response format was invalid.",
-          isLastQuestion: false,
+          checklist: {},
+          feedback: "AI response format error. Please try again.",
         };
       }
 
-      // 4. SAVE TO DB (The "Saving Logic")
-
-      // Ensure Question Exists
-      await prisma.question.upsert({
-        where: { id: questionId },
-        update: {},
-        create: {
-          id: questionId,
-          question: question || "Unknown",
-          category: "General",
-          sampleAnswers: [],
-        },
-      });
-
-      // Create the SessionAttempt
+      // 6. Save to DB
       const attempt = await prisma.sessionAttempt.create({
         data: {
-          sessionId: sessionId,
-          questionId: questionId,
+          sessionId,
+          questionId,
           transcription: finalAnswerText,
           audioUrl: audioUrlPath,
           duration: parseInt(duration) || 0,
           score: aiData.score,
-          feedback: aiData.analysis_highlighting,
+          feedback: aiData.analysis_highlighting || aiData.feedback,
           improvedVersion: aiData.improved_version,
           actionableFeedback: aiData.actionable_feedback,
           checklist: aiData.checklist,
         },
       });
 
-      console.log("Attempt Saved:", attempt.id);
-
-      // 5. RETURN ID (So frontend can redirect to Feedback page)
-      res.json({
-        ok: true,
-        attemptId: attempt.id,
-        analysis: aiData,
-      });
+      res.json({ ok: true, attemptId: attempt.id, analysis: aiData });
     } catch (error: any) {
       console.error("Submit Error:", error);
       res.status(500).json({ error: error.message });
