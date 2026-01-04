@@ -9,9 +9,10 @@ import {
   Home,
   Loader2,
   BarChart3,
+  ArrowLeft,
 } from "lucide-react"; // Added BarChart3 icon
 import Navbar from "../../components/Navbar";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 // 1. Updated Data Interface
 interface AttemptData {
@@ -41,6 +42,8 @@ interface AttemptData {
 const PracticeFeedback = () => {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isViewOnly = searchParams.get("viewOnly") === "true";
   const attemptId = params.attemptId as string;
 
   const [data, setData] = useState<AttemptData | null>(null);
@@ -143,6 +146,11 @@ const PracticeFeedback = () => {
   const handleNavigation = async (targetDestination: string) => {
     if (!data) return;
 
+    if (isViewOnly) {
+      router.push(targetDestination);
+      return;
+    }
+
     if (!data.isLastQuestion && targetDestination === "/dashboard") {
       router.push("/dashboard");
       return;
@@ -176,8 +184,16 @@ const PracticeFeedback = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#F8F9FA] pb-32">
+      <div className="min-h-screen bg-[#F8F9FA] pb-10">
         <div className="max-w-[1000px] mx-auto px-6 pt-32 pb-12">
+          {isViewOnly && (
+            <button
+              onClick={() => router.back()}
+              className="mb-6 flex items-center text-gray-500 hover:text-gray-900 transition"
+            >
+              <ArrowLeft size={20} className="mr-2" /> Back to List
+            </button>
+          )}
           {/* Header */}
           <div className="mb-8 text-center md:text-left">
             <h1 className="text-2xl font-bold text-[#1A1A1A]">
@@ -326,57 +342,82 @@ const PracticeFeedback = () => {
           {/* Navigation Buttons */}
           <div className="flex flex-col items-center gap-8 mt-12">
             <div className="flex items-center justify-center gap-4 w-full">
-              {/* RETRY BUTTON */}
-              <button
-                onClick={() =>
-                  router.push(`/practice?sessionId=${data.sessionId}`)
-                }
-                disabled={isGenerating}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 font-bold text-[14px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RotateCcw size={18} />
-                Retry Question
-              </button>
+              {isViewOnly ? (
+                // VIEW ONLY MODE: Simple Navigation
+                <>
+                  <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all"
+                  >
+                    <ArrowLeft size={18} />
+                    Back to Session List
+                  </button>
 
-              {/* NEXT / FINISH BUTTON */}
-              <button
-                onClick={() => handleNavigation("/analytics")}
-                disabled={isGenerating}
-                className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
-                  // IF LAST QUESTION: Green Color
-                  data.isLastQuestion
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100"
-                    : // ELSE: Blue Color
-                      "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
-                } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    {/* IF LAST QUESTION: "Go to Analytics" + Chart Icon */}
-                    {data.isLastQuestion ? "Go to Analytics" : "Next Question"}
-                    {data.isLastQuestion ? (
-                      <BarChart3 size={18} />
+                  <button
+                    onClick={() => router.push("/dashboard")}
+                    className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A1A] font-bold text-[14px] transition-all ml-4"
+                  >
+                    <Home size={18} />
+                    Return to Dashboard
+                  </button>
+                </>
+              ) : (
+                <>
+                  {/* RETRY BUTTON */}
+                  <button
+                    onClick={() =>
+                      router.push(`/practice?sessionId=${data.sessionId}`)
+                    }
+                    disabled={isGenerating}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 font-bold text-[14px] hover:bg-gray-50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RotateCcw size={18} />
+                    Retry Question
+                  </button>
+
+                  {/* NEXT / FINISH BUTTON */}
+                  <button
+                    onClick={() => handleNavigation("/analytics")}
+                    disabled={isGenerating}
+                    className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
+                      // IF LAST QUESTION: Green Color
+                      data.isLastQuestion
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100"
+                        : // ELSE: Blue Color
+                          "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
+                    } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Processing...
+                      </>
                     ) : (
-                      <ArrowRight size={18} />
+                      <>
+                        {/* IF LAST QUESTION: "Go to Analytics" + Chart Icon */}
+                        {data.isLastQuestion
+                          ? "Go to Analytics"
+                          : "Next Question"}
+                        {data.isLastQuestion ? (
+                          <BarChart3 size={18} />
+                        ) : (
+                          <ArrowRight size={18} />
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </button>
+                  </button>
 
-              {/* DASHBOARD BUTTON */}
-              <button
-                onClick={() => handleNavigation("/dashboard")}
-                disabled={isGenerating}
-                className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A1A] font-bold text-[14px] transition-all ml-4 disabled:opacity-50"
-              >
-                <Home size={18} />
-                Return to Dashboard
-              </button>
+                  {/* DASHBOARD BUTTON */}
+                  <button
+                    onClick={() => handleNavigation("/dashboard")}
+                    disabled={isGenerating}
+                    className="flex items-center gap-2 text-gray-500 hover:text-[#1A1A1A] font-bold text-[14px] transition-all ml-4 disabled:opacity-50"
+                  >
+                    <Home size={18} />
+                    Return to Dashboard
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
