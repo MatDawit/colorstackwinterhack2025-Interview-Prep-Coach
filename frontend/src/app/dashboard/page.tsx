@@ -59,13 +59,13 @@ export default function Dashboard() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-white flex justify-center pt-20">
-        <div className="w-full">
-          <div className="bg-white shadow-xl rounded-xl h-50 w-250 flex flex-col items-start ml-[250px] p-6 space-y-4">
-            <div className="text-xl font-bold text-black mt-2">
+      <div className="min-h-screen bg-white pt-20">
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="bg-white shadow-xl rounded-xl p-6 space-y-4 w-full">
+            <div className="text-xl font-bold text-black">
               Welcome to InterviewAI!
             </div>
-            <div className="text-black text-xs">
+            <div className="text-black text-sm sm:text-base">
               Refine your interview skills with AI-powered practice and actionable feedback.
             </div>
             <div className="bg-blue-500 hover:bg-blue-700 hover:scale-105 rounded-lg w-47 h-10 flex items-center justify-center shadow-xl mt-2">
@@ -78,9 +78,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex flex-row gap-5 ml-[250px] mt-12">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {/* Recent Sessions Box */}
-            <div className="bg-white shadow-xl rounded-xl h-100 w-80 p-6 space-y-4">
+            <div className="bg-white shadow-xl rounded-xl w-full p-6 space-y-4">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-bold text-black">Recent Sessions</h2>
                 <button className="text-blue-500 text-sm">View All →</button>
@@ -116,7 +116,7 @@ export default function Dashboard() {
             </div>
 
             {/* Progress Summary Box */}
-            <div className="bg-white shadow-xl rounded-xl h-100 w-80 p-6 space-y-4">
+            <div className="bg-white shadow-xl rounded-xl p-6 space-y-4 w-full">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-bold text-black">Progress Summary</h2>
                 <button className="text-blue-500 text-sm">View Details →</button>
@@ -155,10 +155,10 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Links Box */}
-            <div className="bg-white shadow-xl rounded-xl h-100 w-80 p-6 space-y-4">
+            <div className="bg-white shadow-xl rounded-xl p-6 space-y-4 w-full">
               <h2 className="text-lg font-bold text-black">Quick Links</h2>
               
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
                   <div className="text-blue-600">📚</div>
                   <span className="text-sm text-black">Question Bank</span>
@@ -182,6 +182,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+          <div className="h-10" />
         </div>
       </div>
     </>
