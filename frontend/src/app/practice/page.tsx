@@ -30,6 +30,16 @@ export default function Practice() {
   const searchParams = useSearchParams();
   const existingSessionId = searchParams.get("sessionId");
 
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      // Set to false immediately when user navigates away
+      isMounted.current = false;
+    };
+  }, []);
+
   const [interviewType, setInterviewType] = useState(
     "Software Engineering Interview"
   );
@@ -127,7 +137,10 @@ export default function Practice() {
       try {
         const res = await fetch("http://localhost:5000/api/questions");
         const data = await res.json(); // { questions: [...] }
-        setQuestions(data.questions ?? []);
+
+        if (isMounted.current) {
+          setQuestions(data.questions ?? []);
+        }
       } catch (err) {
         console.error("Failed to load questions:", err);
       }
@@ -157,7 +170,8 @@ export default function Practice() {
         isCreatingSession.current = true; // Lock
 
         try {
-          setLoadingQuestion(true);
+          if (isMounted.current) setLoadingQuestion(true);
+
           const startRes = await fetch(
             "http://localhost:5000/api/session/start",
             {
@@ -169,6 +183,8 @@ export default function Practice() {
               body: JSON.stringify({ interviewType }),
             }
           );
+
+          if (!isMounted.current) return;
 
           if (startRes.ok) {
             const data = await startRes.json();
