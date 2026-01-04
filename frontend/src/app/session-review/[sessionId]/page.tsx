@@ -6,7 +6,8 @@ import { ArrowLeft, Calendar, ChevronRight, Loader2 } from "lucide-react";
 
 interface AttemptSummary {
   id: string;
-  question: { question: string; category: string };
+  // Made optional to prevent crashes if question data is missing
+  question?: { question: string; category: string };
   score: number;
   duration: number;
   createdAt: string;
@@ -62,52 +63,66 @@ export default function SessionReview() {
           </div>
         ) : (
           <div className="space-y-4">
-            {attempts.map((attempt, index) => (
-              <div
-                key={attempt.id}
-                // This adds the ?viewOnly=true param so the next page knows not to show "Next Question"
-                onClick={() =>
-                  router.push(`/feedback/${attempt.id}?viewOnly=true`)
-                }
-                className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer flex items-center justify-between group"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-md">
-                      Q{index + 1}
-                    </span>
-                    <span className="text-gray-500 text-xs font-medium uppercase tracking-wide">
-                      {attempt.question.category}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition">
-                    {attempt.question.question}
-                  </h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Calendar size={14} />{" "}
-                      {new Date(attempt.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
+            {attempts.map((attempt, index) => {
+              // 1. Safe Data Extraction (Prevents crashes)
+              const category = attempt.question?.category || "General";
+              const questionText =
+                attempt.question?.question || "Question Unavailable";
+              const score = attempt.score || 0;
+              const dateStr = attempt.createdAt
+                ? new Date(attempt.createdAt).toLocaleDateString()
+                : "";
 
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <div
-                      className={`text-xl font-bold ${
-                        attempt.score >= 70
-                          ? "text-emerald-600"
-                          : "text-orange-500"
-                      }`}
-                    >
-                      {attempt.score}%
+              // 2. Custom Color Logic
+              let scoreColor = "text-red-600"; // Default: < 70 (Red)
+              if (score >= 90) {
+                scoreColor = "text-emerald-600"; // 90-100 (Green)
+              } else if (score >= 80) {
+                scoreColor = "text-orange-500"; // 80-89 (Orange)
+              } else if (score >= 70) {
+                scoreColor = "text-yellow-600"; // 70-79 (Yellow)
+              }
+
+              return (
+                <div
+                  key={attempt.id}
+                  onClick={() =>
+                    router.push(`/feedback/${attempt.id}?viewOnly=true`)
+                  }
+                  className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition cursor-pointer flex items-center justify-between group"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-md">
+                        Q{index + 1}
+                      </span>
+                      <span className="text-gray-500 text-xs font-medium uppercase tracking-wide">
+                        {category}
+                      </span>
                     </div>
-                    <div className="text-xs text-gray-400">Score</div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition">
+                      {questionText}
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={14} /> {dateStr}
+                      </span>
+                    </div>
                   </div>
-                  <ChevronRight className="text-gray-300 group-hover:text-blue-500" />
+
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <div className={`text-xl font-bold ${scoreColor}`}>
+                        {score}%
+                      </div>
+                      <div className="text-xs text-gray-400">Score</div>
+                    </div>
+                    <ChevronRight className="text-gray-300 group-hover:text-blue-500" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+            <div className="h-10"></div>
           </div>
         )}
       </div>
