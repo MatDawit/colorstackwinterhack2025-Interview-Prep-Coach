@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import Navbar from "../components/Navbar";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // --- TYPES ---
 interface SessionData {
@@ -47,6 +48,8 @@ const LABEL_MAP: Record<string, string> = {
 };
 
 export default function AnalyticsPage() {
+  const router = useRouter();
+
   // --- STATE ---
   const [category, setCategory] = useState("All Categories");
   const [timeRange, setTimeRange] = useState("All Time");
@@ -390,7 +393,8 @@ export default function AnalyticsPage() {
                 filteredSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="flex flex-col md:flex-row md:items-center justify-between py-4 px-2 md:px-4 hover:bg-gray-50 transition-colors gap-2 md:gap-0"
+                    onClick={() => router.push(`/session-review/${session.id}`)}
+                    className="flex flex-col md:flex-row md:items-center justify-between py-4 px-2 md:px-4 hover:bg-gray-50 transition-colors gap-2 md:gap-0 cursor-pointer"
                   >
                     {/* Left Column */}
                     <div className="flex flex-col md:flex-row md:items-center md:gap-16 w-full md:w-auto">
