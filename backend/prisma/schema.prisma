@@ -73,24 +73,6 @@ model Attempt {
   @@index([questionId])
 }
 
-// Question bank (seeded from JSON)
-model Question {
-  id            String    @id @default(uuid())
-  category      String    // "Teamwork", "Leadership", "Conflict", etc.
-  question      String    @db.Text
-  
-  // For Matthew's scoring reference
-  sampleAnswers Json      // Array of sample answers from the JSON
-  
-  createdAt     DateTime  @default(now())
-  
-  // Relations
-  attempts      SessionAttempt[]
-  currentInSessions Session[]
-  
-  @@index([category])
-}
-
 // Mock interview sessions
 model MockInterview {
   id            String    @id @default(uuid())
@@ -111,6 +93,25 @@ model MockInterview {
   // user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
+}
+
+// Question bank (seeded from JSON)
+model Question {
+  id            String    @id @default(uuid())
+  category      String    // "Teamwork", "Leadership", "Conflict", etc.
+  question      String    @db.Text
+  role          String    @default("General") // "Software Engineering", "Product Management", or "General"
+  
+  // For Matthew's scoring reference
+  sampleAnswers Json      // Array of sample answers from the JSON
+  
+  createdAt     DateTime  @default(now())
+  
+  // Relations
+  attempts      SessionAttempt[]
+  currentInSessions Session[]
+  
+  @@index([category])
 }
 
 model Session {
