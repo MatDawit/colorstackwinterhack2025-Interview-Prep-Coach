@@ -38,6 +38,24 @@ export default function AnalyticsPage() {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // 768px is the standard Tailwind 'md' breakpoint
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Check immediately on mount
+    handleResize();
+
+    // Add listener for window resize events
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup listener on unmount
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // 2. Fetch Data from Backend on Mount
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -163,30 +181,44 @@ export default function AnalyticsPage() {
   // Calculate it immediately (Derived State)
   const dynamicBarData = getDynamicBarData();
 
+  const shortenLabel = (value: string) => {
+    if (!isMobile) return value;
+
+    const map: Record<string, string> = {
+      "Filler Words": "Fillers",
+      Apologizing: "Negative",
+      "Lack of Detail": "No Detail",
+      "Vague Answers": "Vague",
+      "Too Concise": "Length",
+    };
+    return map[value] || value;
+  };
+
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#F8F9FA] pt-24 pb-12 px-8">
+      <main className="min-h-screen bg-[#F8F9FA] pt-24 pb-12 px-4 md:px-8">
         <div className="mx-auto max-w-[1296px]">
           <header className="mb-8">
-            <h1 className="text-[30px] font-bold text-[#1A1A1A]">
+            <h1 className="text-2xl md:text-[30px] font-bold text-[#1A1A1A]">
               Analytics and Insights
             </h1>
-            <p className="text-gray-500 mt-2">
+            <p className="text-gray-500 mt-2 text-sm md:text-base">
               Track your progress and identify interview patterns.
             </p>
           </header>
 
           {/* Filters */}
-          <div className="flex justify-end items-center gap-6 mb-8">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 md:gap-6 mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
               <span className="text-sm font-semibold text-black">
                 Time Range
               </span>
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+                // Update className for width:
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
               >
                 <option>All Time</option>
                 <option>Last 30 Days</option>
@@ -194,12 +226,12 @@ export default function AnalyticsPage() {
                 <option>Last 24 Hours</option>
               </select>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
               <span className="text-sm font-semibold text-black">Category</span>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
               >
                 <option>All Categories</option>
                 {availableCategories.map((cat) => (
@@ -217,7 +249,7 @@ export default function AnalyticsPage() {
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Line Chart */}
-            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
+            <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm h-[350px] md:h-[400px]">
               <h2 className="text-black text-xl font-bold mb-1">
                 Average Score Over Time
               </h2>
@@ -227,7 +259,10 @@ export default function AnalyticsPage() {
 
               {lineChartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="80%">
-                  <LineChart data={lineChartData} margin={{ left: -34 }}>
+                  <LineChart
+                    data={lineChartData}
+                    margin={{ top: 10, left: -30, right: 10, bottom: 20 }}
+                  >
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
@@ -247,9 +282,18 @@ export default function AnalyticsPage() {
                       tick={{ fill: "#0A0D10", fontSize: 12 }}
                     />
                     <Tooltip
+                      cursor={{ fill: "#F9FAFB" }}
+                      contentStyle={{
+                        backgroundColor: "#FFFFFF",
+                        borderColor: "#E5E7EB",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                      }}
+                      itemStyle={{ color: "#000000", fontWeight: 500 }}
                       labelStyle={{
                         color: "#000000",
                         marginBottom: "4px",
+                        fontWeight: "bold",
                       }}
                     />
                     <Line
@@ -274,7 +318,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Bar Chart - NOW USING REAL 'Areas for Improvement' DATA */}
-            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm h-[400px]">
+            <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm h-[350px] md:h-[400px]">
               <h2 className="text-black text-xl font-bold mb-1">
                 Areas for Improvement
               </h2>
@@ -285,7 +329,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="80%">
                 <BarChart
                   data={dynamicBarData}
-                  margin={{ right: 0, left: -30, bottom: 20 }}
+                  margin={{ top: 10, right: 0, left: -30, bottom: 0 }}
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
@@ -296,7 +340,8 @@ export default function AnalyticsPage() {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#0A0D10", fontSize: 11 }}
+                    tick={{ fill: "#0A0D10", fontSize: isMobile ? 10 : 12 }}
+                    tickFormatter={shortenLabel}
                     interval={0}
                     dy={10}
                   />
@@ -308,16 +353,24 @@ export default function AnalyticsPage() {
                   />
                   <Tooltip
                     cursor={{ fill: "#F9FAFB" }}
+                    contentStyle={{
+                      backgroundColor: "#FFFFFF",
+                      borderColor: "#E5E7EB",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                    itemStyle={{ color: "#000000", fontWeight: 500 }}
                     labelStyle={{
                       color: "#000000",
                       marginBottom: "4px",
+                      fontWeight: "bold",
                     }}
                   />
                   <Bar
                     dataKey="count"
                     fill="#10B981" // Green to indicate these are areas to improve
                     radius={[4, 4, 0, 0]}
-                    barSize={40}
+                    barSize={32}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -325,14 +378,16 @@ export default function AnalyticsPage() {
           </div>
 
           {/* History Table */}
-          <section className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-            <h2 className="text-xl font-bold text-[#1A1A1A]">
+          <section className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm">
+            <h2 className="text-lg md:text-xl font-bold text-[#1A1A1A]">
               Session History
             </h2>
-            <p className="text-gray-500 text-sm mb-8">
+            <p className="text-gray-500 text-xs md:text-sm mb-8">
               Detailed record of all your practice interview sessions.
             </p>
-            <div className="w-full flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
+
+            {/* Header: HIDDEN on mobile (hidden md:flex) */}
+            <div className="hidden md:flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
               <div className="flex items-center gap-16">
                 <span className="w-32">Date</span>
                 <span>Category</span>
@@ -342,27 +397,44 @@ export default function AnalyticsPage() {
                 <span className="w-24 text-right">Score</span>
               </div>
             </div>
+
             <div className="divide-y divide-gray-50">
               {filteredSessions.length > 0 ? (
                 filteredSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-colors"
+                    // Change to flex-col on mobile to stack items
+                    className="flex flex-col md:flex-row md:items-center justify-between py-4 px-2 md:px-4 hover:bg-gray-50 transition-colors gap-2 md:gap-0"
                   >
-                    <div className="flex items-center gap-16">
-                      <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
-                        {new Date(session.date).toLocaleDateString()}
-                      </span>
-                      <span className="text-[14px] text-[#1A1A1A]">
+                    {/* Left Side */}
+                    <div className="flex flex-col md:flex-row md:items-center md:gap-16 w-full md:w-auto">
+                      <div className="flex justify-between items-center md:block w-full md:w-auto">
+                        <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
+                          {new Date(session.date).toLocaleDateString()}
+                        </span>
+                        {/* Mobile Score (shown next to date on small screens) */}
+                        <span
+                          className={`md:hidden text-[14px] font-bold ${getScoreColor(
+                            session.score
+                          )}`}
+                        >
+                          {session.score}%
+                        </span>
+                      </div>
+
+                      <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A]">
                         {session.category}
                       </span>
                     </div>
-                    <div className="flex items-center gap-16">
-                      <span className="text-[14px] text-[#1A1A1A] w-20 text-right">
+
+                    {/* Right Side */}
+                    <div className="flex items-center justify-between md:justify-end md:gap-16 w-full md:w-auto mt-1 md:mt-0">
+                      <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A] w-20 text-left md:text-right">
                         {session.duration}
                       </span>
+                      {/* Desktop Score (hidden on mobile) */}
                       <span
-                        className={`text-[14px] font-semibold w-24 text-right ${getScoreColor(
+                        className={`hidden md:block text-[14px] font-semibold w-24 text-right ${getScoreColor(
                           session.score
                         )}`}
                       >
