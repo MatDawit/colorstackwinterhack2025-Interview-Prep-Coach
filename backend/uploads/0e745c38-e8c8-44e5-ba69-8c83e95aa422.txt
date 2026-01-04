@@ -1,0 +1,11 @@
+sessionId: 0e745c38-e8c8-44e5-ba69-8c83e95aa422
+timestamp: 2026-01-01T21:09:57.254Z
+interviewType: Software Engineering Interview
+questionId: q1_teamwork_01
+mode: record
+
+question:
+Tell me about a time you worked on a team project.
+
+answer:
+A time that I worked on a project would be right now with this current project.

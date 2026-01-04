@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  //url      = env("DATABASE_URL") //We'll remove it in Prisma 7
 }
 
 // --- Enums for session status ---
@@ -27,7 +27,12 @@ model User {
   // Profile info
   targetRole    String?   // "Software Engineer Intern", etc.
   experienceLevel String? // "Student", "Entry-level", etc.
-  
+  bio             String?
+  location        String?
+  avatarUrl       String?   // path or URL to avatar image
+  avatarShape     String?   // "circle" | "square" (optional)
+  avatarBorder    String?   // hex like "#3D7AF5" (optional)
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -52,7 +57,7 @@ model Attempt {
   // Matthew's scoring
   starScores    Json?     // { situation: 8.5, task: 7.0, action: 9.2, result: 6.5, overall: 7.8 }
   
-  // Fadlula's AI feedback
+  // Fadlulah's AI feedback
   feedback      String?   @db.Text  // Claude's feedback
   biasPatterns  Json?     // { hedging: 3, apologizing: 1, ... }
   

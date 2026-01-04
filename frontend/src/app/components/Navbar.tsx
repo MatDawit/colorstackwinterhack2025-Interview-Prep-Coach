@@ -13,9 +13,53 @@ import {
 } from "lucide-react";
 
 export default function Navbar() {
+  type Me = {
+    name: string | null;
+    avatarUrl: string | null;
+    avatarShape: string | null;   // "circle" | "square"
+    avatarBorder: string | null;  // e.g. "#3D7AF5" OR "blue"/"green" depending on what you store
+  };
+
+  const [me, setMe] = useState<Me | null>(null);
+
+  useEffect(() => {
+    async function loadMe() {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setMe(null);
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // If backend returned HTML/401/etc, avoid JSON crash
+        if (!res.ok) {
+          setMe(null);
+          return;
+        }
+
+        const data = await res.json();
+        setMe({
+          name: data?.user?.name ?? null,
+          avatarUrl: data?.user?.avatarUrl ?? null,
+          avatarShape: data?.user?.avatarShape ?? null,
+          avatarBorder: data?.user?.avatarBorder ?? null,
+        });
+      } catch {
+        setMe(null);
+      }
+    }
+
+    loadMe();
+  }, []);
+
+
   const pathname = usePathname();
 
-  // ✅ controls whether the mobile menu is open
+  //controls whether the mobile menu is open
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [
@@ -24,11 +68,59 @@ export default function Navbar() {
     { label: "Analytics", href: "/analytics", icon: ChartNoAxesColumn },
   ];
 
-  // ✅ close the mobile menu automatically when route changes
+  // close the mobile menu automatically when route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
+  function ProfileAvatar({ me }: { me: { name: string | null; avatarUrl: string | null; avatarShape: string | null; avatarBorder: string | null } | null }) {
+    const initials =
+      (me?.name ?? "U")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0]?.toUpperCase())
+        .join("") || "U";
+
+    const isCircle = (me?.avatarShape ?? "circle") === "circle";
+
+    // If you store hex in DB, use it directly.
+    // If you store "blue"/"green", map it.
+    const border =
+      me?.avatarBorder?.startsWith("#")
+        ? me.avatarBorder
+        : me?.avatarBorder === "green"
+        ? "#22c55e"
+        : "#3D7AF5";
+
+    if (me?.avatarUrl) {
+      return (
+        <img
+          src={me.avatarUrl}
+          alt="Profile avatar"
+          className={[
+            "w-9 h-9 object-cover",
+            isCircle ? "rounded-full" : "rounded-xl",
+          ].join(" ")}
+          style={{ border: `2px solid ${border}` }}
+        />
+      );
+    }
+
+    return (
+      <div
+        className={[
+          "w-9 h-9 bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-700",
+          isCircle ? "rounded-full" : "rounded-xl",
+        ].join(" ")}
+        style={{ border: `2px solid ${border}` }}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  
   return (
     <header className="fixed top-0 left-0 w-full h-16 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] z-50">
       <div className="mx-auto w-full max-w-6xl h-full px-4 sm:px-8 flex items-center justify-between">
@@ -58,7 +150,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* ✅ Desktop links (hidden on small screens) */}
+          {/*  Desktop links (hidden on small screens) */}
           <nav className="hidden sm:flex items-center gap-2">
             {links.map((link) => {
               const isActive = pathname?.startsWith(link.href);
@@ -86,11 +178,14 @@ export default function Navbar() {
         {/* RIGHT: Profile icon (links to profile page) */}
         <Link
           href="/profile"
-          aria-label="Profile"
-          className="w-9 h-9 bg-[#F5E7F9] rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
+          className="mt-1 flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
         >
-          <CircleUserRound className="w-6 h-6 text-gray-700" strokeWidth={1.5} />
+          <div className="shrink-0">
+            <ProfileAvatar me={me} />
+          </div>
+          Profile
         </Link>
+
       </div>
 
       {/* ✅ Mobile dropdown menu (ONLY on small screens, and only when open) */}
@@ -117,13 +212,14 @@ export default function Navbar() {
               );
             })}
 
-            <Link
-              href="/profile"
-              className="mt-1 flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              <CircleUserRound className="h-5 w-5 text-gray-500" />
-              Profile
-            </Link>
+          <Link
+            href="/profile"
+            aria-label="Profile"
+            className="w-9 h-9 flex items-center justify-center hover:opacity-90 transition-opacity"
+          >
+            <ProfileAvatar me={me} />
+          </Link>
+
           </nav>
         </div>
       )}

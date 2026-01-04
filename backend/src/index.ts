@@ -7,7 +7,7 @@ import practiceRoutes from "./routes/practice.routes";
 import questionsRouter from "./routes/questions.routes";
 import feedbackRouter from "./routes/feedback.routes";
 import analyticsRouter from "./routes/analytics.routes";
-
+import profileRouter from "./routes/profile.routes";
 // read the env file
 dotenv.config();
 // create the express app
@@ -39,6 +39,9 @@ app.use("/api/feedback", feedbackRouter);
 
 // register analytics routes
 app.use("/api/analytics", analyticsRouter);
+
+// register profile routes
+app.use("/api/profile", profileRouter);
 
 // check if backend is running
 app.get("/health", (req, res) => {
