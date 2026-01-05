@@ -1,66 +1,51 @@
-import { PrismaClient } from "../generated/prisma";
-import * as fs from "fs";
-import * as path from "path";
+import { PrismaClient } from '../generated/prisma';
+import * as fs from 'fs';
+import * as path from 'path';
 
+// Initialize Prisma Client
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting seed...");
-
   try {
-    const jsonPath = path.join(__dirname, "questions.json");
-    const raw = fs.readFileSync(jsonPath, "utf-8");
-    const data = JSON.parse(raw);
+    console.log('🌱 Starting to seed questions...');
 
-    if (!Array.isArray(data.questions)) {
-      throw new Error('questions.json must contain a "questions" array');
-    }
+    // Read the questions.json file
+    const questionsPath = path.join(__dirname, 'questions.json');
+    const questionsData = fs.readFileSync(questionsPath, 'utf-8');
+    const questions = JSON.parse(questionsData);
 
-    console.log(`📚 Found ${data.questions.length} questions`);
-
-    // Clear table
+    // Delete existing questions (optional - only if you want to reset)
+    console.log('🗑️  Clearing existing questions...');
     await prisma.question.deleteMany({});
-    console.log("🗑️  Cleared existing questions");
 
-    for (const q of data.questions) {
+    // Insert questions one by one
+    let count = 0;
+    for (const q of questions) {
       await prisma.question.create({
         data: {
-          // Only include id if it exists in JSON
-          ...(q.id && { id: q.id }),
-
           category: q.category,
           question: q.question,
-
-          // Optional fields with schema defaults
-          role: q.role ?? "General",
-          difficulty: q.difficulty ?? "Basic",
+          sampleAnswers: q.sampleAnswers || {},
+          role: q.role || null, // If you have a role field
         },
       });
-
-      console.log(`✅ Seeded: ${q.category} | ${q.role ?? "General"}`);
+      count++;
+      console.log(`✅ Seeded question ${count}: ${q.question.substring(0, 50)}...`);
     }
 
-    console.log("✨ Seeding complete");
-
-    // Verification
-    const count = await prisma.question.count();
-    console.log(`📊 Total questions in DB: ${count}`);
-
-    const sample = await prisma.question.findFirst();
-    console.log("📋 Sample question:", {
-      id: sample?.id,
-      category: sample?.category,
-      role: sample?.role,
-      difficulty: sample?.difficulty,
-    });
+    console.log(`\n🎉 Successfully seeded ${count} questions!`);
   } catch (error) {
-    console.error("❌ Seed failed:", error);
+    console.error('❌ Error seeding questions:', error);
     throw error;
   }
 }
 
+// Run the seed function
 main()
-  .catch(() => process.exit(1))
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });
