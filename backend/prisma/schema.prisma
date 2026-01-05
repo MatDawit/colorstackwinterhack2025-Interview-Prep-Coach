@@ -101,9 +101,7 @@ model Question {
   category      String    // "Teamwork", "Leadership", "Conflict", etc.
   question      String    @db.Text
   role          String    @default("General") // "Software Engineering", "Product Management", or "General"
-  
-  // For Matthew's scoring reference
-  sampleAnswers Json      // Array of sample answers from the JSON
+  difficulty    String    @default("Basic") // Options are Basic and Advanced
   
   createdAt     DateTime  @default(now())
   
