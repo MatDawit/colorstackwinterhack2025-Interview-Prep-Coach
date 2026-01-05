@@ -77,8 +77,8 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
 
     const whereCondition = {
       id: { notIn: attemptedIds },
-      role: session.interviewType, // Strict Match
-      difficulty: session.difficulty, // Strict Match
+      role: session.interviewType, // Exact Match
+      difficulty: session.difficulty, // Exact Match
     };
 
     const unattemptedCount = await prisma.question.count({
@@ -94,12 +94,8 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
 
     // Pick random next question
     const skip = Math.floor(Math.random() * unattemptedCount);
-
     const nextQuestions = await prisma.question.findMany({
-      where: {
-        id: { notIn: attemptedIds },
-        OR: [{ role: "General" }, { role: session.interviewType }],
-      },
+      where: whereCondition,
       take: 1,
       skip: skip,
     });
