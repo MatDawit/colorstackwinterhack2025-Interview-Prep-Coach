@@ -24,9 +24,10 @@ export default function Dashboard() {
         // Get the JWT token from localStorage (or wherever you store it)
         const token = localStorage.getItem('token'); // Adjust based on where you store your token
         
+        // PROTECTION: Redirect to login if no token
         if (!token) {
-          console.error('No auth token found');
-          setLoading(false);
+          console.error('No auth token found - redirecting to login');
+          router.push('/login');
           return;
         }
 
@@ -37,6 +38,12 @@ export default function Dashboard() {
         });
         
         if (!response.ok) {
+          // If token is invalid/expired, redirect to login
+          if (response.status === 401) {
+            localStorage.removeItem('token'); // Clear invalid token
+            router.push('/login');
+            return;
+          }
           throw new Error('Failed to fetch stats');
         }
 
@@ -54,7 +61,7 @@ export default function Dashboard() {
     };
 
     fetchSessionStats();
-  }, []);
+  }, [router]);
 
   return (
     <>
