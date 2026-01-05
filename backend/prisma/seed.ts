@@ -1,8 +1,12 @@
+import "dotenv/config"; // load DATABASE_URL
 import { PrismaClient } from "../generated/prisma";
+import { PrismaPg } from "@prisma/adapter-pg";
 import * as fs from "fs";
 import * as path from "path";
 
-const prisma = new PrismaClient();
+// Prisma 7: client must be constructed with an adapter
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Starting seed...");
@@ -18,7 +22,12 @@ async function main() {
 
     console.log(`📚 Found ${data.questions.length} questions`);
 
-    // Clear table
+    // Clear dependent tables first to avoid FK violations
+    await prisma.sessionAttempt.deleteMany({});
+    await prisma.session.deleteMany({});
+    console.log("🗑️  Cleared sessions and attempts");
+
+    // Clear questions last
     await prisma.question.deleteMany({});
     console.log("🗑️  Cleared existing questions");
 
