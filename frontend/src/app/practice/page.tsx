@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, X } from "lucide-react"; // Added X for error modal
 
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
@@ -54,6 +54,11 @@ export default function Practice() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Error modal state
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorTitle, setErrorTitle] = useState("Error");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const isCreatingSession = useRef(false);
 
@@ -190,15 +195,148 @@ export default function Practice() {
     }, 1000);
   }
 
+  // Helper function to show error modal
+  function showError(title: string, message: string) {
+    setErrorTitle(title);
+    setErrorMessage(message);
+    setShowErrorModal(true);
+  }
+
+  // This effect handles Session Syncing.
+  // Instead of picking a random question every time, it asks the backend: "What is the active question?"
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const initSession = async () => {
+      let activeId = existingSessionId || sessionId;
+
+      // 1. Create New Session if needed
+      if (!activeId) {
+        if (isCreatingSession.current) return;
+        isCreatingSession.current = true;
+        try {
+          if (isMounted.current) setLoadingQuestion(true);
+
+          const startRes = await fetch(
+            "http://localhost:5000/api/session/start",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ interviewType, difficulty }),
+            }
+          );
+
+          if (isMounted.current) {
+            if (startRes.ok) {
+              const data = await startRes.json();
+              activeId = data.sessionId;
+              setSessionId(activeId);
+              router.replace(`/practice?sessionId=${activeId}`, {
+                scroll: false,
+              });
+            } else {
+              const errorData = await startRes.json();
+              showError(
+                "Session Error",
+                errorData.error || "Failed to start interview session. Please try again."
+              );
+            }
+          }
+        } catch (err) {
+          console.error("Failed to start session", err);
+          if (isMounted.current) {
+            showError(
+              "Connection Error",
+              "Unable to connect to the server. Please check your internet connection."
+            );
+          }
+        } finally {
+          isCreatingSession.current = false;
+        }
+      }
+
+      // 2. Fetch Session State (Which now includes the Question!)
+      if (activeId) {
+        setSessionId(activeId);
+        setLoadingQuestion(true);
+        try {
+          const res = await fetch(
+            `http://localhost:5000/api/practice/session/${activeId}`
+          );
+          if (res.ok) {
+            const sessionData = await res.json();
+
+            // FIX: We read the question directly from the backend response
+            // No more searching through a "questions" array
+            if (sessionData.currentQuestion) {
+              setCurrentQuestion(sessionData.currentQuestion);
+              setQId(sessionData.currentQuestion.id);
+              setQuestion(sessionData.currentQuestion.question);
+            } else {
+              showError(
+                "Question Error",
+                "No question found for this session. Please refresh the page."
+              );
+            }
+
+            if (sessionData.status === "COMPLETED") {
+              router.push("/analytics");
+            }
+          } else {
+            const errorData = await res.json();
+            showError(
+              "Session Error",
+              errorData.error || "Failed to load question. Please try again."
+            );
+          }
+        } catch (error) {
+          console.error("Error fetching session:", error);
+          showError(
+            "Connection Error",
+            "Unable to load question. Please check your connection."
+          );
+        } finally {
+          setLoadingQuestion(false);
+        }
+      }
+    };
+
+    initSession();
+
+    // Reset UI on question change
+    setTypedAnswer("");
+    handleRerecord();
+    setSubmitError(null);
+
+    // Dependency array is much cleaner now
+  }, [existingSessionId, interviewType]);
+
+  //This is the function that submits the answer to the backend
+  //This is just a test at the moment
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("Please log in to submit.");
-      if (!sessionId)
-        throw new Error("Session not initialized. Please refresh.");
+      if (!token) {
+        showError("Authentication Error", "Please log in to submit your answer.");
+        setSubmitting(false);
+        return;
+      }
+      
+      if (!sessionId) {
+        showError("Session Error", "Session not initialized. Please refresh the page.");
+        setSubmitting(false);
+        return;
+      }
 
       const form = new FormData();
       form.append("sessionId", sessionId);
@@ -208,12 +346,26 @@ export default function Practice() {
       form.append("duration", String(elapsedTime));
 
       if (mode === "type") {
-        if (!typedAnswer.trim()) throw new Error("Answer cannot be empty.");
+        if (!typedAnswer.trim()) {
+          showError("Empty Answer", "Please type your answer before submitting.");
+          setSubmitting(false);
+          return;
+        }
         form.append("answerText", typedAnswer);
       } else {
         if (recordingState === "recording")
           throw new Error("Stop the recording before submitting.");
         if (!audioBlob) throw new Error("No audio recorded.");
+        if (recordingState === "recording") {
+          showError("Recording In Progress", "Please stop the recording before submitting.");
+          setSubmitting(false);
+          return;
+        }
+        if (!audioBlob) {
+          showError("No Recording", "Please record your answer before submitting.");
+          setSubmitting(false);
+          return;
+        }
         form.append("audio", audioBlob, "answer.webm");
       }
 
@@ -224,11 +376,28 @@ export default function Practice() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed.");
+      
+      if (!res.ok) {
+        showError(
+          "Submission Failed",
+          data.error || "Unable to submit your answer. Please try again."
+        );
+        setSubmitting(false);
+        return;
+      }
 
-      router.push(`/feedback/${data.attemptId}`);
+      // Check if session is complete
+      if (data.sessionComplete) {
+        router.push(`/session-review/${data.sessionId}`);
+      } else {
+        router.push(`/feedback/${data.attemptId}`);
+      }
     } catch (err: any) {
-      setSubmitError(err.message);
+      console.error("Submission error:", err);
+      showError(
+        "Connection Error",
+        "Unable to submit your answer. Please check your connection and try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -266,6 +435,10 @@ export default function Practice() {
     } catch (err) {
       setMicPermission("denied");
       setSubmitError("Microphone permission denied.");
+      showError(
+        "Microphone Access Denied",
+        "Please allow microphone access in your browser settings to record your answer."
+      );
       stopMicStream();
     }
   }
@@ -276,6 +449,7 @@ export default function Practice() {
       streamRef.current = null;
     }
   }
+  
   function stopRecording() {
     setSubmitError(null);
     if (recordingState !== "recording") return;
@@ -516,6 +690,52 @@ export default function Practice() {
           )}
         </div>
       </div>
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 relative animate-fadeIn">
+            {/* Close button */}
+            <button
+              onClick={() => setShowErrorModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Error Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border-4 border-red-500">
+                  <X className="w-10 h-10 text-red-500" strokeWidth={3} />
+                </div>
+              </div>
+            </div>
+
+            {/* Error Title */}
+            <h2 className="text-2xl font-bold text-center text-red-600 mb-3">
+              {errorTitle}
+            </h2>
+
+            {/* Error Message */}
+            <p className="text-center text-gray-600 mb-6">
+              {errorMessage}
+            </p>
+
+            {/* Dismiss Button */}
+            <button
+              onClick={() => setShowErrorModal(false)}
+              className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+/*
+Yeah, so the frontend I want you to replace those, recent session areas like, Behavioral interview, technical interview and system design interview with the actual values from the database, if you don't find it for this user then just have it at 0%. Also completion should be calculation by 
+*/
