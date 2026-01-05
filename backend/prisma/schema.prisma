@@ -101,6 +101,7 @@ model Question {
   category      String    // "Teamwork", "Leadership", "Conflict", etc.
   question      String    @db.Text
   role          String    @default("General") // "Software Engineering", "Product Management", or "General"
+  difficulty    String    @default("Basic") // Options are Basic and Advanced
   
   createdAt     DateTime  @default(now())
   
