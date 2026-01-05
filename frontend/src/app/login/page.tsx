@@ -18,13 +18,9 @@ text-2xl text-gray-800 - text size and color
   refresh: function,   // Reload current page
   prefetch: function,  // Pre-load a page
   // ... and more
-
-  
-
  */
 
-'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation'
 import { BrainCircuit, X } from "lucide-react";
 
@@ -41,6 +37,15 @@ export default function Login() {
     const [errorTitle, setErrorTitle] = useState('Error')
     const [errorMessage, setErrorMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+
+    // Load remembered email on component mount
+    useEffect(() => {
+        const rememberedEmail = localStorage.getItem('rememberedEmail')
+        if (rememberedEmail) {
+            setEmail(rememberedEmail)
+            setRememberMe(true)
+        }
+    }, []);
 
     // Handle regular login
     const handleLogin = async () => {
@@ -75,9 +80,11 @@ export default function Login() {
                 // Store token
                 localStorage.setItem('token', data.token)
                 
-                // Optionally store user info
+                // Handle "Remember Me" - save email for next time
                 if (rememberMe) {
-                    localStorage.setItem('userEmail', email)
+                    localStorage.setItem('rememberedEmail', email)
+                } else {
+                    localStorage.removeItem('rememberedEmail')
                 }
                 
                 // Redirect to dashboard
@@ -85,7 +92,7 @@ export default function Login() {
             } else {
                 // Display specific error from backend
                 setErrorTitle('Login Failed')
-                setErrorMessage(data.error || 'Invalid credentials. Please try again.')
+                setErrorMessage(data.error || 'Invalid email or password. Please try again.')
                 setShowErrorModal(true)
             }
         } catch (err) {
@@ -129,33 +136,34 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 flex justify-center pt-20">
+        // Outer container - full screen gradient background, responsive padding
+        <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 flex justify-center items-center px-4 py-8 sm:py-12 md:py-20">
             
-            {/* Main Login Card */}
-            <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full h-fit relative">
+            {/* Main Login Card - responsive width and padding */}
+            <div className="bg-white rounded-xl shadow-xl p-6 sm:p-8 w-full max-w-md">
                 
-                {/* Logo Section */}
-                <div className="flex items-center justify-center mb-6">
-                    <div className="w-9 h-9 bg-blue-600 overflow-hidden rounded-lg flex items-center justify-center">
-                        <BrainCircuit className="w-6 h-6 text-white" strokeWidth={1.5} />
+                {/* Logo Section - responsive spacing */}
+                <div className="flex items-center justify-center mb-4 sm:mb-6">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-600 overflow-hidden rounded-lg flex items-center justify-center">
+                        <BrainCircuit className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={1.5} />
                     </div>
-                    <span className="ml-2 text-2xl font-semibold text-blue-600">
+                    <span className="ml-2 text-xl sm:text-2xl font-semibold text-blue-600">
                         InterviewAI
                     </span>
                 </div>
                 
-                {/* Title */}
-                <h1 className="text-black text-3xl font-bold text-center mb-2">
+                {/* Title - responsive text size */}
+                <h1 className="text-black text-2xl sm:text-3xl font-bold text-center mb-2">
                     Sign In to InterviewAI
                 </h1>
                 
-                {/* Subtitle */}
-                <p className="text-gray-600 text-center mb-6">
+                {/* Subtitle - responsive text size */}
+                <p className="text-gray-600 text-sm sm:text-base text-center mb-4 sm:mb-6">
                     Access your AI-powered interview practice sessions.
                 </p>
 
-                {/* OAuth Buttons */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                {/* OAuth Buttons - responsive grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                     {/* Google Button */}
                     <button
                         onClick={handleGoogleAuth}
@@ -184,18 +192,18 @@ export default function Login() {
                     </button>
                 </div>
 
-                {/* Divider */}
-                <div className="relative my-6">
+                {/* Divider - responsive spacing */}
+                <div className="relative my-4 sm:my-6">
                     <div className="absolute inset-0 flex items-center">
                         <div className="w-full border-t border-gray-300"></div>
                     </div>
-                    <div className="relative flex justify-center text-sm">
+                    <div className="relative flex justify-center text-xs sm:text-sm">
                         <span className="px-2 bg-white text-gray-500">OR CONTINUE WITH</span>
                     </div>
                 </div>
                 
-                {/* Email Input */}
-                <div className="mb-4">
+                {/* Email Input - responsive spacing */}
+                <div className="mb-3 sm:mb-4">
                     <label className="block text-sm text-black font-bold mb-2">Email</label>
                     <input 
                         type="email"
@@ -203,12 +211,12 @@ export default function Login() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={isLoading}
-                        className="bg-white border-2 rounded-lg border-gray-300 w-full h-12 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="bg-white border-2 rounded-lg border-gray-300 w-full h-11 sm:h-12 px-3 sm:px-4 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                 </div>
 
-                {/* Password Input */}
-                <div className="mb-4">
+                {/* Password Input - responsive spacing */}
+                <div className="mb-3 sm:mb-4">
                     <label className="block text-sm text-black font-bold mb-2">Password</label>
                     <input 
                         type="password"
@@ -217,12 +225,12 @@ export default function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyPress={handleKeyPress}
                         disabled={isLoading}
-                        className="bg-white border-2 rounded-lg border-gray-300 w-full h-12 px-4 text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="bg-white border-2 rounded-lg border-gray-300 w-full h-11 sm:h-12 px-3 sm:px-4 text-sm sm:text-base text-black placeholder:text-gray-400 focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
                 </div>
 
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between mb-6">
+                {/* Remember Me & Forgot Password - responsive layout */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                     <label className="flex items-center">
                         <input
                             type="checkbox"
@@ -234,16 +242,16 @@ export default function Login() {
                         <span className="ml-2 text-sm text-gray-700">Remember me</span>
                     </label>
                     <button 
-                        className="text-sm text-blue-600 hover:underline font-medium"
+                        className="text-sm text-blue-600 hover:underline font-medium text-left sm:text-right"
                         disabled={isLoading}
                     >
                         Forgot password?
                     </button>
                 </div>
                 
-                {/* Sign In Button */}
+                {/* Sign In Button - responsive height and text */}
                 <button 
-                    className="bg-blue-600 text-white w-full h-12 rounded-lg shadow-md font-bold hover:bg-blue-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
+                    className="bg-blue-600 text-white w-full h-11 sm:h-12 rounded-lg shadow-md text-sm sm:text-base font-bold hover:bg-blue-700 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 mb-3 sm:mb-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100" 
                     onClick={handleLogin}
                     disabled={isLoading}
                 >  
@@ -263,20 +271,20 @@ export default function Login() {
                     )}
                 </button>
 
-                {/* Continue as Guest */}
+                {/* Continue as Guest - responsive spacing */}
                 <button 
-                    className="w-full text-center text-sm text-gray-600 font-semibold hover:text-gray-900 hover:underline mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full text-center text-xs sm:text-sm text-gray-600 font-semibold hover:text-gray-900 hover:underline mb-4 sm:mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleGuestMode}
                     disabled={isLoading}
                 >
                     Continue as Guest →
                 </button>
 
-                {/* Sign Up Link */}
+                {/* Sign Up Link - responsive text size */}
                 <div className="text-center">
-                    <span className="text-sm text-gray-600">Don't have an account? </span>
+                    <span className="text-xs sm:text-sm text-gray-600">Don't have an account? </span>
                     <button 
-                        className="text-sm text-blue-600 font-bold hover:underline disabled:opacity-50 disabled:cursor-not-allowed" 
+                        className="text-xs sm:text-sm text-blue-600 font-bold hover:underline disabled:opacity-50 disabled:cursor-not-allowed" 
                         onClick={() => router.push('/signup')}
                         disabled={isLoading}
                     >
@@ -285,10 +293,10 @@ export default function Login() {
                 </div>
             </div>
 
-            {/* Error Modal */}
+            {/* Error Modal - responsive sizing */}
             {showErrorModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 relative animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 max-w-sm w-full mx-4 relative animate-fadeIn">
                         {/* Close button */}
                         <button
                             onClick={() => setShowErrorModal(false)}
@@ -297,29 +305,29 @@ export default function Login() {
                             <X size={20} />
                         </button>
 
-                        {/* Error Icon */}
+                        {/* Error Icon - responsive sizing */}
                         <div className="flex justify-center mb-4">
-                            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-                                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border-4 border-red-500">
-                                    <X className="w-10 h-10 text-red-500" strokeWidth={3} />
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-red-100 rounded-full flex items-center justify-center">
+                                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-full flex items-center justify-center border-4 border-red-500">
+                                    <X className="w-8 h-8 sm:w-10 sm:h-10 text-red-500" strokeWidth={3} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* Error Title */}
-                        <h2 className="text-2xl font-bold text-center text-red-600 mb-3">
+                        {/* Error Title - responsive text size */}
+                        <h2 className="text-xl sm:text-2xl font-bold text-center text-red-600 mb-3">
                             {errorTitle}
                         </h2>
 
-                        {/* Error Message */}
-                        <p className="text-center text-gray-600 mb-6">
+                        {/* Error Message - responsive text size */}
+                        <p className="text-sm sm:text-base text-center text-gray-600 mb-6">
                             {errorMessage}
                         </p>
 
-                        {/* Dismiss Button */}
+                        {/* Dismiss Button - responsive height */}
                         <button
                             onClick={() => setShowErrorModal(false)}
-                            className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors"
+                            className="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-red-600 transition-colors"
                         >
                             Dismiss
                         </button>
