@@ -17,7 +17,6 @@ router.post("/start", async (req: Request, res: Response) => {
     const token = authHeader.split(" ")[1];
     let userId: string;
 
-    // 2. VERIFY TOKEN & GET USER ID
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       userId = decoded.userId;
@@ -25,36 +24,45 @@ router.post("/start", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized: Invalid token" });
     }
 
-    const { interviewType } = req.body;
+    const { interviewType, difficulty } = req.body;
 
-    // 3. Close any old "IN_PROGRESS" sessions to keep DB clean
+    // 3. Close old sessions
     await prisma.session.updateMany({
       where: { userId: userId, status: "IN_PROGRESS" },
       data: { status: "ABANDONED", endedAt: new Date() },
     });
 
-    // 4. Create the new Session
+    // 4. Create new Session
     const session = await prisma.session.create({
       data: {
         userId,
         interviewType: interviewType || "General",
+        difficulty: difficulty || "Basic",
         status: "IN_PROGRESS",
       },
     });
 
-    // A. Count total questions available
-    const count = await prisma.question.count();
+    // A. Count questions that are either "General" OR match the specific interview type
+    const whereCondition = {
+      role: interviewType, // Exact match (e.g. "General" or "Software...")
+      difficulty: difficulty, // Exact match (e.g. "Basic")
+    };
+
+    const count = await prisma.question.count({ where: whereCondition });
 
     if (count > 0) {
-      // B. Pick a random offset
+      // B. Pick random offset within that filtered count
       const skip = Math.floor(Math.random() * count);
 
-      // C. Fetch the random question
+      // C. Fetch the random question using the SAME filter
       const firstQuestion = await prisma.question.findFirst({
+        where: {
+          OR: [{ role: "General" }, { role: interviewType }],
+        },
         skip: skip,
       });
 
-      // D. Save it to the session ("Bookmark" it)
+      // D. Bookmark it
       if (firstQuestion) {
         await prisma.session.update({
           where: { id: session.id },

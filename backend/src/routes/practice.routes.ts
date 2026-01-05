@@ -14,6 +14,16 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { interviewType: true, difficulty: true },
+    });
+
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+
     // 1. Check if the session is already completed or full
     const existingAttempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
@@ -65,19 +75,31 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
     // 4. Filter out questions we've already done
     const attemptedIds = Array.from(uniqueQuestionIds);
 
+    const whereCondition = {
+      id: { notIn: attemptedIds },
+      role: session.interviewType, // Strict Match
+      difficulty: session.difficulty, // Strict Match
+    };
+
     const unattemptedCount = await prisma.question.count({
-      where: { id: { notIn: attemptedIds } },
+      where: whereCondition,
     });
 
     if (unattemptedCount === 0) {
-      res.status(404).json({ error: "No more questions available." });
+      res
+        .status(404)
+        .json({ error: "No more questions available for this level." });
       return;
     }
 
-    // 5. Pick random next question
+    // Pick random next question
     const skip = Math.floor(Math.random() * unattemptedCount);
+
     const nextQuestions = await prisma.question.findMany({
-      where: { id: { notIn: attemptedIds } },
+      where: {
+        id: { notIn: attemptedIds },
+        OR: [{ role: "General" }, { role: session.interviewType }],
+      },
       take: 1,
       skip: skip,
     });

@@ -40,9 +40,9 @@ export default function Practice() {
     };
   }, []);
 
-  const [interviewType, setInterviewType] = useState(
-    "Software Engineering Interview"
-  );
+  const [interviewType, setInterviewType] = useState("General");
+  const [difficulty, setDifficulty] = useState("Basic");
+
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   //Right now, the question ID and question are hardcoded. In the future, we will fetch these from the database
@@ -156,7 +156,7 @@ export default function Practice() {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${token}`,
               },
-              body: JSON.stringify({ interviewType }),
+              body: JSON.stringify({ interviewType, difficulty }),
             }
           );
 
@@ -481,15 +481,30 @@ export default function Practice() {
               onChange={(e) => setInterviewType(e.target.value)}
               className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              {/* General is now its own standalone type */}
+              <option value="General">General</option>
               <option value="Software Engineering Interview">
-                Software Engineering Interview
+                Software Engineering
               </option>
               <option value="Product Management Interview">
-                Product Management Interview
+                Product Management
               </option>
-              <option value="Data Science Interview">
-                Data Science Interview
-              </option>
+              <option value="Data Science Interview">Data Science</option>
+            </select>
+          </div>
+
+          {/* DIFFICULTY SELECTOR */}
+          <div>
+            <label className="block py-2 text-sm font-medium text-gray-700">
+              Difficulty
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => setDifficulty(e.target.value)}
+              className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Basic">Basic</option>
+              <option value="Advanced">Advanced</option>
             </select>
           </div>
         </div>

@@ -120,6 +120,7 @@ model Session {
   interviewType String        // "Software Engineering", "Product Mgmt"
   status        SessionStatus @default(IN_PROGRESS)
   currentQuestionId String?
+  difficulty    String    @default("Basic")
   
   // Aggregate Stats (Filled when completed)
   overallScore  Float?        // Average score of attempts
