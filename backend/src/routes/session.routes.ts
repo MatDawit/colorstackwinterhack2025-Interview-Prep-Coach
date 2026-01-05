@@ -44,21 +44,19 @@ router.post("/start", async (req: Request, res: Response) => {
 
     // A. Count questions that are either "General" OR match the specific interview type
     const whereCondition = {
-      role: interviewType, // Exact match (e.g. "General" or "Software...")
-      difficulty: difficulty, // Exact match (e.g. "Basic")
+      role: interviewType, // Exact Match (e.g. "Software Engineering")
+      difficulty: difficulty, // Exact Match (e.g. "Basic")
     };
 
+    // 2. Count matching questions
     const count = await prisma.question.count({ where: whereCondition });
 
     if (count > 0) {
-      // B. Pick random offset within that filtered count
       const skip = Math.floor(Math.random() * count);
 
-      // C. Fetch the random question using the SAME filter
+      // 3. Find question
       const firstQuestion = await prisma.question.findFirst({
-        where: {
-          OR: [{ role: "General" }, { role: interviewType }],
-        },
+        where: whereCondition,
         skip: skip,
       });
 
