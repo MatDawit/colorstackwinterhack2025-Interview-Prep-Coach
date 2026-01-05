@@ -1,4 +1,3 @@
-
 /*
 What if get invalid data
 what if email already exists
@@ -6,7 +5,7 @@ How to safely store pw
 and what do we send back to the user????
 
 hash the password so if the app is hacked they cannot see the real password
-JWT gives each user a unique token for their account that lets us know if they're logged in\
+JWT gives each user a unique token for their account that lets us know if they're logged in
 {
   userId: "abc123",
   email: "prince@umbc.edu",
@@ -24,17 +23,25 @@ const JWT_SECRET = process.env.JWT_SECRET
 export async function signup(email: string, password: string, name: string){ 
     // check if email, password, name exist
     if (!email || !password || !name){
-        throw new Error('Fill out all the fields')
+        throw new Error('Please fill out all fields.')
     } 
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address.')
+    }
+    
     // If password is too short, throw error
     if (password.length < 6){
-        throw new Error('Password must be greater than or equal to 6')
+        throw new Error('Password must be at least 6 characters long.')
     }
+    
     // check if someone with this email is already in the database 
     const existingUser = await prisma.user.findUnique({where:{email}})
 
     if (existingUser != null){
-        throw new Error("There is already a user with this email!!!")
+        throw new Error("An account with this email already exists. Please log in instead.")
     }
 
     // hash the password for security so that it's secure if someone hacks in
@@ -42,14 +49,14 @@ export async function signup(email: string, password: string, name: string){
     // print hashed password so we know it worked
     console.log(hashedPW)
 
-    // create the user and store the hashes password in thge database, it comes with an id already we don't needa create
+    // create the user and store the hashed password in the database, it comes with an id already we don't needa create
     const user = await prisma.user.create({
-    data: {
-        // What fields to save
-        email: email,
-        name: name,
-        passwordHash: hashedPW
-    }
+        data: {
+            // What fields to save
+            email: email,
+            name: name,
+            passwordHash: hashedPW
+        }
     });
 
     // create JWT the sign method create a token in contains the payload which is the user data 
@@ -58,9 +65,7 @@ export async function signup(email: string, password: string, name: string){
             userId: user.id,
             email: user.email
         },
-
         JWT_SECRET!, // the exclamation point is a promise that this exists
-
         {
             expiresIn: '7d'
         }
@@ -77,7 +82,6 @@ export async function signup(email: string, password: string, name: string){
             name: user.name
         }
     };
-
 }
 
 /*
@@ -110,26 +114,33 @@ text.split(" ")               // ["Hello", "World"]
 */
 
 export async function login(email: string, password: string){
-
     // all boxes are filled
     if (!email || !password){
-        throw new Error('FIll in all the boxes')
+        throw new Error('Please enter both email and password.')
     }
-    // doesn't matter to check for beingg greater than 6 because they just need to match with the users email
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address.')
+    }
+    
     // find user and check if the user exists
     const user = await prisma.user.findUnique({
         where: {email}
     })
-    if (!user)
-    {
-        throw new Error("invalid email")
+    
+    if (!user) {
+        throw new Error("Invalid email or password. Please try again.")
     }
 
     // verify the user password
     const validPW = await bcrypt.compare(password, user.passwordHash)
+    
     if(!validPW){
-        throw new Error('Password not found in database')
+        throw new Error('Invalid email or password. Please try again.')
     }
+    
     // generate the token
     const token = jwt.sign(
         {
@@ -140,7 +151,7 @@ export async function login(email: string, password: string){
         {expiresIn: '7d'}
     )
     
-    // 
+    // return token and user info
     return{
         token,  
         user: {
