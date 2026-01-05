@@ -59,7 +59,7 @@ export default function Dashboard() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-white pt-20">
+      <div className="min-h-screen bg-white pt-20 mt-13">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow-xl rounded-xl p-6 space-y-4 w-full">
             <div className="text-xl font-bold text-black">
