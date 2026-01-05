@@ -1,11 +1,8 @@
-//"use client" runs this component in the browser. This is important because it allows the component to use browser-specific APIs and features,
-// like recording audio
 "use client";
-//useState stores values that change over time, useRef saves values between renders, useEffect runs code after rendering, useMemo caches expensive computations
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react"; // Added for loading state
+import { Loader2 } from "lucide-react";
 
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
@@ -29,80 +26,156 @@ export default function Practice() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const existingSessionId = searchParams.get("sessionId");
-
   const isMounted = useRef(true);
 
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      // Set to false immediately when user navigates away
-      isMounted.current = false;
-    };
-  }, []);
-
+  // --- 1. STATE MUST BE AT THE TOP ---
   const [interviewType, setInterviewType] = useState("General");
   const [difficulty, setDifficulty] = useState("Basic");
-
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  //Right now, the question ID and question are hardcoded. In the future, we will fetch these from the database
   const [qId, setQId] = useState("");
   const [question, setQuestion] = useState("");
-
-  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [loadingQuestion, setLoadingQuestion] = useState(true); // Added loading state
+  const [loadingQuestion, setLoadingQuestion] = useState(true);
 
-  //sets mode and your answer
   const [mode, setMode] = useState<Mode>("record");
   const [typedAnswer, setTypedAnswer] = useState("");
 
-  //Recording state
   const [recordingState, setRecordingState] = useState<RecordingState>("idle");
   const [micPermission, setMicPermission] = useState<MicPermission>("unknown");
-  //useRef is used for objects that are not re-rendered when the component updates
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
-
-  //audioBlob and audioUrl are used to store the recorded audio
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-  //This is for the timer
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  //this is to submit the answer
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const isCreatingSession = useRef(false);
 
-  //this is for the timer again
   const timeLabel = useMemo(() => formatTime(elapsedTime), [elapsedTime]);
 
-  const interviewTypeToCategories: Record<string, string[]> = {
-    "Software Engineering Interview": [
-      "Teamwork",
-      "Problem-Solving",
-      "Failure",
-      "Initiative",
-    ],
-    "Product Management Interview": [
-      "Communication",
-      "Leadership",
-      "Teamwork",
-      "Initiative",
-    ],
-    "Data Science Interview": [
-      "Problem-Solving",
-      "Communication",
-      "Failure",
-      "Teamwork",
-    ],
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // --- 2. HELPER FUNCTIONS ---
+
+  const fetchSessionDetails = async (id: string) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/practice/session/${id}`
+      );
+      if (res.ok) {
+        const sessionData = await res.json();
+
+        // Sync Dropdowns to match the DB Session
+        if (sessionData.interviewType)
+          setInterviewType(sessionData.interviewType);
+        if (sessionData.difficulty) setDifficulty(sessionData.difficulty);
+
+        if (sessionData.currentQuestion) {
+          setCurrentQuestion(sessionData.currentQuestion);
+          setQId(sessionData.currentQuestion.id);
+          setQuestion(sessionData.currentQuestion.question);
+        } else {
+          // Handle empty DB case safely
+          setCurrentQuestion(null);
+          setQuestion("");
+        }
+
+        if (sessionData.status === "COMPLETED") {
+          router.push("/analytics");
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching session:", error);
+    } finally {
+      setLoadingQuestion(false);
+    }
   };
 
+  const startNewSession = async (type: string, diff: string) => {
+    if (isCreatingSession.current) return;
+    isCreatingSession.current = true;
+
+    // Reset UI immediately to avoid "stale" data
+    setLoadingQuestion(true);
+    setQuestion("");
+    setCurrentQuestion(null);
+    setQId("");
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch("http://localhost:5000/api/session/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ interviewType: type, difficulty: diff }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSessionId(data.sessionId);
+        router.replace(`/practice?sessionId=${data.sessionId}`, {
+          scroll: false,
+        });
+
+        await fetchSessionDetails(data.sessionId);
+      }
+    } catch (err) {
+      console.error("Failed to start session:", err);
+    } finally {
+      isCreatingSession.current = false;
+      setLoadingQuestion(false);
+    }
+  };
+
+  // --- 3. HANDLERS ---
+
+  const handleTypeChange = (newType: string) => {
+    setInterviewType(newType);
+    startNewSession(newType, difficulty);
+  };
+
+  const handleDifficultyChange = (newDiff: string) => {
+    setDifficulty(newDiff);
+    startNewSession(interviewType, newDiff);
+  };
+
+  // --- 4. INITIAL EFFECT ---
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    if (existingSessionId) {
+      setSessionId(existingSessionId);
+      setLoadingQuestion(true);
+      fetchSessionDetails(existingSessionId);
+    } else {
+      startNewSession(interviewType, difficulty);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingSessionId]);
+
+  // --- AUDIO & TIMER HELPERS ---
   function clearTimer() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -117,95 +190,6 @@ export default function Practice() {
     }, 1000);
   }
 
-  // This effect handles Session Syncing.
-  // Instead of picking a random question every time, it asks the backend: "What is the active question?"
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    const initSession = async () => {
-      let activeId = existingSessionId || sessionId;
-
-      // 1. Create New Session if needed
-      if (!activeId) {
-        if (isCreatingSession.current) return;
-        isCreatingSession.current = true;
-        try {
-          if (isMounted.current) setLoadingQuestion(true);
-
-          const startRes = await fetch(
-            "http://localhost:5000/api/session/start",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ interviewType, difficulty }),
-            }
-          );
-
-          if (isMounted.current && startRes.ok) {
-            const data = await startRes.json();
-            activeId = data.sessionId;
-            setSessionId(activeId);
-            router.replace(`/practice?sessionId=${activeId}`, {
-              scroll: false,
-            });
-          }
-        } catch (err) {
-          console.error("Failed to start session", err);
-        } finally {
-          isCreatingSession.current = false;
-        }
-      }
-
-      // 2. Fetch Session State (Which now includes the Question!)
-      if (activeId) {
-        setSessionId(activeId);
-        setLoadingQuestion(true);
-        try {
-          const res = await fetch(
-            `http://localhost:5000/api/practice/session/${activeId}`
-          );
-          if (res.ok) {
-            const sessionData = await res.json();
-
-            // FIX: We read the question directly from the backend response
-            // No more searching through a "questions" array
-            if (sessionData.currentQuestion) {
-              setCurrentQuestion(sessionData.currentQuestion);
-              setQId(sessionData.currentQuestion.id);
-              setQuestion(sessionData.currentQuestion.question);
-            }
-
-            if (sessionData.status === "COMPLETED") {
-              router.push("/analytics");
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching session:", error);
-        } finally {
-          setLoadingQuestion(false);
-        }
-      }
-    };
-
-    initSession();
-
-    // Reset UI on question change
-    setTypedAnswer("");
-    handleRerecord();
-    setSubmitError(null);
-
-    // Dependency array is much cleaner now
-  }, [existingSessionId, interviewType]);
-
-  //This is the function that submits the answer to the backend
-  //This is just a test at the moment
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
@@ -227,20 +211,15 @@ export default function Practice() {
         if (!typedAnswer.trim()) throw new Error("Answer cannot be empty.");
         form.append("answerText", typedAnswer);
       } else {
-        if (recordingState === "recording") {
+        if (recordingState === "recording")
           throw new Error("Stop the recording before submitting.");
-        }
-        if (!audioBlob) {
-          throw new Error("No audio recorded.");
-        }
+        if (!audioBlob) throw new Error("No audio recorded.");
         form.append("audio", audioBlob, "answer.webm");
       }
 
       const res = await fetch("http://localhost:5000/api/feedback/submit", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
 
@@ -255,65 +234,43 @@ export default function Practice() {
     }
   }
 
-  //this is to reset the audio recording
-
   async function startRecording() {
     setSubmitError(null);
-
-    // Prevent starting a second recorder if one is already running
     if (recordingState === "recording") return;
-
     try {
-      // 1) Ask for mic permission and get a live audio stream
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicPermission("granted");
       streamRef.current = stream;
-
-      // 2) Create a MediaRecorder using that stream
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-
-      // Clear any old recording data
       audioChunksRef.current = [];
       setAudioBlob(null);
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
-
-      // 3) As the recorder produces data, store it into audioChunksRef
       mediaRecorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
-
-      // 4) When recording stops, turn chunks into a Blob and create a playback URL
       mediaRecorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
-
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-
         setRecordingState("stopped");
         clearTimer();
         stopMicStream();
       };
-
-      // 5) Start recording + start timer + set state
       mediaRecorder.start();
       setRecordingState("recording");
       setElapsedTime(0);
       startTimer();
     } catch (err) {
-      // User blocked mic or browser error
       setMicPermission("denied");
-      setSubmitError(
-        "Microphone permission denied. Please allow mic access in your browser."
-      );
+      setSubmitError("Microphone permission denied.");
       stopMicStream();
     }
   }
 
   function stopMicStream() {
-    // If we have a stream (mic on), stop every track so the mic turns off
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -321,67 +278,38 @@ export default function Practice() {
   }
   function stopRecording() {
     setSubmitError(null);
-
     if (recordingState !== "recording") return;
-
     const recorder = mediaRecorderRef.current;
-    if (!recorder) return;
-
-    // This triggers `mediaRecorder.onstop` above
-    recorder.stop();
+    if (recorder) recorder.stop();
     mediaRecorderRef.current = null;
-
-    // Timer will also be cleared in onstop (double-safe)
     clearTimer();
   }
-
   function handleRerecord() {
     setSubmitError(null);
-
-    // If currently recording, stop it first
-    if (recordingState === "recording") {
-      stopRecording();
-    }
-
-    // Stop mic and timer no matter what (safe cleanup)
+    if (recordingState === "recording") stopRecording();
     clearTimer();
     stopMicStream();
-
-    // Reset UI state
     setElapsedTime(0);
     setRecordingState("idle");
     audioChunksRef.current = [];
-
     setAudioBlob(null);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
   }
-
   function switchMode(nextMode: Mode) {
     if (nextMode === mode) return;
-
-    // If recording, stop it so mic/timer are not running
     if (recordingState === "recording") stopRecording();
-
-    if (nextMode === "type") {
-      // Keep typedAnswer as-is (usually nice), but clear recording artifacts:
-      handleRerecord();
-    } else {
-      // Switching to record: clear typed answer (optional)
-      setTypedAnswer("");
-    }
-
+    if (nextMode === "type") handleRerecord();
+    else setTypedAnswer("");
     setMode(nextMode);
     setSubmitError(null);
   }
-
   useEffect(() => {
     return () => {
       clearTimer();
       stopMicStream();
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]);
 
   return (
@@ -393,61 +321,74 @@ export default function Practice() {
             Interview Settings
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Select your interview type and preferences.
+            Select your role and preferences.
           </p>
 
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Interview Type
-            </label>
-            <select
-              value={interviewType}
-              onChange={(e) => setInterviewType(e.target.value)}
-              className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {/* General is now its own standalone type */}
-              <option value="General">General</option>
-              <option value="Software Engineering Interview">
-                Software Engineering
-              </option>
-              <option value="Product Management Interview">
-                Product Management
-              </option>
-              <option value="Data Science Interview">Data Science</option>
-            </select>
-          </div>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Role
+              </label>
+              <select
+                value={interviewType}
+                onChange={(e) => handleTypeChange(e.target.value)}
+                className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="General">General</option>
+                <option value="Software Engineering">
+                  Software Engineering
+                </option>
+                <option value="Product Management">Product Management</option>
+                <option value="Data Science">Data Science</option>
+              </select>
+            </div>
 
-          {/* DIFFICULTY SELECTOR */}
-          <div>
-            <label className="block py-2 text-sm font-medium text-gray-700">
-              Difficulty
-            </label>
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value)}
-              className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Basic">Basic</option>
-              <option value="Advanced">Advanced</option>
-            </select>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Difficulty
+              </label>
+              <select
+                value={difficulty}
+                onChange={(e) => handleDifficultyChange(e.target.value)}
+                className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Basic">Basic</option>
+                <option value="Advanced">Advanced</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-          {loadingQuestion || !currentQuestion ? (
+          {loadingQuestion ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
               <p className="text-gray-500">Loading your question...</p>
+            </div>
+          ) : !currentQuestion ? (
+            // FIX: This prevents the infinite loading spinner
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-red-500 font-medium text-lg">
+                No questions found
+              </p>
+              <p className="text-gray-500 mt-2">
+                There are no {difficulty} questions for {interviewType} yet.
+              </p>
             </div>
           ) : (
             <>
               {/* Question display */}
               <div className="mt-4 rounded-lg border border-gray-200 p-4">
-                <p className="text-sm text-gray-500 text-center">
-                  Your Question:
-                </p>
+                <div className="flex justify-center gap-2 mb-2">
+                  <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-wide">
+                    {currentQuestion.category}
+                  </span>
+                  <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded uppercase tracking-wide">
+                    {difficulty}
+                  </span>
+                </div>
                 <p className="mt-2 text-2xl text-center font-medium text-gray-900">
                   {question}
                 </p>
@@ -486,13 +427,11 @@ export default function Practice() {
 
               {mode === "record" ? (
                 <>
-                  {/* Timer + status */}
                   <div className="mt-6 text-center">
                     <div className="text-4xl font-bold text-gray-900">
                       {timeLabel}
                     </div>
                     <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
-                      {/* You can swap this with icons later */}
                       {recordingState === "idle" && "Ready to record"}
                       {recordingState === "recording" && "Recording..."}
                       {recordingState === "stopped" && "Recording saved"}
@@ -502,7 +441,6 @@ export default function Practice() {
                     </div>
                   </div>
 
-                  {/* Record buttons */}
                   <div className="mt-6 flex items-center justify-center gap-3">
                     {recordingState !== "recording" ? (
                       <button
@@ -528,7 +466,6 @@ export default function Practice() {
                     </button>
                   </div>
 
-                  {/* Playback */}
                   {audioUrl && (
                     <div className="mt-6">
                       <p className="text-sm text-gray-500 mb-2">Playback:</p>
@@ -538,7 +475,6 @@ export default function Practice() {
                 </>
               ) : (
                 <>
-                  {/* Type answer UI */}
                   <div className="mt-6">
                     <textarea
                       value={typedAnswer}
@@ -564,24 +500,21 @@ export default function Practice() {
                   {submitError}
                 </div>
               )}
+
+              <div className="flex items-center justify-center mt-8">
+                <button
+                  onClick={submitForAnalysis}
+                  disabled={submitting}
+                  className={`bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded ${
+                    submitting ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {submitting ? "Analyzing..." : "Submit for Analysis"}
+                </button>
+              </div>
             </>
           )}
         </div>
-
-        {/* Only show button if not loading */}
-        {!loadingQuestion && (
-          <div className="flex items-center justify-center mt-8">
-            <button
-              onClick={submitForAnalysis}
-              disabled={submitting}
-              className={`bg-blue-500 hover:bg-blue-700 text-white text-2xl font-bold py-2 px-4 rounded ${
-                submitting ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
-              {submitting ? "Analyzing..." : "Submit for Analysis"}
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
