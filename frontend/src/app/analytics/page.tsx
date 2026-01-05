@@ -166,9 +166,10 @@ export default function AnalyticsPage() {
   const availableCategories = useMemo(() => {
     return Array.from(
       new Set([
-        "Software Engineering Interview",
-        "Product Management Interview",
-        "Data Science Interview",
+        "General",
+        "Software Engineering",
+        "Product Management",
+        "Data Science",
         ...sessions.map((s) => s.category),
       ])
     );

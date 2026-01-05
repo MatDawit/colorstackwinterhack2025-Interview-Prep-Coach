@@ -245,7 +245,8 @@ export default function Practice() {
               const errorData = await startRes.json();
               showError(
                 "Session Error",
-                errorData.error || "Failed to start interview session. Please try again."
+                errorData.error ||
+                  "Failed to start interview session. Please try again."
               );
             }
           }
@@ -327,13 +328,19 @@ export default function Practice() {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        showError("Authentication Error", "Please log in to submit your answer.");
+        showError(
+          "Authentication Error",
+          "Please log in to submit your answer."
+        );
         setSubmitting(false);
         return;
       }
-      
+
       if (!sessionId) {
-        showError("Session Error", "Session not initialized. Please refresh the page.");
+        showError(
+          "Session Error",
+          "Session not initialized. Please refresh the page."
+        );
         setSubmitting(false);
         return;
       }
@@ -347,26 +354,40 @@ export default function Practice() {
 
       if (mode === "type") {
         if (!typedAnswer.trim()) {
-          showError("Empty Answer", "Please type your answer before submitting.");
+          showError(
+            "Empty Answer",
+            "Please type your answer before submitting."
+          );
           setSubmitting(false);
           return;
         }
         form.append("answerText", typedAnswer);
       } else {
-        if (recordingState === "recording")
-          throw new Error("Stop the recording before submitting.");
-        if (!audioBlob) throw new Error("No audio recorded.");
+        // 1. Remove the 'throw new Error' lines that were blocking the UI logic
+
+        // 2. Check if recording is active
         if (recordingState === "recording") {
-          showError("Recording In Progress", "Please stop the recording before submitting.");
+          showError(
+            "Recording In Progress",
+            "Please stop the recording before submitting."
+          );
           setSubmitting(false);
           return;
         }
+
+        // 3. Check if audio exists
         if (!audioBlob) {
-          showError("No Recording", "Please record your answer before submitting.");
+          showError(
+            "No Recording",
+            "Please record your answer before submitting."
+          );
           setSubmitting(false);
           return;
         }
+
+        // 4. Append audio
         form.append("audio", audioBlob, "answer.webm");
+        // --- FIX ENDS HERE ---
       }
 
       const res = await fetch("http://localhost:5000/api/feedback/submit", {
@@ -376,7 +397,7 @@ export default function Practice() {
       });
 
       const data = await res.json();
-      
+
       if (!res.ok) {
         showError(
           "Submission Failed",
@@ -449,7 +470,7 @@ export default function Practice() {
       streamRef.current = null;
     }
   }
-  
+
   function stopRecording() {
     setSubmitError(null);
     if (recordingState !== "recording") return;
@@ -718,9 +739,7 @@ export default function Practice() {
             </h2>
 
             {/* Error Message */}
-            <p className="text-center text-gray-600 mb-6">
-              {errorMessage}
-            </p>
+            <p className="text-center text-gray-600 mb-6">{errorMessage}</p>
 
             {/* Dismiss Button */}
             <button
