@@ -18,6 +18,7 @@ import {
   Mail,
   AtSign,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type ProfileForm = {
   name: string;
@@ -28,6 +29,7 @@ type ProfileForm = {
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [form, setForm] = useState<ProfileForm>({
     name: "",
     email: "",
@@ -41,7 +43,9 @@ export default function ProfilePage() {
 
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -97,8 +101,14 @@ export default function ProfilePage() {
           bio: data.user.bio ?? "",
         });
 
-        setAvatarShape((data.user.avatarShape as "circle" | "square") ?? "circle");
-        setBorderColor((data.user.avatarBorder === "green" ? "green" : "blue") as "blue" | "green");
+        setAvatarShape(
+          (data.user.avatarShape as "circle" | "square") ?? "circle"
+        );
+        setBorderColor(
+          (data.user.avatarBorder === "green" ? "green" : "blue") as
+            | "blue"
+            | "green"
+        );
 
         // ✅ Load avatar from backend if your API returns it
         // You need backend to return user.avatarUrl (string) OR null
@@ -113,7 +123,10 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
-  function updateField<K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) {
+  function updateField<K extends keyof ProfileForm>(
+    key: K,
+    value: ProfileForm[K]
+  ) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -146,16 +159,16 @@ export default function ProfilePage() {
         }),
       });
 
-const contentType = res.headers.get("content-type") || "";
+      const contentType = res.headers.get("content-type") || "";
 
-    if (contentType.includes("application/json")) {
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed");
-    } else {
-    const raw = await res.text();
-    console.error("Non-JSON response:", raw);
-    throw new Error("Backend returned non-JSON");
-    }
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed");
+      } else {
+        const raw = await res.text();
+        console.error("Non-JSON response:", raw);
+        throw new Error("Backend returned non-JSON");
+      }
 
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 1500);
@@ -196,7 +209,10 @@ const contentType = res.headers.get("content-type") || "";
       return;
     }
 
-    const croppedDataUrl = await getCroppedImageDataUrl(selectedImageUrl, croppedAreaPixels);
+    const croppedDataUrl = await getCroppedImageDataUrl(
+      selectedImageUrl,
+      croppedAreaPixels
+    );
     setAvatarUrl(croppedDataUrl);
 
     // close modal + cleanup object url
@@ -226,8 +242,12 @@ const contentType = res.headers.get("content-type") || "";
         <Navbar />
         <div className="pt-24 px-4">
           <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Profile</h1>
-            <p className="mt-2 text-sm text-gray-600">Manage your account details and preferences.</p>
+            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+              Profile
+            </h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Manage your account details and preferences.
+            </p>
 
             <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <p className="text-sm font-semibold text-gray-900">Guest User</p>
@@ -264,18 +284,43 @@ const contentType = res.headers.get("content-type") || "";
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} />
+                  <SidebarLink
+                    href="/dashboard"
+                    label="Home"
+                    icon={<Home className="h-4 w-4" />}
+                  />
 
-                  <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />}>
-                    <SidebarSubLink label="Shortcuts" icon={<Keyboard className="h-4 w-4" />} />
-                    <SidebarSubLink label="Account" icon={<User className="h-4 w-4" />} />
-                    <SidebarSubLink label="Personal" active icon={<UserCircle2 className="h-4 w-4" />} />
+                  <SidebarGroup
+                    label="Settings"
+                    icon={<Settings className="h-4 w-4" />}
+                  >
+                    <SidebarSubLink
+                      label="Shortcuts"
+                      icon={<Keyboard className="h-4 w-4" />}
+                    />
+                    <SidebarSubLink
+                      label="Account"
+                      icon={<User className="h-4 w-4" />}
+                    />
+                    <SidebarSubLink
+                      label="Personal"
+                      active
+                      icon={<UserCircle2 className="h-4 w-4" />}
+                    />
                   </SidebarGroup>
 
                   <div className="my-3 h-px bg-gray-100" />
 
-                  <SidebarLink href="/practice" label="Practice" icon={<BrainCircuit className="h-4 w-4" />} />
-                  <SidebarLink href="/analytics" label="Analytics" icon={<ChartNoAxesColumn className="h-4 w-4" />} />
+                  <SidebarLink
+                    href="/practice"
+                    label="Practice"
+                    icon={<BrainCircuit className="h-4 w-4" />}
+                  />
+                  <SidebarLink
+                    href="/analytics"
+                    label="Analytics"
+                    icon={<ChartNoAxesColumn className="h-4 w-4" />}
+                  />
                 </nav>
               </div>
             </aside>
@@ -291,12 +336,20 @@ const contentType = res.headers.get("content-type") || "";
                       <div
                         className={[
                           "h-14 w-14 bg-gray-100 flex items-center justify-center overflow-hidden",
-                          avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
-                          borderColor === "blue" ? "ring-2 ring-blue-500" : "ring-2 ring-green-500",
+                          avatarShape === "circle"
+                            ? "rounded-full"
+                            : "rounded-2xl",
+                          borderColor === "blue"
+                            ? "ring-2 ring-blue-500"
+                            : "ring-2 ring-green-500",
                         ].join(" ")}
                       >
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                          <img
+                            src={avatarUrl}
+                            alt="Avatar"
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           <span className="text-gray-600 font-semibold">
                             {(form.name || "User")
@@ -310,17 +363,24 @@ const contentType = res.headers.get("content-type") || "";
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-500">Profile Settings</p>
+                        <p className="text-sm text-gray-500">
+                          Profile Settings
+                        </p>
                         <h1 className="mt-1 text-xl font-semibold text-gray-900 tracking-tight">
                           Manage Your Profile
                         </h1>
-                        <p className="mt-1 text-sm text-gray-600">{form.email || "Signed in"}</p>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {form.email || "Signed in"}
+                        </p>
                       </div>
                     </div>
 
                     {/* Top right actions */}
                     <div className="flex items-center gap-2">
-                      <button className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
+                      <button
+                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                        onClick={() => router.push("/dashboard")}
+                      >
                         Cancel
                       </button>
                       <button
@@ -336,7 +396,9 @@ const contentType = res.headers.get("content-type") || "";
 
                 {/* Basic Info */}
                 <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold text-gray-900">Basic Information</h2>
+                  <h2 className="text-sm font-semibold text-gray-900">
+                    Basic Information
+                  </h2>
                   <p className="mt-1 text-sm text-gray-500">
                     Update your personal details and contact information.
                   </p>
@@ -350,7 +412,12 @@ const contentType = res.headers.get("content-type") || "";
                       placeholder="Your name"
                     />
 
-                    <Input label="Email" icon={<Mail className="h-4 w-4 text-gray-400" />} value={form.email} readOnly />
+                    <Input
+                      label="Email"
+                      icon={<Mail className="h-4 w-4 text-gray-400" />}
+                      value={form.email}
+                      readOnly
+                    />
 
                     <Input
                       label="Display Name"
@@ -370,7 +437,9 @@ const contentType = res.headers.get("content-type") || "";
                   </div>
 
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bio
+                    </label>
                     <textarea
                       value={form.bio}
                       onChange={(e) => updateField("bio", e.target.value)}
@@ -384,7 +453,9 @@ const contentType = res.headers.get("content-type") || "";
                 <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-sm font-semibold text-gray-900">Avatar</h2>
+                      <h2 className="text-sm font-semibold text-gray-900">
+                        Avatar
+                      </h2>
                       <p className="mt-1 text-sm text-gray-500">
                         Upload a profile picture and customize its appearance.
                       </p>
@@ -427,7 +498,9 @@ const contentType = res.headers.get("content-type") || "";
                       </div>
 
                       <div className="mt-5">
-                        <p className="text-sm font-medium text-gray-700">Border Color</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          Border Color
+                        </p>
                         <div className="mt-2 flex gap-2">
                           <ColorDot
                             active={borderColor === "blue"}
@@ -448,12 +521,20 @@ const contentType = res.headers.get("content-type") || "";
                       <div
                         className={[
                           "h-24 w-24 bg-white flex items-center justify-center overflow-hidden shadow-sm",
-                          avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
-                          borderColor === "blue" ? "ring-4 ring-blue-500" : "ring-4 ring-green-500",
+                          avatarShape === "circle"
+                            ? "rounded-full"
+                            : "rounded-2xl",
+                          borderColor === "blue"
+                            ? "ring-4 ring-blue-500"
+                            : "ring-4 ring-green-500",
                         ].join(" ")}
                       >
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                          <img
+                            src={avatarUrl}
+                            alt="Avatar"
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
                           <span className="text-gray-600 font-semibold text-lg">
                             {(form.name || "User")
@@ -480,7 +561,9 @@ const contentType = res.headers.get("content-type") || "";
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
             <div className="p-4 border-b flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-900">Crop your avatar</p>
+              <p className="text-sm font-semibold text-gray-900">
+                Crop your avatar
+              </p>
               <button
                 type="button"
                 onClick={() => setIsCropOpen(false)}
@@ -491,7 +574,7 @@ const contentType = res.headers.get("content-type") || "";
             </div>
 
             <div className="relative h-[320px] bg-gray-100">
-              <ReactCropper 
+              <ReactCropper
                 image={selectedImageUrl}
                 crop={crop}
                 zoom={zoom}
@@ -573,7 +656,6 @@ async function getCroppedImageDataUrl(
   return canvas.toDataURL("image/jpeg", 0.8);
 }
 
-
 /*  Small UI helpers (yours unchanged below)  */
 // ... keep SidebarLink, SidebarGroup, SidebarSubLink, Input, ToggleButton, ColorDot as-is
 
@@ -632,7 +714,9 @@ function SidebarSubLink({
     <div
       className={[
         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
-        active ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50",
+        active
+          ? "bg-blue-50 text-blue-700 font-semibold"
+          : "text-gray-600 hover:bg-gray-50",
       ].join(" ")}
     >
       <span className={active ? "text-blue-600" : "text-gray-400"}>{icon}</span>
@@ -658,7 +742,9 @@ function Input({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
 
       <div
         className={[
@@ -688,8 +774,6 @@ function Input({
     </div>
   );
 }
-
-
 
 function ToggleButton({
   active,
