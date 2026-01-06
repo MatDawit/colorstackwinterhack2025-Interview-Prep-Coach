@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+import dotenv, { config } from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import sessionRoutes from "./routes/session.routes";
 import practiceRoutes from "./routes/practice.routes";
@@ -8,6 +8,9 @@ import questionsRouter from "./routes/questions.routes";
 import feedbackRouter from "./routes/feedback.routes";
 import analyticsRouter from "./routes/analytics.routes";
 import profileRouter from "./routes/profile.routes";
+import passport from "passport"
+import {configurePassport} from "./config/passport"
+
 // read the env file
 dotenv.config();
 // create the express app
@@ -15,6 +18,9 @@ const app = express();
 
 // define the port we'll be running on
 const PORT = 5000;
+
+configurePassport();
+app.use(passport.initialize());
 
 // middleware are fxn that run before the routes
 app.use(cors()); // allows the frontend to make requests to the backend while they are on diff ports

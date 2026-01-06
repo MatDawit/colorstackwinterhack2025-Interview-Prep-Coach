@@ -21,9 +21,12 @@ enum SessionStatus {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique 
-  name          String
-  passwordHash  String
+  name          String?
+  passwordHash  String?
   
+  //google auth info
+  googleId      String?   @unique
+
   // Profile info
   targetRole    String?   // "Software Engineer Intern", etc.
   experienceLevel String? // "Student", "Entry-level", etc.

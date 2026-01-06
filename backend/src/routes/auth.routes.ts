@@ -2,10 +2,14 @@ import { Router } from "express"
 import { Request } from "express"
 import { Response } from "express"
 import { login, signup } from '../services/auth.service'
+import passport from "passport"
+import jwt from "jsonwebtoken";
 
 // create the router
 // this is where i'll add new endpoints
 const router  = Router()
+const JWT_SECRET = process.env.JWT_SECRET!;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 // routers accept requests from the front end and then extract data from those requests, calls fxns and then sends response back to the frontend
 // create abn endpoint that accepts post requests and (r.post)
@@ -50,5 +54,36 @@ router.post('/login', async (req: Request, res: Response) => {
     
 
 })
+
+router.get(
+  "/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    session: false,
+  })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: `${FRONTEND_URL}/login?error=google_auth_failed`,
+  }),
+  (req, res) => {
+    // passport puts your Prisma user on req.user
+    const user = req.user as any;
+
+    // Issue YOUR JWT (same style you already do on normal login)
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Redirect to frontend callback page with token
+    res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+  }
+);
+
 // export the router
 export default router
