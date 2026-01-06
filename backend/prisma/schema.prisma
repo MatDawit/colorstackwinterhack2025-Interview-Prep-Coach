@@ -98,14 +98,14 @@ model MockInterview {
 // Question bank (seeded from JSON)
 model Question {
   id            String    @id @default(uuid())
-  category      String    // "Teamwork", "Leadership", "Conflict", etc.
+  category      String
   question      String    @db.Text
-  role          String    @default("General") // "Software Engineering", "Product Management", or "General"
-  difficulty    String    @default("Basic") // Options are Basic and Advanced
+  role          String    @default("General")
+  difficulty    String    @default("Basic")
+  sampleAnswers Json?     // Add this line
   
   createdAt     DateTime  @default(now())
   
-  // Relations
   attempts      SessionAttempt[]
   currentInSessions Session[]
   

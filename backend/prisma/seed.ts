@@ -43,6 +43,7 @@ async function main() {
           // Optional fields with schema defaults
           role: q.role ?? "General",
           difficulty: q.difficulty ?? "Basic",
+          sampleAnswers: q.sampleAnswers ?? {}, // Added this line
         },
       });
 
