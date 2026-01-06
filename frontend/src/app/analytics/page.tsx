@@ -20,6 +20,7 @@ interface SessionData {
   id: string;
   date: string;
   category: string;
+  difficulty?: string; // NEW field
   duration: string;
   score: number;
   checklistCounts: {
@@ -52,17 +53,19 @@ export default function AnalyticsPage() {
 
   // --- STATE ---
   const [category, setCategory] = useState("All Categories");
+  const [difficulty, setDifficulty] = useState("All Levels");
   const [timeRange, setTimeRange] = useState("All Time");
+
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   // --- EFFECTS ---
 
-  // 1. Handle Mobile Resize
+  // 1. Mobile Check
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); // Check immediately
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -92,17 +95,23 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, []);
 
-  // --- MEMOIZED DATA CALCULATIONS ---
+  // --- MEMOS ---
 
-  // 3. Filter Sessions
+  // 3. Filter Logic
   const filteredSessions = useMemo(() => {
     return sessions.filter((session) => {
-      // Category Check
+      // Filter Category
       if (category !== "All Categories" && session.category !== category) {
         return false;
       }
 
-      // Time Check
+      // Filter Difficulty (NEW)
+      const sessDiff = session.difficulty || "Basic";
+      if (difficulty !== "All Levels" && sessDiff !== difficulty) {
+        return false;
+      }
+
+      // Filter Time
       const sessionDate = new Date(session.date);
       const now = new Date();
 
@@ -117,11 +126,11 @@ export default function AnalyticsPage() {
           sessionDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         );
       }
-      return true; // "All Time"
+      return true;
     });
-  }, [sessions, category, timeRange]);
+  }, [sessions, category, difficulty, timeRange]);
 
-  // 4. Line Chart Data (Formatted)
+  // 4. Chart Data
   const lineChartData = useMemo(() => {
     return [...filteredSessions].reverse().map((s) => ({
       date: new Date(s.date).toLocaleDateString("en-US", {
@@ -132,7 +141,6 @@ export default function AnalyticsPage() {
     }));
   }, [filteredSessions]);
 
-  // 5. Bar Chart Data (Aggregated)
   const dynamicBarData = useMemo(() => {
     const totals = {
       fillerWords: 0,
@@ -162,7 +170,6 @@ export default function AnalyticsPage() {
     ];
   }, [filteredSessions]);
 
-  // 6. Available Categories (Dynamic)
   const availableCategories = useMemo(() => {
     return Array.from(
       new Set([
@@ -171,6 +178,16 @@ export default function AnalyticsPage() {
         "Product Management",
         "Data Science",
         ...sessions.map((s) => s.category),
+      ])
+    );
+  }, [sessions]);
+
+  const availableDifficulties = useMemo(() => {
+    return Array.from(
+      new Set([
+        "Basic",
+        "Advanced",
+        ...sessions.map((s) => s.difficulty || "Basic"),
       ])
     );
   }, [sessions]);
@@ -209,16 +226,17 @@ export default function AnalyticsPage() {
             </p>
           </header>
 
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 md:gap-6 mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
-              <span className="text-sm font-semibold text-black">
+          {/* FILTERS SECTION (Mobile Proof) */}
+          <div className="flex flex-col lg:flex-row justify-end items-start lg:items-center gap-4 mb-8">
+            {/* Time Range */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+              <span className="text-sm font-semibold text-black whitespace-nowrap">
                 Time Range
               </span>
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-2 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
               >
                 <option>All Time</option>
                 <option>Last 30 Days</option>
@@ -227,17 +245,37 @@ export default function AnalyticsPage() {
               </select>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
+            {/* Category */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
               <span className="text-sm font-semibold text-black">Category</span>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-2 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
               >
                 <option>All Categories</option>
                 {availableCategories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Difficulty (NEW) */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
+              <span className="text-sm font-semibold text-black">
+                Difficulty
+              </span>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-2 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+              >
+                <option>All Levels</option>
+                {availableDifficulties.map((diff) => (
+                  <option key={diff} value={diff}>
+                    {diff}
                   </option>
                 ))}
               </select>
@@ -285,11 +323,6 @@ export default function AnalyticsPage() {
                       cursor={{ fill: "#F9FAFB" }}
                       contentStyle={TOOLTIP_STYLE}
                       itemStyle={{ color: "#000000", fontWeight: 500 }}
-                      labelStyle={{
-                        color: "#000000",
-                        marginBottom: "4px",
-                        fontWeight: "bold",
-                      }}
                     />
                     <Line
                       type="monotone"
@@ -350,11 +383,6 @@ export default function AnalyticsPage() {
                     cursor={{ fill: "#F9FAFB" }}
                     contentStyle={TOOLTIP_STYLE}
                     itemStyle={{ color: "#000000", fontWeight: 500 }}
-                    labelStyle={{
-                      color: "#000000",
-                      marginBottom: "4px",
-                      fontWeight: "bold",
-                    }}
                   />
                   <Bar
                     dataKey="count"
@@ -376,11 +404,13 @@ export default function AnalyticsPage() {
               Detailed record of all your practice interview sessions.
             </p>
 
-            {/* Table Header (Hidden on Mobile) */}
+            {/* Desktop Header */}
             <div className="hidden md:flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
               <div className="flex items-center gap-16">
                 <span className="w-32">Date</span>
-                <span>Category</span>
+                <span className="w-32">Category</span>
+                <span className="w-24">Difficulty</span>{" "}
+                {/* New Column Header */}
               </div>
               <div className="flex items-center gap-16">
                 <span className="w-20 text-right">Duration</span>
@@ -388,7 +418,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Table Body */}
+            {/* List */}
             <div className="divide-y divide-gray-50">
               {filteredSessions.length > 0 ? (
                 filteredSessions.map((session) => (
@@ -399,11 +429,11 @@ export default function AnalyticsPage() {
                   >
                     {/* Left Column */}
                     <div className="flex flex-col md:flex-row md:items-center md:gap-16 w-full md:w-auto">
+                      {/* Date & Mobile Score */}
                       <div className="flex justify-between md:block w-full md:w-32">
                         <span className="text-[14px] font-bold text-[#1A1A1A]">
                           {new Date(session.date).toLocaleDateString()}
                         </span>
-                        {/* Mobile Score */}
                         <span
                           className={`md:hidden text-[14px] font-bold ${getScoreColor(
                             session.score
@@ -412,8 +442,17 @@ export default function AnalyticsPage() {
                           {session.score}%
                         </span>
                       </div>
-                      <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A]">
+
+                      {/* Category */}
+                      <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A] w-32">
                         {session.category}
+                      </span>
+
+                      {/* Difficulty (New) */}
+                      <span className="text-[13px] md:text-[14px] w-20 flex items-center">
+                        <span className="py-0.5 rounded font-medium text-gray-500">
+                          {session.difficulty || "Basic"}
+                        </span>
                       </span>
                     </div>
 
@@ -422,7 +461,6 @@ export default function AnalyticsPage() {
                       <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A] w-20 text-left md:text-right">
                         {session.duration}
                       </span>
-                      {/* Desktop Score */}
                       <span
                         className={`hidden md:block text-[14px] font-semibold w-24 text-right ${getScoreColor(
                           session.score
