@@ -399,8 +399,8 @@ export default function AnalyticsPage() {
                   >
                     {/* Left Column */}
                     <div className="flex flex-col md:flex-row md:items-center md:gap-16 w-full md:w-auto">
-                      <div className="flex justify-between items-center md:block w-full md:w-auto">
-                        <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
+                      <div className="flex justify-between md:block w-full md:w-32">
+                        <span className="text-[14px] font-bold text-[#1A1A1A]">
                           {new Date(session.date).toLocaleDateString()}
                         </span>
                         {/* Mobile Score */}
