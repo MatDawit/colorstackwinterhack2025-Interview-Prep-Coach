@@ -85,5 +85,36 @@ router.get(
   }
 );
 
+//github auth
+router.get(
+    "/github",
+    passport.authenticate("github", {
+      scope: ["user:email"],
+      session: false,
+    })
+  );
+
+//github callback
+router.get(
+    "/github/callback",
+    passport.authenticate("github", {
+        session: false,
+    }),
+    (req, res) => {
+        // passport puts your Prisma user on req.user
+        const user = req.user as any;
+
+        // Issue YOUR JWT (same style you already do on normal login)
+        const token = jwt.sign(
+            { userId: user.id, email: user.email },
+            JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        // Redirect to frontend callback page with token
+        res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+    }
+);
+
 // export the router
 export default router
