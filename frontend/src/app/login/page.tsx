@@ -107,7 +107,7 @@ export default function Login() {
 
     // Handle Google OAuth
     const handleGoogleAuth = () => {
-        // TODO: Implement Google OAuth
+        // Implements Google OAuth
         window.location.href = "http://localhost:5000/api/auth/google";
 
     }
@@ -115,9 +115,7 @@ export default function Login() {
     // Handle GitHub OAuth
     const handleGitHubAuth = () => {
         // TODO: Implement GitHub OAuth
-        setErrorTitle('Coming Soon')
-        setErrorMessage('GitHub authentication will be available soon!')
-        setShowErrorModal(true)
+        window.location.href = "http://localhost:5000/api/auth/github";
     }
 
     // Handle Continue as Guest

@@ -84,16 +84,13 @@ export default function Signup() {
 
     // Handle Google OAuth
     const handleGoogleAuth = () => {
-        setErrorTitle('Coming Soon')
-        setErrorMessage('Google authentication will be available soon!')
-        setShowErrorModal(true)
+        window.location.href = "http://localhost:5000/api/auth/google";
     }
 
     // Handle GitHub OAuth
     const handleGitHubAuth = () => {
-        setErrorTitle('Coming Soon')
-        setErrorMessage('GitHub authentication will be available soon!')
-        setShowErrorModal(true)
+        window.location.href = "http://localhost:5000/api/auth/github";
+
     }
 
     // Handle Continue as Guest
