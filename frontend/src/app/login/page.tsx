@@ -108,9 +108,8 @@ export default function Login() {
     // Handle Google OAuth
     const handleGoogleAuth = () => {
         // TODO: Implement Google OAuth
-        setErrorTitle('Coming Soon')
-        setErrorMessage('Google authentication will be available soon!')
-        setShowErrorModal(true)
+        window.location.href = "http://localhost:5000/api/auth/google";
+
     }
 
     // Handle GitHub OAuth
