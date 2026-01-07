@@ -59,7 +59,16 @@ export default function AnalyticsPage() {
 
   // --- EFFECTS ---
 
-  // 1. Handle Mobile Resize
+  // 1. Check Authentication First
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+  }, [router]);
+
+  // 2. Handle Mobile Resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize(); // Check immediately
@@ -67,18 +76,26 @@ export default function AnalyticsPage() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 2. Fetch Data
+  // 3. Fetch Data
   useEffect(() => {
     const fetchAnalytics = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        setLoading(false);
+        router.push("/login");
         return;
       }
       try {
         const res = await fetch("http://localhost:5000/api/analytics", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
+        if (res.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+        
         if (res.ok) {
           const data = await res.json();
           setSessions(data.sessions);
@@ -90,11 +107,11 @@ export default function AnalyticsPage() {
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [router]);
 
   // --- MEMOIZED DATA CALCULATIONS ---
 
-  // 3. Filter Sessions
+  // 4. Filter Sessions
   const filteredSessions = useMemo(() => {
     return sessions.filter((session) => {
       // Category Check
@@ -121,7 +138,7 @@ export default function AnalyticsPage() {
     });
   }, [sessions, category, timeRange]);
 
-  // 4. Line Chart Data (Formatted)
+  // 5. Line Chart Data (Formatted)
   const lineChartData = useMemo(() => {
     return [...filteredSessions].reverse().map((s) => ({
       date: new Date(s.date).toLocaleDateString("en-US", {
@@ -132,7 +149,7 @@ export default function AnalyticsPage() {
     }));
   }, [filteredSessions]);
 
-  // 5. Bar Chart Data (Aggregated)
+  // 6. Bar Chart Data (Aggregated)
   const dynamicBarData = useMemo(() => {
     const totals = {
       fillerWords: 0,
@@ -162,7 +179,7 @@ export default function AnalyticsPage() {
     ];
   }, [filteredSessions]);
 
-  // 6. Available Categories (Dynamic)
+  // 7. Available Categories (Dynamic)
   const availableCategories = useMemo(() => {
     return Array.from(
       new Set([
