@@ -316,14 +316,17 @@ export default function ProfilePage() {
                     icon={<Settings className="h-4 w-4" />}
                   >
                     <SidebarSubLink
+                    href="/profile/appearance"
                       label="Appearance"
                       icon={<SunMoon className="h-4 w-4" />}
                     />
                     <SidebarSubLink
+                      href="/profile/account"
                       label="Account"
                       icon={<User className="h-4 w-4" />}
                     />
                     <SidebarSubLink
+                      href="/profile"
                       label="Personal"
                       active
                       icon={<UserCircle2 className="h-4 w-4" />}
@@ -780,23 +783,24 @@ function SidebarSubLink({
   label,
   icon,
   active,
+  href,
 }: {
   label: string;
   icon: React.ReactNode;
   active?: boolean;
+  href: string;
 }) {
   return (
-    <div
+    <Link
+      href={href}
       className={[
         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
-        active
-          ? "bg-blue-50 text-blue-700 font-semibold"
-          : "text-gray-600 hover:bg-gray-50",
+        active ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50",
       ].join(" ")}
     >
       <span className={active ? "text-blue-600" : "text-gray-400"}>{icon}</span>
       {label}
-    </div>
+    </Link>
   );
 }
 
