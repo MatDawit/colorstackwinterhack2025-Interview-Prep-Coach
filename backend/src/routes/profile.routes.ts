@@ -34,8 +34,65 @@ function ConfirmAndThrow(message: string): never {
   throw new Error(message);
 }
 
+// Sign out method (basically what we're doing here is we are going to remove the token from local storage so the browser "forgets" the user was logged in and re prompts)
+// delete wikll remove uyser from the database
 /**
- * GET /profile
+ * POST /profile/signout
+ * Signs out the user (frontend will remove token from localStorage)
+ * This does NOT delete the user from the database - just logs them out
+ */
+router.post("/signout", async (req: Request, res: Response) => {
+  try {
+    // Verify the token is valid
+    getUserIdFromRequest(req);
+    
+    // For JWT-based auth, we don't need to do anything on the backend
+    // The frontend will remove the token from localStorage
+    // The user account remains in the database, they just need to log in again
+    return res.json({ ok: true, message: "Signed out successfully" });
+  } catch (error: any) {
+    return res.status(401).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /profile/account
+ * Permanently deletes the user's account and all associated data
+ * THIS is the one that removes them from the database
+ */
+/**
+ * DELETE /profile/delete
+ * Permanently deletes the user's account and all associated data
+ */
+router.delete("/delete", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromRequest(req);
+
+    // Delete user's session attempts first
+    await prisma.sessionAttempt.deleteMany({
+      where: { 
+        session: {
+          userId: userId
+        }
+      },
+    });
+
+    // Delete user's sessions
+    await prisma.session.deleteMany({
+      where: { userId },
+    });
+
+    // Delete the user account permanently
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return res.json({ ok: true, message: "Account deleted successfully" });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+ /* GET /profile
  * Returns the current user's profile (safe fields only).
  */
 router.get("/", async (req: Request, res: Response) => {
