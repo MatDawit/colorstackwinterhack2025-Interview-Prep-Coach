@@ -11,6 +11,7 @@ const upload = multer({ dest: "uploads/" });
 const generation_ai = new GoogleGenAI({
   apiKey: process.env.MATT_GEMINI_API_KEY,
 });
+
 const transcription_ai = new GoogleGenAI({
   apiKey: process.env.FAD_GEMINI_API_KEY,
 });
@@ -24,13 +25,13 @@ router.post(
     try {
       const { sessionId, questionId, mode, answerText, duration } = req.body;
 
-      // 1. Validation
+      // Validation
       if (!sessionId || !questionId) {
         res.status(400).json({ error: "Missing sessionId or questionId" });
         return;
       }
 
-      // 2. Fetch Trusted Question
+      // Fetch Trusted Question
       const questionRecord = await prisma.question.findUnique({
         where: { id: questionId },
       });
