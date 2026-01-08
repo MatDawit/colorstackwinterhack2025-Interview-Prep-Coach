@@ -18,6 +18,8 @@ import {
   MapPin,
   Mail,
   AtSign,
+  LogOut,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -60,7 +62,7 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // This is the final chosen avatar (cropped result). If you save it to backend, it persists.
+  // Avatar state
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Crop modal state
@@ -74,6 +76,9 @@ export default function ProfilePage() {
     width: number;
     height: number;
   } | null>(null);
+
+  // Delete account modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -160,8 +165,6 @@ export default function ProfilePage() {
           bio: form.bio,
           avatarShape,
           avatarBorder: borderColor,
-
-          // Persist avatar if backend supports it
           avatarUrl,
         }),
       });
@@ -185,6 +188,52 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleSignOut() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      await fetch("http://localhost:5000/api/profile/signout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      localStorage.removeItem("token");
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      // Even if backend fails, still remove token and redirect
+      localStorage.removeItem("token");
+      router.push("/login");
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/profile/delete", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete account");
+      }
+
+      localStorage.removeItem("token");
+      router.push("/");
+    } catch (error) {
+      console.error("Delete account failed:", error);
+      alert("Failed to delete account. Please try again.");
+    }
+  }
+
   function openFilePicker() {
     fileInputRef.current?.click();
   }
@@ -202,7 +251,6 @@ export default function ProfilePage() {
     setSelectedImageUrl(url);
     setIsCropOpen(true);
 
-    // allow re-selecting same file later
     e.target.value = "";
   }
 
@@ -222,7 +270,6 @@ export default function ProfilePage() {
     );
     setAvatarUrl(croppedDataUrl);
 
-    // close modal + cleanup object url
     setIsCropOpen(false);
     try {
       URL.revokeObjectURL(selectedImageUrl);
@@ -349,10 +396,11 @@ export default function ProfilePage() {
                     {/* Top right actions */}
                     <div className="flex items-center gap-2">
                       <button
-                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
-                        onClick={() => router.push("/dashboard")}
+                        onClick={handleSignOut}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
                       >
-                        Cancel
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
                       </button>
                       <button
                         onClick={saveProfile}
@@ -518,12 +566,36 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 </section>
+
+                {/* Danger Zone - Delete Account */}
+                <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-sm font-semibold text-red-900 flex items-center gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Danger Zone
+                      </h2>
+                      <p className="mt-1 text-sm text-red-700">
+                        Once you delete your account, there is no going back. Please be certain.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete Account
+                    </button>
+                  </div>
+                </section>
               </div>
             </main>
           </div>
         </div>
       </div>
 
+      {/* Crop Modal */}
       {/* Crop Modal */}
       {isCropOpen && selectedImageUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -575,6 +647,46 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Delete Account Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+
+              <h3 className="mt-4 text-center text-lg font-semibold text-gray-900">
+                Confirm Account Deletion
+              </h3>
+
+              <p className="mt-2 text-center text-sm text-gray-600">
+                Are you absolutely sure you wish to delete your InterviewAI account?
+              </p>
+
+              <p className="mt-3 text-center text-sm text-red-600 font-medium">
+                This action is irreversible and all your data, progress, and settings will be permanently lost.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700"
+                >
+                  Yes, permanently delete my account
+                </button>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                >
+                  No, keep my account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -591,7 +703,6 @@ async function getCroppedImageDataUrl(
     img.src = imageSrc;
   });
 
-  // cap output size so base64 is small
   const MAX = 512;
   const scale = Math.min(MAX / cropPixels.width, MAX / cropPixels.height, 1);
 
@@ -620,12 +731,8 @@ async function getCroppedImageDataUrl(
     outH
   );
 
-  // JPEG is much smaller than PNG
   return canvas.toDataURL("image/jpeg", 0.8);
 }
-
-/*  Small UI helpers (yours unchanged below)  */
-// ... keep SidebarLink, SidebarGroup, SidebarSubLink, Input, ToggleButton, ColorDot as-is
 
 /*  Small UI helpers  */
 
@@ -736,7 +843,7 @@ function Input({
 
       {readOnly && (
         <p className="mt-1 text-xs text-gray-500">
-          Email is tied to your login and can’t be changed here.
+          Email is tied to your login and can't be changed here.
         </p>
       )}
     </div>
