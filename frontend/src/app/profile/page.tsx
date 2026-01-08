@@ -9,6 +9,7 @@ import {
   Home,
   Settings,
   Keyboard,
+  SunMoon,
   User,
   UserCircle2,
   BrainCircuit,
@@ -39,8 +40,18 @@ export default function ProfilePage() {
   });
 
   const [avatarShape, setAvatarShape] = useState<"circle" | "square">("circle");
-  const [borderColor, setBorderColor] = useState<"blue" | "green">("blue");
-
+  const [borderColor, setBorderColor] = useState<string>("#3B82F6");// default blue
+    const BORDER_COLORS = [
+    { name: "Red", hex: "#EF4444" },
+    { name: "Orange", hex: "#F97316" },
+    { name: "Yellow", hex: "#EAB308" },
+    { name: "Green", hex: "#22C55E" },
+    { name: "Blue", hex: "#3B82F6" },
+    { name: "Indigo", hex: "#6366F1" },
+    { name: "Violet", hex: "#A855F7" },
+    { name: "White", hex: "#FFFFFF" },
+    { name: "Black", hex: "#000000" },
+    ];
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<
@@ -104,14 +115,10 @@ export default function ProfilePage() {
         setAvatarShape(
           (data.user.avatarShape as "circle" | "square") ?? "circle"
         );
-        setBorderColor(
-          (data.user.avatarBorder === "green" ? "green" : "blue") as
-            | "blue"
-            | "green"
-        );
+        setBorderColor(data.user.avatarBorder || "#3B82F6");
 
-        // ✅ Load avatar from backend if your API returns it
-        // You need backend to return user.avatarUrl (string) OR null
+        //Load avatar from backend if the API returns it
+        // backend returns user.avatarUrl (string) OR null
         setAvatarUrl(data.user.avatarUrl ?? null);
       } catch (e) {
         console.error(e);
@@ -235,39 +242,6 @@ export default function ProfilePage() {
     );
   }
 
-  // Guest view UI
-  if (!isSignedIn) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <div className="pt-24 px-4">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
-              Profile
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              Manage your account details and preferences.
-            </p>
-
-            <div className="mt-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold text-gray-900">Guest User</p>
-              <p className="mt-1 text-sm text-gray-600">Not signed in</p>
-
-              <div className="mt-6 grid gap-3">
-                <button className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50">
-                  Sign in
-                </button>
-                <button className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                  Create account
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Signed-in view
   return (
     <div className="min-h-screen bg-gray-50">
@@ -295,8 +269,8 @@ export default function ProfilePage() {
                     icon={<Settings className="h-4 w-4" />}
                   >
                     <SidebarSubLink
-                      label="Shortcuts"
-                      icon={<Keyboard className="h-4 w-4" />}
+                      label="Appearance"
+                      icon={<SunMoon className="h-4 w-4" />}
                     />
                     <SidebarSubLink
                       label="Account"
@@ -335,14 +309,11 @@ export default function ProfilePage() {
                       {/* Avatar preview */}
                       <div
                         className={[
-                          "h-14 w-14 bg-gray-100 flex items-center justify-center overflow-hidden",
-                          avatarShape === "circle"
-                            ? "rounded-full"
-                            : "rounded-2xl",
-                          borderColor === "blue"
-                            ? "ring-2 ring-blue-500"
-                            : "ring-2 ring-green-500",
+                            "h-14 w-14 bg-gray-100 flex items-center justify-center overflow-hidden",
+                            avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                            "border-2",
                         ].join(" ")}
+                        style={{borderColor }}
                       >
                         {avatarUrl ? (
                           <img
@@ -501,34 +472,31 @@ export default function ProfilePage() {
                         <p className="text-sm font-medium text-gray-700">
                           Border Color
                         </p>
-                        <div className="mt-2 flex gap-2">
-                          <ColorDot
-                            active={borderColor === "blue"}
-                            onClick={() => setBorderColor("blue")}
-                            className="bg-blue-500"
-                          />
-                          <ColorDot
-                            active={borderColor === "green"}
-                            onClick={() => setBorderColor("green")}
-                            className="bg-green-500"
-                          />
+                        <div className="mt-2 flex flex-wrap gap-2">
+                        {BORDER_COLORS.map((c) => (
+                            <ColorDot
+                            key={c.hex}
+                            active={borderColor.toLowerCase() === c.hex.toLowerCase()}
+                            onClick={() => setBorderColor(c.hex)}
+                            color={c.hex}
+                            label={c.name}
+                            />
+                        ))}
                         </div>
                       </div>
                     </div>
 
                     {/* Preview */}
                     <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 p-6">
-                      <div
+                        <div
                         className={[
-                          "h-24 w-24 bg-white flex items-center justify-center overflow-hidden shadow-sm",
-                          avatarShape === "circle"
-                            ? "rounded-full"
-                            : "rounded-2xl",
-                          borderColor === "blue"
-                            ? "ring-4 ring-blue-500"
-                            : "ring-4 ring-green-500",
+                            "h-24 w-24 bg-white flex items-center justify-center overflow-hidden shadow-sm",
+                            avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                            "border-4",
                         ].join(" ")}
-                      >
+                        style={{ borderColor }}
+                        >
+
                         {avatarUrl ? (
                           <img
                             src={avatarUrl}
@@ -556,7 +524,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ✅ Crop Modal */}
+      {/* Crop Modal */}
       {isCropOpen && selectedImageUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
@@ -803,22 +771,29 @@ function ToggleButton({
 function ColorDot({
   active,
   onClick,
-  className,
+  color,
+  label,
 }: {
   active: boolean;
   onClick: () => void;
-  className: string;
+  color: string;
+  label: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      title={label}
       className={[
-        "h-6 w-6 rounded-full",
-        className,
+        "h-6 w-6 rounded-full border",
         active ? "ring-2 ring-offset-2 ring-gray-900" : "ring-0",
       ].join(" ")}
-      aria-label="Select border color"
+      style={{
+        backgroundColor: color,
+        borderColor: color.toLowerCase() === "#ffffff" ? "#D1D5DB" : color, // visible border for white
+      }}
+      aria-label={`Select ${label} border color`}
     />
   );
 }
+
