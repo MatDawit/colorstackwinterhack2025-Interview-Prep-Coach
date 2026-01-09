@@ -63,6 +63,11 @@ export default function Dashboard() {
     fetchSessionStats();
   }, [router]);
 
+  // Calculate progress toward next milestone (every 5 sessions)
+  const nextMilestone = Math.ceil(sessionStats.totalSessions / 5) * 5;
+  const sessionsToMilestone = nextMilestone - sessionStats.totalSessions;
+  const milestoneProgress = sessionStats.totalSessions > 0 ? ((sessionStats.totalSessions % 5) / 5) * 100 : 0;
+
   return (
     <>
       <Navbar />
@@ -86,40 +91,45 @@ export default function Dashboard() {
           </div>
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {/* Recent Sessions Box */}
-            <div className="bg-white shadow-xl rounded-xl w-full p-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-black">Recent Sessions</h2>
-                <button className="text-blue-500 text-sm">View All →</button>
+            {/* Motivational Progress Box */}
+            <div className="bg-white shadow-xl rounded-xl w-full p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">✨</span>
+                <h2 className="text-lg font-bold text-black">You're on fire!</h2>
+                <span className="text-2xl">🔥</span>
               </div>
               
-              <div className="space-y-3">
-                <div className="border-b pb-3">
-                  <h3 className="font-semibold text-sm text-black">Behavioral Interview</h3>
-                  <p className="text-xs text-gray-500">2023-11-20</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-green-600 font-bold text-sm">85%</span>
-                    <span className="text-xs text-gray-600">Completed</span>
+              {loading ? (
+                <p className="text-sm text-gray-600">Loading...</p>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600">
+                    {sessionStats.totalSessions} session{sessionStats.totalSessions !== 1 ? 's' : ''} this week
+                  </p>
+                  
+                  <p className="text-sm text-gray-600">
+                    Keep up the great work!
+                  </p>
+                  
+                  <div className="pt-2">
+                    <p className="text-sm font-semibold text-blue-600 mb-2">
+                      Next milestone: {milestoneProgress.toFixed(0)}% complete
+                    </p>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                      <div 
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                        style={{ width: `${milestoneProgress}%` }}
+                      ></div>
+                    </div>
+                    
+                    <p className="text-xs text-gray-500">
+                      Practice {sessionsToMilestone} more session{sessionsToMilestone !== 1 ? 's' : ''} to reach your next badge!
+                    </p>
                   </div>
-                </div>
-
-                <div className="border-b pb-3">
-                  <h3 className="font-semibold text-sm text-black">Technical Interview (Python)</h3>
-                  <p className="text-xs text-gray-500">2023-11-18</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-green-600 font-bold text-sm">72%</span>
-                    <span className="text-xs text-gray-600">Completed</span>
-                  </div>
-                </div>
-
-                <div className="pb-3">
-                  <h3 className="font-semibold text-sm text-black">System Design Interview</h3>
-                  <p className="text-xs text-gray-500">2023-11-15</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-yellow-600 font-bold text-sm">In Progress</span>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
             {/* Progress Summary Box */}
@@ -169,6 +179,11 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
                   <div className="text-blue-600">📚</div>
                   <span className="text-sm text-black">Question Bank</span>
+                </div>
+
+                <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                  <div className="text-blue-600">📄</div>
+                  <span className="text-sm text-black">Resume Review</span>
                 </div>
 
                 <div 
