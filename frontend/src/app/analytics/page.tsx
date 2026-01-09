@@ -14,6 +14,7 @@ import {
 import Navbar from "../components/Navbar";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "../context/ThemeContext";
 
 // --- TYPES ---
 interface SessionData {
@@ -32,13 +33,6 @@ interface SessionData {
 }
 
 // --- CONSTANTS ---
-const TOOLTIP_STYLE = {
-  backgroundColor: "#FFFFFF",
-  borderColor: "#E5E7EB",
-  borderRadius: "8px",
-  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-};
-
 const LABEL_MAP: Record<string, string> = {
   "Filler Words": "Fillers",
   Apologizing: "Negative",
@@ -49,6 +43,7 @@ const LABEL_MAP: Record<string, string> = {
 
 export default function AnalyticsPage() {
   const router = useRouter();
+  const { isDarkMode } = useTheme();
 
   // --- STATE ---
   const [category, setCategory] = useState("All Categories");
@@ -203,9 +198,19 @@ export default function AnalyticsPage() {
     return isMobile ? LABEL_MAP[value] || value : value;
   };
 
+  // Dynamic Tooltip Style
+  const TOOLTIP_STYLE = {
+    backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF",
+    borderColor: isDarkMode ? "#374151" : "#E5E7EB",
+    borderRadius: "8px",
+    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
+      <div className={`min-h-screen flex items-center justify-center ${
+        isDarkMode ? 'bg-gray-900' : 'bg-[#F8F9FA]'
+      }`}>
         <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
       </div>
     );
@@ -214,14 +219,20 @@ export default function AnalyticsPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#F8F9FA] pt-24 pb-12 px-4 md:px-8">
+      <main className={`min-h-screen pt-24 pb-12 px-4 md:px-8 ${
+        isDarkMode ? 'bg-gray-900' : 'bg-[#F8F9FA]'
+      }`}>
         <div className="mx-auto max-w-[1296px]">
           {/* Header */}
           <header className="mb-8">
-            <h1 className="text-2xl md:text-[30px] font-bold text-[#1A1A1A]">
+            <h1 className={`text-2xl md:text-[30px] font-bold ${
+              isDarkMode ? 'text-white' : 'text-[#1A1A1A]'
+            }`}>
               Analytics and Insights
             </h1>
-            <p className="text-gray-500 mt-2 text-sm md:text-base">
+            <p className={`mt-2 text-sm md:text-base ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               Track your progress and identify interview patterns.
             </p>
           </header>
@@ -229,13 +240,19 @@ export default function AnalyticsPage() {
           {/* Filters */}
           <div className="flex flex-col md:flex-row justify-end items-start md:items-center gap-4 md:gap-6 mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
-              <span className="text-sm font-semibold text-black">
+              <span className={`text-sm font-semibold ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
                 Time Range
               </span>
               <select
                 value={timeRange}
                 onChange={(e) => setTimeRange(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+                className={`w-full sm:w-auto border rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white' 
+                    : 'bg-white border-gray-200 text-black'
+                }`}
               >
                 <option>All Time</option>
                 <option>Last 30 Days</option>
@@ -245,11 +262,19 @@ export default function AnalyticsPage() {
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
-              <span className="text-sm font-semibold text-black">Category</span>
+              <span className={`text-sm font-semibold ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
+                Category
+              </span>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full sm:w-auto bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer text-black"
+                className={`w-full sm:w-auto border rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white' 
+                    : 'bg-white border-gray-200 text-black'
+                }`}
               >
                 <option>All Categories</option>
                 {availableCategories.map((cat) => (
@@ -261,16 +286,24 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="w-full border-b border-gray-300 mb-10" />
+          <div className={`w-full border-b mb-10 ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-300'
+          }`} />
 
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Line Chart */}
-            <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm h-[350px] md:h-[400px]">
-              <h2 className="text-black text-xl font-bold mb-1">
+            <div className={`p-6 md:p-8 rounded-2xl border shadow-sm h-[350px] md:h-[400px] ${
+              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+            }`}>
+              <h2 className={`text-xl font-bold mb-1 ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
                 Average Score Over Time
               </h2>
-              <p className="text-gray-500 text-sm mb-6">
+              <p className={`text-sm mb-6 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Trend of your average scores across practice sessions.
               </p>
 
@@ -283,27 +316,27 @@ export default function AnalyticsPage() {
                     <CartesianGrid
                       strokeDasharray="3 3"
                       vertical={false}
-                      stroke="#F0F0F0"
+                      stroke={isDarkMode ? "#374151" : "#F0F0F0"}
                     />
                     <XAxis
                       dataKey="date"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "#0A0D10", fontSize: 12 }}
+                      tick={{ fill: isDarkMode ? "#9CA3AF" : "#0A0D10", fontSize: 12 }}
                       dy={10}
                     />
                     <YAxis
                       domain={[0, 100]}
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "#0A0D10", fontSize: 12 }}
+                      tick={{ fill: isDarkMode ? "#9CA3AF" : "#0A0D10", fontSize: 12 }}
                     />
                     <Tooltip
-                      cursor={{ fill: "#F9FAFB" }}
+                      cursor={{ fill: isDarkMode ? "#1F2937" : "#F9FAFB" }}
                       contentStyle={TOOLTIP_STYLE}
-                      itemStyle={{ color: "#000000", fontWeight: 500 }}
+                      itemStyle={{ color: isDarkMode ? "#FFFFFF" : "#000000", fontWeight: 500 }}
                       labelStyle={{
-                        color: "#000000",
+                        color: isDarkMode ? "#FFFFFF" : "#000000",
                         marginBottom: "4px",
                         fontWeight: "bold",
                       }}
@@ -323,18 +356,26 @@ export default function AnalyticsPage() {
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex h-full items-center justify-center text-gray-400 pb-10">
+                <div className={`flex h-full items-center justify-center pb-10 ${
+                  isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                }`}>
                   No session data available.
                 </div>
               )}
             </div>
 
             {/* Bar Chart */}
-            <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm h-[350px] md:h-[400px]">
-              <h2 className="text-black text-xl font-bold mb-1">
+            <div className={`p-6 md:p-8 rounded-2xl border shadow-sm h-[350px] md:h-[400px] ${
+              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+            }`}>
+              <h2 className={`text-xl font-bold mb-1 ${
+                isDarkMode ? 'text-white' : 'text-black'
+              }`}>
                 Areas for Improvement
               </h2>
-              <p className="text-gray-500 text-sm mb-6">
+              <p className={`text-sm mb-6 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 Frequency of issues identified in your answers
               </p>
 
@@ -346,13 +387,13 @@ export default function AnalyticsPage() {
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
-                    stroke="#F0F0F0"
+                    stroke={isDarkMode ? "#374151" : "#F0F0F0"}
                   />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#0A0D10", fontSize: isMobile ? 10 : 12 }}
+                    tick={{ fill: isDarkMode ? "#9CA3AF" : "#0A0D10", fontSize: isMobile ? 10 : 12 }}
                     tickFormatter={shortenLabel}
                     interval={0}
                     dy={10}
@@ -361,14 +402,14 @@ export default function AnalyticsPage() {
                     allowDecimals={false}
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: "#0A0D10", fontSize: 12 }}
+                    tick={{ fill: isDarkMode ? "#9CA3AF" : "#0A0D10", fontSize: 12 }}
                   />
                   <Tooltip
-                    cursor={{ fill: "#F9FAFB" }}
+                    cursor={{ fill: isDarkMode ? "#1F2937" : "#F9FAFB" }}
                     contentStyle={TOOLTIP_STYLE}
-                    itemStyle={{ color: "#000000", fontWeight: 500 }}
+                    itemStyle={{ color: isDarkMode ? "#FFFFFF" : "#000000", fontWeight: 500 }}
                     labelStyle={{
-                      color: "#000000",
+                      color: isDarkMode ? "#FFFFFF" : "#000000",
                       marginBottom: "4px",
                       fontWeight: "bold",
                     }}
@@ -385,16 +426,24 @@ export default function AnalyticsPage() {
           </div>
 
           {/* History Table */}
-          <section className="bg-white p-6 md:p-8 rounded-2xl border border-gray-100 shadow-sm">
-            <h2 className="text-lg md:text-xl font-bold text-[#1A1A1A]">
+          <section className={`p-6 md:p-8 rounded-2xl border shadow-sm ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
+          }`}>
+            <h2 className={`text-lg md:text-xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-[#1A1A1A]'
+            }`}>
               Session History
             </h2>
-            <p className="text-gray-500 text-xs md:text-sm mb-8">
+            <p className={`text-xs md:text-sm mb-8 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               Detailed record of all your practice interview sessions.
             </p>
 
             {/* Table Header (Hidden on Mobile) */}
-            <div className="hidden md:flex items-center justify-between pb-4 border-b border-gray-100 px-4 text-gray-400 text-[13px] font-semibold uppercase tracking-wider">
+            <div className={`hidden md:flex items-center justify-between pb-4 border-b px-4 text-[13px] font-semibold uppercase tracking-wider ${
+              isDarkMode ? 'border-gray-700 text-gray-500' : 'border-gray-100 text-gray-400'
+            }`}>
               <div className="flex items-center gap-16">
                 <span className="w-32">Date</span>
                 <span>Category</span>
@@ -406,18 +455,22 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-50">
+            <div className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-50'}`}>
               {filteredSessions.length > 0 ? (
                 filteredSessions.map((session) => (
                   <div
                     key={session.id}
                     onClick={() => router.push(`/session-review/${session.id}`)}
-                    className="flex flex-col md:flex-row md:items-center justify-between py-4 px-2 md:px-4 hover:bg-gray-50 transition-colors gap-2 md:gap-0 cursor-pointer"
+                    className={`flex flex-col md:flex-row md:items-center justify-between py-4 px-2 md:px-4 rounded-lg transition-colors gap-2 md:gap-0 cursor-pointer ${
+                      isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    }`}
                   >
                     {/* Left Column */}
                     <div className="flex flex-col md:flex-row md:items-center md:gap-16 w-full md:w-auto">
                       <div className="flex justify-between items-center md:block w-full md:w-auto">
-                        <span className="text-[14px] font-bold text-[#1A1A1A] w-32">
+                        <span className={`text-[14px] font-bold w-32 ${
+                          isDarkMode ? 'text-white' : 'text-[#1A1A1A]'
+                        }`}>
                           {new Date(session.date).toLocaleDateString()}
                         </span>
                         {/* Mobile Score */}
@@ -429,14 +482,18 @@ export default function AnalyticsPage() {
                           {session.score}%
                         </span>
                       </div>
-                      <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A]">
+                      <span className={`text-[13px] md:text-[14px] ${
+                        isDarkMode ? 'text-gray-400 md:text-gray-300' : 'text-gray-500 md:text-[#1A1A1A]'
+                      }`}>
                         {session.category}
                       </span>
                     </div>
 
                     {/* Right Column */}
                     <div className="flex items-center justify-between md:justify-end md:gap-16 w-full md:w-auto mt-1 md:mt-0">
-                      <span className="text-[13px] md:text-[14px] text-gray-500 md:text-[#1A1A1A] w-20 text-left md:text-right">
+                      <span className={`text-[13px] md:text-[14px] w-20 text-left md:text-right ${
+                        isDarkMode ? 'text-gray-400 md:text-gray-300' : 'text-gray-500 md:text-[#1A1A1A]'
+                      }`}>
                         {session.duration}
                       </span>
                       {/* Desktop Score */}
@@ -451,7 +508,9 @@ export default function AnalyticsPage() {
                   </div>
                 ))
               ) : (
-                <div className="py-8 text-center text-gray-500">
+                <div className={`py-8 text-center ${
+                  isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                }`}>
                   No sessions found matching your filters.
                 </div>
               )}
