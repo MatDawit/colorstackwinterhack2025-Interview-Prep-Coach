@@ -8,7 +8,7 @@ import { useTheme } from "../../context/ThemeContext";
 import {
   Home,
   Settings,
-  Keyboard,
+  Settings2,
   SunMoon,
   User,
   UserCircle2,
@@ -257,7 +257,7 @@ const pageBg = !mounted
                   <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} isDarkMode={isDarkMode} />
 
                   <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />} isDarkMode={isDarkMode}>
-                    <SidebarSubLink href="/profile/appearance" label="Appearance" icon={<SunMoon className="h-4 w-4" />} isDarkMode={isDarkMode} />
+                    <SidebarSubLink href="/profile/preferences" label="Preferences" icon={<Settings2 className="h-4 w-4" />} isDarkMode={isDarkMode} />
                     <SidebarSubLink href="/profile/account" label="Account" active icon={<User className="h-4 w-4" />} isDarkMode={isDarkMode} />
                     <SidebarSubLink href="/profile" label="Personal" icon={<UserCircle2 className="h-4 w-4" />} isDarkMode={isDarkMode} />
                   </SidebarGroup>
@@ -285,11 +285,11 @@ const pageBg = !mounted
                         <Shield className={`h-5 w-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
                       </div>
                       <div>
-                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Settings</p>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Account Settings</p>
                         <h1 className={`mt-1 text-xl font-semibold tracking-tight ${
                           isDarkMode ? 'text-white' : 'text-gray-900'
                         }`}>
-                          Account
+                          Manage Your Account
                         </h1>
                         <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           {account.email || "Signed in"}

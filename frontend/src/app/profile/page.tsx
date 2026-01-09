@@ -8,6 +8,7 @@ import Link from "next/link";
 import {
   Home,
   Settings,
+  Settings2,
   SunMoon,
   User,
   UserCircle2,
@@ -335,9 +336,9 @@ export default function ProfilePage() {
                     isDarkMode={isDarkMode}
                   >
                     <SidebarSubLink
-                      href="/profile/appearance"
-                      label="Appearance"
-                      icon={<SunMoon className="h-4 w-4" />}
+                      href="/profile/preferences"
+                      label="Preferences"
+                      icon={<Settings2 className="h-4 w-4" />}
                       isDarkMode={isDarkMode}
                     />
                     <SidebarSubLink
