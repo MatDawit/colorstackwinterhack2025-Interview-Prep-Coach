@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useTheme } from "../context/ThemeContext";
 import {
   LayoutDashboard,
   BrainCircuit,
@@ -13,6 +14,8 @@ import {
 } from "lucide-react";
 
 export default function Navbar() {
+  const { isDarkMode } = useTheme();
+
   type Me = {
     name: string | null;
     avatarUrl: string | null;
@@ -110,8 +113,9 @@ export default function Navbar() {
     return (
       <div
         className={[
-          "w-9 h-9 bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-700",
+          "w-9 h-9 flex items-center justify-center text-xs font-semibold",
           isCircle ? "rounded-full" : "rounded-xl",
+          isDarkMode ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700",
         ].join(" ")}
         style={{ border: `2px solid ${border}` }}
       >
@@ -122,7 +126,9 @@ export default function Navbar() {
 
   
   return (
-    <header className="fixed top-0 left-0 w-full h-16 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.08)] z-50">
+    <header className={`fixed top-0 left-0 w-full h-16 shadow-[0_2px_4px_rgba(0,0,0,0.08)] z-50 ${
+      isDarkMode ? 'bg-gray-800' : 'bg-white'
+    }`}>
       <div className="mx-auto w-full max-w-6xl h-full px-4 sm:px-8 flex items-center justify-between">
         {/* LEFT: Hamburger + Brand */}
         <div className="flex items-center gap-2 sm:gap-10">
@@ -131,12 +137,14 @@ export default function Navbar() {
             type="button"
             aria-label="Open menu"
             onClick={() => setMobileOpen((prev) => !prev)}
-            className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-50"
+            className={`sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg ${
+              isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+            }`}
           >
             {mobileOpen ? (
-              <X className="w-6 h-6 text-gray-700" />
+              <X className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
             ) : (
-              <Menu className="w-6 h-6 text-gray-700" />
+              <Menu className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
             )}
           </button>
 
@@ -164,10 +172,12 @@ export default function Navbar() {
                   className={`h-10 px-4 flex items-center justify-center rounded-lg gap-3 transition-all duration-200 text-[13px] font-semibold tracking-tight ${
                     isActive
                       ? "text-[#3D7AF5] bg-[#3D7AF5]/10"
+                      : isDarkMode
+                      ? "text-gray-300 hover:bg-gray-700 hover:text-white"
                       : "text-gray-600 hover:bg-gray-50 hover:text-black"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 ${isActive ? "text-[#3D7AF5]" : "text-gray-500"}`} />
+                  <Icon className={`h-4 w-4 ${isActive ? "text-[#3D7AF5]" : isDarkMode ? "text-gray-400" : "text-gray-500"}`} />
                   {link.label}
                 </Link>
               );
@@ -178,7 +188,11 @@ export default function Navbar() {
         {/* RIGHT: Profile icon (links to profile page) */}
         <Link
           href="/profile"
-          className="mt-1 flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+          className={`mt-1 flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${
+            isDarkMode 
+              ? 'text-gray-300 hover:bg-gray-700' 
+              : 'text-gray-700 hover:bg-gray-50'
+          }`}
         >
           <div className="shrink-0">
             <ProfileAvatar me={me} />
@@ -190,7 +204,9 @@ export default function Navbar() {
 
       {/* ✅ Mobile dropdown menu (ONLY on small screens, and only when open) */}
       {mobileOpen && (
-        <div className="sm:hidden border-t border-gray-100 bg-white">
+        <div className={`sm:hidden border-t ${
+          isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-white'
+        }`}>
           <nav className="px-4 py-3 flex flex-col gap-1">
             {links.map((link) => {
               const isActive = pathname?.startsWith(link.href);
@@ -203,10 +219,12 @@ export default function Navbar() {
                   className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${
                     isActive
                       ? "bg-blue-50 text-[#3D7AF5]"
+                      : isDarkMode
+                      ? "text-gray-300 hover:bg-gray-700"
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? "text-[#3D7AF5]" : "text-gray-500"}`} />
+                  <Icon className={`h-5 w-5 ${isActive ? "text-[#3D7AF5]" : isDarkMode ? "text-gray-400" : "text-gray-500"}`} />
                   {link.label}
                 </Link>
               );
@@ -225,7 +243,9 @@ export default function Navbar() {
       )}
 
       {/* Bottom Separator Line */}
-      <div className="absolute bottom-0 left-0 w-full border-b border-[#F4F4F4]" />
+      <div className={`absolute bottom-0 left-0 w-full border-b ${
+        isDarkMode ? 'border-gray-700' : 'border-[#F4F4F4]'
+      }`} />
     </header>
   );
 }
