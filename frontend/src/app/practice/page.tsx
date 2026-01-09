@@ -2,7 +2,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, X } from "lucide-react"; // Added X for error modal
+import { Loader2, X } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
 
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
@@ -25,6 +26,7 @@ function formatTime(seconds: number) {
 export default function Practice() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isDarkMode } = useTheme();
   const existingSessionId = searchParams.get("sessionId");
   const isMounted = useRef(true);
 
@@ -203,7 +205,6 @@ export default function Practice() {
   }
 
   // This effect handles Session Syncing.
-  // Instead of picking a random question every time, it asks the backend: "What is the active question?"
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -263,7 +264,7 @@ export default function Practice() {
         }
       }
 
-      // 2. Fetch Session State (Which now includes the Question!)
+      // 2. Fetch Session State
       if (activeId) {
         setSessionId(activeId);
         setLoadingQuestion(true);
@@ -274,8 +275,6 @@ export default function Practice() {
           if (res.ok) {
             const sessionData = await res.json();
 
-            // FIX: We read the question directly from the backend response
-            // No more searching through a "questions" array
             if (sessionData.currentQuestion) {
               setCurrentQuestion(sessionData.currentQuestion);
               setQId(sessionData.currentQuestion.id);
@@ -315,12 +314,8 @@ export default function Practice() {
     setTypedAnswer("");
     handleRerecord();
     setSubmitError(null);
-
-    // Dependency array is much cleaner now
   }, [existingSessionId, interviewType]);
 
-  //This is the function that submits the answer to the backend
-  //This is just a test at the moment
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
@@ -363,9 +358,6 @@ export default function Practice() {
         }
         form.append("answerText", typedAnswer);
       } else {
-        // 1. Remove the 'throw new Error' lines that were blocking the UI logic
-
-        // 2. Check if recording is active
         if (recordingState === "recording") {
           showError(
             "Recording In Progress",
@@ -375,7 +367,6 @@ export default function Practice() {
           return;
         }
 
-        // 3. Check if audio exists
         if (!audioBlob) {
           showError(
             "No Recording",
@@ -385,9 +376,7 @@ export default function Practice() {
           return;
         }
 
-        // 4. Append audio
         form.append("audio", audioBlob, "answer.webm");
-        // --- FIX ENDS HERE ---
       }
 
       const res = await fetch("http://localhost:5000/api/feedback/submit", {
@@ -407,7 +396,6 @@ export default function Practice() {
         return;
       }
 
-      // Check if session is complete
       if (data.sessionComplete) {
         router.push(`/session-review/${data.sessionId}`);
       } else {
@@ -479,6 +467,7 @@ export default function Practice() {
     mediaRecorderRef.current = null;
     clearTimer();
   }
+
   function handleRerecord() {
     setSubmitError(null);
     if (recordingState === "recording") stopRecording();
@@ -491,6 +480,7 @@ export default function Practice() {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
   }
+
   function switchMode(nextMode: Mode) {
     if (nextMode === mode) return;
     if (recordingState === "recording") stopRecording();
@@ -499,6 +489,7 @@ export default function Practice() {
     setMode(nextMode);
     setSubmitError(null);
   }
+
   useEffect(() => {
     return () => {
       clearTimer();
@@ -508,26 +499,38 @@ export default function Practice() {
   }, [audioUrl]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <Navbar />
       <div className="max-w-4xl mt-12 mx-auto px-4 pt-8">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-900">
+        <div className={`border rounded-xl shadow-sm p-6 ${
+          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
+          <h2 className={`text-base font-semibold ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
             Interview Settings
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className={`text-sm mt-1 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             Select your role and preferences.
           </p>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Role
               </label>
               <select
                 value={interviewType}
                 onChange={(e) => handleTypeChange(e.target.value)}
-                className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-black'
+                }`}
               >
                 <option value="General">General</option>
                 <option value="Software Engineering">
@@ -539,13 +542,19 @@ export default function Practice() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Difficulty
               </label>
               <select
                 value={difficulty}
                 onChange={(e) => handleDifficultyChange(e.target.value)}
-                className="w-full text-black rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-black'
+                }`}
               >
                 <option value="Basic">Basic</option>
                 <option value="Advanced">Advanced</option>
@@ -556,42 +565,53 @@ export default function Practice() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div className={`border rounded-xl shadow-sm p-6 ${
+          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+        }`}>
           {loadingQuestion ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-              <p className="text-gray-500">Loading your question...</p>
+              <p className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
+                Loading your question...
+              </p>
             </div>
           ) : !currentQuestion ? (
-            // FIX: This prevents the infinite loading spinner
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-red-500 font-medium text-lg">
                 No questions found
               </p>
-              <p className="text-gray-500 mt-2">
+              <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 There are no {difficulty} questions for {interviewType} yet.
               </p>
             </div>
           ) : (
             <>
               {/* Question display */}
-              <div className="mt-4 rounded-lg border border-gray-200 p-4">
+              <div className={`mt-4 rounded-lg border p-4 ${
+                isDarkMode ? 'border-gray-700' : 'border-gray-200'
+              }`}>
                 <div className="flex justify-center gap-2 mb-2">
                   <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded uppercase tracking-wide">
                     {currentQuestion.category}
                   </span>
-                  <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded uppercase tracking-wide">
+                  <span className={`text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ${
+                    isDarkMode ? 'text-gray-400 bg-gray-700' : 'text-gray-500 bg-gray-100'
+                  }`}>
                     {difficulty}
                   </span>
                 </div>
-                <p className="mt-2 text-2xl text-center font-medium text-gray-900">
+                <p className={`mt-2 text-2xl text-center font-medium ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>
                   {question}
                 </p>
               </div>
 
               {/* Toggle */}
               <div className="mt-6 flex justify-center">
-                <div className="grid grid-cols-2 bg-gray-100 rounded-lg p-1 w-full max-w-2xl">
+                <div className={`grid grid-cols-2 rounded-lg p-1 w-full max-w-2xl ${
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                }`}>
                   <button
                     type="button"
                     onClick={() => switchMode("record")}
@@ -599,6 +619,8 @@ export default function Practice() {
                       "py-2 rounded-md text-sm font-semibold transition",
                       mode === "record"
                         ? "bg-blue-600 text-white shadow"
+                        : isDarkMode
+                        ? "text-gray-300 hover:bg-gray-600"
                         : "text-gray-700 hover:bg-gray-200",
                     ].join(" ")}
                   >
@@ -612,6 +634,8 @@ export default function Practice() {
                       "py-2 rounded-md text-sm font-semibold transition",
                       mode === "type"
                         ? "bg-blue-600 text-white shadow"
+                        : isDarkMode
+                        ? "text-gray-300 hover:bg-gray-600"
                         : "text-gray-700 hover:bg-gray-200",
                     ].join(" ")}
                   >
@@ -623,10 +647,14 @@ export default function Practice() {
               {mode === "record" ? (
                 <>
                   <div className="mt-6 text-center">
-                    <div className="text-4xl font-bold text-gray-900">
+                    <div className={`text-4xl font-bold ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
                       {timeLabel}
                     </div>
-                    <div className="mt-2 text-sm text-gray-600 flex items-center justify-center gap-2">
+                    <div className={`mt-2 text-sm flex items-center justify-center gap-2 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       {recordingState === "idle" && "Ready to record"}
                       {recordingState === "recording" && "Recording..."}
                       {recordingState === "stopped" && "Recording saved"}
@@ -663,7 +691,11 @@ export default function Practice() {
 
                   {audioUrl && (
                     <div className="mt-6">
-                      <p className="text-sm text-gray-500 mb-2">Playback:</p>
+                      <p className={`text-sm mb-2 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}>
+                        Playback:
+                      </p>
                       <audio controls src={audioUrl} className="w-full" />
                     </div>
                   )}
@@ -675,9 +707,15 @@ export default function Practice() {
                       value={typedAnswer}
                       onChange={(e) => setTypedAnswer(e.target.value)}
                       placeholder="Type your answer here..."
-                      className="w-full min-h-45 rounded-xl border border-gray-300 p-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full min-h-45 rounded-xl border p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                      }`}
                     />
-                    <div className="mt-2 text-xs text-gray-500 flex justify-between">
+                    <div className={`mt-2 text-xs flex justify-between ${
+                      isDarkMode ? 'text-gray-500' : 'text-gray-500'
+                    }`}>
                       <span>
                         Tip: Try STAR (Situation, Task, Action, Result)
                       </span>
@@ -715,16 +753,18 @@ export default function Practice() {
       {/* Error Modal */}
       {showErrorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 relative animate-fadeIn">
-            {/* Close button */}
+          <div className={`rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 relative animate-fadeIn ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <button
               onClick={() => setShowErrorModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className={`absolute top-4 right-4 transition-colors ${
+                isDarkMode ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+              }`}
             >
               <X size={20} />
             </button>
 
-            {/* Error Icon */}
             <div className="flex justify-center mb-4">
               <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border-4 border-red-500">
@@ -733,15 +773,16 @@ export default function Practice() {
               </div>
             </div>
 
-            {/* Error Title */}
             <h2 className="text-2xl font-bold text-center text-red-600 mb-3">
               {errorTitle}
             </h2>
 
-            {/* Error Message */}
-            <p className="text-center text-gray-600 mb-6">{errorMessage}</p>
+            <p className={`text-center mb-6 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              {errorMessage}
+            </p>
 
-            {/* Dismiss Button */}
             <button
               onClick={() => setShowErrorModal(false)}
               className="w-full bg-red-500 text-white py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors"
@@ -754,7 +795,3 @@ export default function Practice() {
     </div>
   );
 }
-
-/*
-Yeah, so the frontend I want you to replace those, recent session areas like, Behavioral interview, technical interview and system design interview with the actual values from the database, if you don't find it for this user then just have it at 0%. Also completion should be calculation by 
-*/
