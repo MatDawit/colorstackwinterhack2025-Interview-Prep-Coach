@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Navbar from "../../components/Navbar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTheme } from "../../context/ThemeContext";
 import {
   Home,
   Settings,
@@ -34,27 +35,12 @@ type AccountData = {
 
 export default function AccountPage() {
   const router = useRouter();
+  
+  // Get theme state and toggle function from context
+  const { isDarkMode, toggleTheme } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
-
-  // Dark mode state with localStorage persistence
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme');
-      return saved === 'dark';
-    }
-    return false;
-  });
-
-  // Toggle theme function
-  const toggleTheme = () => {
-    setIsDarkMode(prev => {
-      const newMode = !prev;
-      localStorage.setItem('theme', newMode ? 'dark' : 'light');
-      return newMode;
-    });
-  };
 
   // pretend these come from backend
   const [account, setAccount] = useState<AccountData>({
@@ -546,6 +532,44 @@ export default function AccountPage() {
                   <p className={`mt-4 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                     If you signed up with Google/GitHub only, password features may be unavailable until you set a password.
                   </p>
+                </section>
+
+                {/* Danger Zone */}
+                <section className={`mt-6 rounded-2xl border p-6 shadow-sm ${
+                  isDarkMode ? 'border-red-900 bg-red-950/20' : 'border-red-200 bg-red-50'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`h-10 w-10 rounded-lg border flex items-center justify-center ${
+                      isDarkMode ? 'bg-red-950 border-red-900' : 'bg-red-100 border-red-200'
+                    }`}>
+                      <Shield className="h-5 w-5 text-red-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className={`text-sm font-semibold ${isDarkMode ? 'text-red-400' : 'text-red-900'}`}>
+                        Danger Zone
+                      </h2>
+                      <p className={`mt-1 text-sm ${isDarkMode ? 'text-red-300/80' : 'text-red-700'}`}>
+                        Once you delete your account, there is no going back. Please be certain.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <button
+                      onClick={() => {
+                        // TODO: Implement delete account flow
+                        const confirmed = confirm("Are you sure you want to delete your account? This action cannot be undone.");
+                        if (confirmed) {
+                          alert("Hook up Delete Account API here");
+                        }
+                      }}
+                      className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${
+                        isDarkMode ? 'bg-red-600 hover:bg-red-700' : 'bg-red-600 hover:bg-red-700'
+                      }`}
+                    >
+                      Delete Account
+                    </button>
+                  </div>
                 </section>
 
                 <div className="h-10" />

@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import ReactCropper from "react-easy-crop";
+import "react-easy-crop/react-easy-crop.css";
 import Navbar from "../components/Navbar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Home,
   Settings,
@@ -13,98 +14,117 @@ import {
   UserCircle2,
   BrainCircuit,
   ChartNoAxesColumn,
-  Mail,
-  Shield,
-  LogOut,
-  Link as LinkIcon,
-  FileText,
   Upload,
+  MapPin,
+  Mail,
+  AtSign,
+  LogOut,
   Trash2,
-  Sun,
-  Moon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-type AccountData = {
+type ProfileForm = {
+  name: string;
   email: string;
-  providerGoogleConnected: boolean;
-  providerGithubConnected: boolean;
-  resumeFileName?: string | null;
-  resumeUpdatedAt?: string | null;
+  displayName: string;
+  location: string;
+  bio: string;
 };
 
-export default function AccountPage() {
+export default function ProfilePage() {
   const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
-  const [isSignedIn, setIsSignedIn] = useState(false);
-
-  // Dark mode state with localStorage persistence
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('theme');
-      return saved === 'dark';
-    }
-    return false;
-  });
-
-  // Toggle theme function
-  const toggleTheme = () => {
-    setIsDarkMode(prev => {
-      const newMode = !prev;
-      localStorage.setItem('theme', newMode ? 'dark' : 'light');
-      return newMode;
-    });
-  };
-
-  // pretend these come from backend
-  const [account, setAccount] = useState<AccountData>({
+  const [form, setForm] = useState<ProfileForm>({
+    name: "",
     email: "",
-    providerGoogleConnected: false,
-    providerGithubConnected: false,
-    resumeFileName: null,
-    resumeUpdatedAt: null,
+    displayName: "",
+    location: "",
+    bio: "",
   });
 
-  // resume upload UI state
-  const resumeInputRef = useRef<HTMLInputElement | null>(null);
-  const [resumeUploading, setResumeUploading] = useState(false);
-  const [resumeError, setResumeError] = useState<string | null>(null);
+  const [avatarShape, setAvatarShape] = useState<"circle" | "square">("circle");
+  const [borderColor, setBorderColor] = useState<string>("#3B82F6");// default blue
+    const BORDER_COLORS = [
+    { name: "Red", hex: "#EF4444" },
+    { name: "Orange", hex: "#F97316" },
+    { name: "Yellow", hex: "#EAB308" },
+    { name: "Green", hex: "#22C55E" },
+    { name: "Blue", hex: "#3B82F6" },
+    { name: "Indigo", hex: "#6366F1" },
+    { name: "Violet", hex: "#A855F7" },
+    { name: "White", hex: "#FFFFFF" },
+    { name: "Black", hex: "#000000" },
+    ];
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
 
-  // password UI state (placeholders)
-  const [pwLoading, setPwLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Crop modal state
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Delete account modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsSignedIn(!!token);
+  }, []);
 
-    // Load account info
-    async function loadAccount() {
+  useEffect(() => {
+    async function loadProfile() {
+      const token = localStorage.getItem("token");
       if (!token) {
         setLoading(false);
         return;
       }
 
       try {
-        // TODO: Replace with your real endpoint
-        // const res = await fetch("http://localhost:5000/api/profile", { headers: { Authorization: `Bearer ${token}` } });
-        // const data = await res.json();
-        // setAccount({
-        //   email: data.user.email ?? "",
-        //   providerGoogleConnected: !!data.user.googleId,
-        //   providerGithubConnected: !!data.user.githubId,
-        //   resumeFileName: data.user.resumeFileName ?? null,
-        //   resumeUpdatedAt: data.user.resumeUpdatedAt ?? null,
-        // });
+        const res = await fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        // temporary defaults so page renders nicely
-        setAccount((prev) => ({
-          ...prev,
-          email: "you@example.com",
-          providerGoogleConnected: true,
-          providerGithubConnected: false,
-          resumeFileName: null,
-          resumeUpdatedAt: null,
-        }));
+        const raw = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          console.error("Non-JSON response:", raw);
+          throw new Error("Backend returned non-JSON");
+        }
+
+        if (!res.ok) throw new Error(data.error || "Failed to load profile.");
+
+        setForm({
+          name: data.user.name ?? "",
+          email: data.user.email ?? "",
+          displayName: data.user.displayName ?? "",
+          location: data.user.location ?? "",
+          bio: data.user.bio ?? "",
+        });
+
+        setAvatarShape(
+          (data.user.avatarShape as "circle" | "square") ?? "circle"
+        );
+        setBorderColor(data.user.avatarBorder || "#3B82F6");
+
+        //Load avatar from backend if the API returns it
+        // backend returns user.avatarUrl (string) OR null
+        setAvatarUrl(data.user.avatarUrl ?? null);
       } catch (e) {
         console.error(e);
       } finally {
@@ -112,138 +132,166 @@ export default function AccountPage() {
       }
     }
 
-    loadAccount();
+    loadProfile();
   }, []);
 
-  function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("isGuest");
-    router.push("/login");
+  function updateField<K extends keyof ProfileForm>(
+    key: K,
+    value: ProfileForm[K]
+  ) {
+    setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  function openResumePicker() {
-    resumeInputRef.current?.click();
+  async function saveProfile() {
+    setSaveStatus("saving");
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setSaveStatus("error");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: form.name,
+          displayName: form.displayName,
+          location: form.location,
+          bio: form.bio,
+          avatarShape,
+          avatarBorder: borderColor,
+          avatarUrl,
+        }),
+      });
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed");
+      } else {
+        const raw = await res.text();
+        console.error("Non-JSON response:", raw);
+        throw new Error("Backend returned non-JSON");
+      }
+
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 1500);
+    } catch (e) {
+      console.error(e);
+      setSaveStatus("error");
+    }
   }
 
-  async function onResumeSelected(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleSignOut() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      await fetch("http://localhost:5000/api/profile/signout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      localStorage.removeItem("token");
+      router.push("/login");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      // Even if backend fails, still remove token and redirect
+      localStorage.removeItem("token");
+      router.push("/login");
+    }
+  }
+
+  async function handleDeleteAccount() {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/profile/delete", {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete account");
+      }
+
+      localStorage.removeItem("token");
+      router.push("/");
+    } catch (error) {
+      console.error("Delete account failed:", error);
+      alert("Failed to delete account. Please try again.");
+    }
+  }
+
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
+  function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setResumeError(null);
-
-    // simple client validation
-    const allowed = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    if (!allowed.includes(file.type)) {
-      setResumeError("Please upload a PDF or Word document (.pdf, .doc, .docx).");
-      e.target.value = "";
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setResumeError("File too large. Please keep resumes under 10MB.");
-      e.target.value = "";
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
       return;
     }
 
-    setResumeUploading(true);
+    const url = URL.createObjectURL(file);
+    setSelectedImageUrl(url);
+    setIsCropOpen(true);
 
+    e.target.value = "";
+  }
+
+  function onCropComplete(_: any, croppedPixels: any) {
+    setCroppedAreaPixels(croppedPixels);
+  }
+
+  async function applyCrop() {
+    if (!selectedImageUrl || !croppedAreaPixels) {
+      setIsCropOpen(false);
+      return;
+    }
+
+    const croppedDataUrl = await getCroppedImageDataUrl(
+      selectedImageUrl,
+      croppedAreaPixels
+    );
+    setAvatarUrl(croppedDataUrl);
+
+    setIsCropOpen(false);
     try {
-      // TODO: Implement backend upload:
-      // POST http://localhost:5000/api/profile/resume (multipart/form-data)
-      // const token = localStorage.getItem("token");
-      // const formData = new FormData();
-      // formData.append("resume", file);
-      // const res = await fetch("http://localhost:5000/api/profile/resume", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData });
-      // const data = await res.json();
-      // setAccount(prev => ({ ...prev, resumeFileName: data.fileName, resumeUpdatedAt: data.updatedAt }));
-
-      // UI-only simulation
-      setAccount((prev) => ({
-        ...prev,
-        resumeFileName: file.name,
-        resumeUpdatedAt: new Date().toISOString(),
-      }));
-    } catch (err) {
-      console.error(err);
-      setResumeError("Upload failed. Please try again.");
-    } finally {
-      setResumeUploading(false);
-      e.target.value = "";
-    }
+      URL.revokeObjectURL(selectedImageUrl);
+    } catch {}
+    setSelectedImageUrl(null);
   }
 
-  function removeResume() {
-    // TODO: call backend DELETE /api/profile/resume
-    setAccount((prev) => ({ ...prev, resumeFileName: null, resumeUpdatedAt: null }));
-  }
-
-  function connectGoogle() {
-    // For your OAuth flow: redirect to backend
-    window.location.href = "http://localhost:5000/api/auth/google";
-  }
-
-  function connectGithub() {
-    window.location.href = "http://localhost:5000/api/auth/github";
-  }
-
-  function disconnectProvider(provider: "google" | "github") {
-    // TODO: call backend (PATCH) to unlink provider
-    // or a dedicated endpoint like POST /api/profile/unlink-provider
-    if (provider === "google") {
-      setAccount((prev) => ({ ...prev, providerGoogleConnected: false }));
-    } else {
-      setAccount((prev) => ({ ...prev, providerGithubConnected: false }));
-    }
-  }
-
-  function formatDate(iso?: string | null) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    return d.toLocaleString();
-  }
-
+  // loading state
   if (loading) {
     return (
-      <div className={isDarkMode ? "min-h-screen bg-gray-900" : "min-h-screen bg-gray-50"}>
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className={`pt-24 px-4 max-w-3xl mx-auto text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Loading account...
+        <div className="pt-24 px-4 max-w-3xl mx-auto text-sm text-gray-600">
+          Loading profile...
         </div>
       </div>
     );
   }
 
-  if (!isSignedIn) {
-    return (
-      <div className={isDarkMode ? "min-h-screen bg-gray-900" : "min-h-screen bg-white"}>
-        <Navbar />
-        <div className="pt-24 px-4">
-          <div className="max-w-3xl mx-auto">
-            <h1 className={`text-2xl font-semibold tracking-tight ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Account
-            </h1>
-            <p className={`mt-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              You must be signed in to view this page.
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={() => router.push("/login")}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Go to Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Signed-in view
   return (
-    <div className={isDarkMode ? "min-h-screen bg-gray-900" : "min-h-screen bg-gray-50"}>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
 
       <div className="pt-16">
@@ -251,336 +299,461 @@ export default function AccountPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
             {/* Sidebar */}
             <aside className="lg:sticky lg:top-24 h-fit">
-              <div className={`rounded-2xl border p-3 shadow-sm ${
-                isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-              }`}>
-                <div className={`px-3 pt-2 pb-3 text-xs font-semibold uppercase tracking-wide ${
-                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+              <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+                <div className="px-3 pt-2 pb-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Navigation
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} isDarkMode={isDarkMode} />
+                  <SidebarLink
+                    href="/dashboard"
+                    label="Home"
+                    icon={<Home className="h-4 w-4" />}
+                  />
 
-                  <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />} isDarkMode={isDarkMode}>
-                    <SidebarSubLink href="/profile/appearance" label="Appearance" icon={<SunMoon className="h-4 w-4" />} isDarkMode={isDarkMode} />
-                    <SidebarSubLink href="/profile/account" label="Account" active icon={<User className="h-4 w-4" />} isDarkMode={isDarkMode} />
-                    <SidebarSubLink href="/profile" label="Personal" icon={<UserCircle2 className="h-4 w-4" />} isDarkMode={isDarkMode} />
+                  <SidebarGroup
+                    label="Settings"
+                    icon={<Settings className="h-4 w-4" />}
+                  >
+                    <SidebarSubLink
+                    href="/profile/appearance"
+                      label="Appearance"
+                      icon={<SunMoon className="h-4 w-4" />}
+                    />
+                    <SidebarSubLink
+                      href="/profile/account"
+                      label="Account"
+                      icon={<User className="h-4 w-4" />}
+                    />
+                    <SidebarSubLink
+                      href="/profile"
+                      label="Personal"
+                      active
+                      icon={<UserCircle2 className="h-4 w-4" />}
+                    />
                   </SidebarGroup>
 
-                  <div className={`my-3 h-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`} />
+                  <div className="my-3 h-px bg-gray-100" />
 
-                  <SidebarLink href="/practice" label="Practice" icon={<BrainCircuit className="h-4 w-4" />} isDarkMode={isDarkMode} />
-                  <SidebarLink href="/analytics" label="Analytics" icon={<ChartNoAxesColumn className="h-4 w-4" />} isDarkMode={isDarkMode} />
+                  <SidebarLink
+                    href="/practice"
+                    label="Practice"
+                    icon={<BrainCircuit className="h-4 w-4" />}
+                  />
+                  <SidebarLink
+                    href="/analytics"
+                    label="Analytics"
+                    icon={<ChartNoAxesColumn className="h-4 w-4" />}
+                  />
                 </nav>
               </div>
             </aside>
 
-            {/* Main */}
+            {/* Main content */}
             <main className="min-w-0">
               <div className="max-w-4xl">
-                {/* Header */}
-                <section className={`rounded-2xl border p-6 shadow-sm ${
-                  isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-                }`}>
+                {/* Header card */}
+                <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${
-                        isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                      }`}>
-                        <Shield className={`h-5 w-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+                    <div className="flex items-center gap-4">
+                      {/* Avatar preview */}
+                      <div
+                        className={[
+                            "h-14 w-14 bg-gray-100 flex items-center justify-center overflow-hidden",
+                            avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                            "border-2",
+                        ].join(" ")}
+                        style={{borderColor }}
+                      >
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt="Avatar"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-gray-600 font-semibold">
+                            {(form.name || "User")
+                              .split(" ")
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((p) => p[0]?.toUpperCase())
+                              .join("") || "U"}
+                          </span>
+                        )}
                       </div>
+
                       <div>
-                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Settings</p>
-                        <h1 className={`mt-1 text-xl font-semibold tracking-tight ${
-                          isDarkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          Account
+                        <p className="text-sm text-gray-500">
+                          Profile Settings
+                        </p>
+                        <h1 className="mt-1 text-xl font-semibold text-gray-900 tracking-tight">
+                          Manage Your Profile
                         </h1>
-                        <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {account.email || "Signed in"}
+                        <p className="mt-1 text-sm text-gray-600">
+                          {form.email || "Signed in"}
                         </p>
                       </div>
                     </div>
 
+                    {/* Top right actions */}
                     <div className="flex items-center gap-2">
-                      {/* Theme Toggle Button */}
                       <button
-                        onClick={toggleTheme}
-                        className={`rounded-lg p-2 transition-colors ${
-                          isDarkMode 
-                            ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        aria-label="Toggle theme"
-                      >
-                        {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                      </button>
-
-                      <button
-                        onClick={() => router.push("/profile")}
-                        className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
-                          isDarkMode 
-                            ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600' 
-                            : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-                        }`}
-                      >
-                        Back
-                      </button>
-                      <button
-                        onClick={logout}
-                        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white ${
-                          isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-900 hover:bg-black'
-                        }`}
+                        onClick={handleSignOut}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
                       >
                         <LogOut className="h-4 w-4" />
-                        Log out
+                        Sign Out
+                      </button>
+                      <button
+                        onClick={saveProfile}
+                        disabled={saveStatus === "saving"}
+                        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                      >
+                        {saveStatus === "saving" ? "Saving..." : "Save Changes"}
                       </button>
                     </div>
                   </div>
                 </section>
 
-                {/* Account */}
-                <section className={`mt-6 rounded-2xl border p-6 shadow-sm ${
-                  isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-                }`}>
-                  <h2 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Account
+                {/* Basic Info */}
+                <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                  <h2 className="text-sm font-semibold text-gray-900">
+                    Basic Information
                   </h2>
-                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Your core account details.
+                  <p className="mt-1 text-sm text-gray-500">
+                    Update your personal details and contact information.
                   </p>
 
                   <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ReadOnlyField
+                    <Input
+                      label="Name"
+                      icon={<User className="h-4 w-4 text-gray-400" />}
+                      value={form.name}
+                      onChange={(v) => updateField("name", v)}
+                      placeholder="Your name"
+                    />
+
+                    <Input
                       label="Email"
-                      value={account.email}
                       icon={<Mail className="h-4 w-4 text-gray-400" />}
-                      helper="Email is tied to your login and can't be changed here."
-                      isDarkMode={isDarkMode}
+                      value={form.email}
+                      readOnly
                     />
 
-                    <ReadOnlyField
-                      label="Auth Status"
-                      value="Active"
-                      icon={<Shield className="h-4 w-4 text-gray-400" />}
-                      helper="Your account is active and ready to use."
-                      isDarkMode={isDarkMode}
+                    <Input
+                      label="Display Name"
+                      icon={<AtSign className="h-4 w-4 text-gray-400" />}
+                      value={form.displayName}
+                      onChange={(v) => updateField("displayName", v)}
+                      placeholder="e.g. John Doe"
+                    />
+
+                    <Input
+                      label="Location"
+                      icon={<MapPin className="h-4 w-4 text-gray-400" />}
+                      value={form.location}
+                      onChange={(v) => updateField("location", v)}
+                      placeholder="City, State"
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bio
+                    </label>
+                    <textarea
+                      value={form.bio}
+                      onChange={(e) => updateField("bio", e.target.value)}
+                      placeholder="Tell us a little about yourself..."
+                      className="w-full min-h-[110px] rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </section>
 
-                {/* Connected Providers */}
-                <section className={`mt-6 rounded-2xl border p-6 shadow-sm ${
-                  isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-                }`}>
-                  <h2 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Connected Providers
-                  </h2>
-                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Connect social accounts for quick sign-in.
-                  </p>
-
-                  <div className="mt-5 space-y-3">
-                    <ProviderRow
-                      name="Google"
-                      connected={account.providerGoogleConnected}
-                      onConnect={connectGoogle}
-                      onDisconnect={() => disconnectProvider("google")}
-                      isDarkMode={isDarkMode}
-                    />
-                    <ProviderRow
-                      name="GitHub"
-                      connected={account.providerGithubConnected}
-                      onConnect={connectGithub}
-                      onDisconnect={() => disconnectProvider("github")}
-                      isDarkMode={isDarkMode}
-                    />
-                  </div>
-
-                  <p className={`mt-4 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    Tip: If you sign in with Google or GitHub, we'll link accounts by email (when available).
-                  </p>
-                </section>
-
-                {/* Resume */}
-                <section className={`mt-6 rounded-2xl border p-6 shadow-sm ${
-                  isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-                }`}>
+                {/* Avatar */}
+                <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                        Resume
+                      <h2 className="text-sm font-semibold text-gray-900">
+                        Avatar
                       </h2>
-                      <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Upload your resume to personalize interview questions and feedback.
+                      <p className="mt-1 text-sm text-gray-500">
+                        Upload a profile picture and customize its appearance.
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <>
                       <button
                         type="button"
-                        onClick={openResumePicker}
-                        disabled={resumeUploading}
-                        className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-60 ${
-                          isDarkMode 
-                            ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600' 
-                            : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-                        }`}
+                        onClick={openFilePicker}
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-50"
                       >
                         <Upload className="h-4 w-4" />
-                        {account.resumeFileName ? "Replace" : "Upload"}
+                        Upload
                       </button>
 
-                      {account.resumeFileName && (
-                        <button
-                          type="button"
-                          onClick={removeResume}
-                          disabled={resumeUploading}
-                          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-60 ${
-                            isDarkMode 
-                              ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600' 
-                              : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                          Remove
-                        </button>
-                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={onFileChange}
+                      />
+                    </>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Shape</p>
+                      <div className="mt-2 flex gap-2">
+                        <ToggleButton
+                          active={avatarShape === "circle"}
+                          onClick={() => setAvatarShape("circle")}
+                          label="Circle"
+                        />
+                        <ToggleButton
+                          active={avatarShape === "square"}
+                          onClick={() => setAvatarShape("square")}
+                          label="Square"
+                        />
+                      </div>
+
+                      <div className="mt-5">
+                        <p className="text-sm font-medium text-gray-700">
+                          Border Color
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                        {BORDER_COLORS.map((c) => (
+                            <ColorDot
+                            key={c.hex}
+                            active={borderColor.toLowerCase() === c.hex.toLowerCase()}
+                            onClick={() => setBorderColor(c.hex)}
+                            color={c.hex}
+                            label={c.name}
+                            />
+                        ))}
+                        </div>
+                      </div>
                     </div>
 
-                    <input
-                      ref={resumeInputRef}
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      onChange={onResumeSelected}
-                    />
-                  </div>
+                    {/* Preview */}
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                        <div
+                        className={[
+                            "h-24 w-24 bg-white flex items-center justify-center overflow-hidden shadow-sm",
+                            avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                            "border-4",
+                        ].join(" ")}
+                        style={{ borderColor }}
+                        >
 
-                  <div className={`mt-5 rounded-xl border p-4 ${
-                    isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-gray-50'
-                  }`}>
-                    {account.resumeFileName ? (
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-0.5 h-10 w-10 rounded-lg border flex items-center justify-center ${
-                          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                        }`}>
-                          <FileText className={`h-5 w-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`text-sm font-semibold truncate ${
-                            isDarkMode ? 'text-white' : 'text-gray-900'
-                          }`}>
-                            {account.resumeFileName}
-                          </p>
-                          <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            Last updated: {formatDate(account.resumeUpdatedAt)}
-                          </p>
-                          <p className={`mt-2 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                            We'll use your resume to tailor questions and highlight skill gaps during practice.
-                          </p>
-                        </div>
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt="Avatar"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-gray-600 font-semibold text-lg">
+                            {(form.name || "User")
+                              .split(" ")
+                              .filter(Boolean)
+                              .slice(0, 2)
+                              .map((p) => p[0]?.toUpperCase())
+                              .join("") || "U"}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-0.5 h-10 w-10 rounded-lg border flex items-center justify-center ${
-                          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                        }`}>
-                          <Upload className={`h-5 w-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-                        </div>
-                        <div>
-                          <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                            No resume uploaded
-                          </p>
-                          <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                            Upload a PDF or Word document to personalize your practice sessions.
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                      <p className="mt-3 text-sm text-gray-500">Preview</p>
+                    </div>
                   </div>
-
-                  {resumeError && (
-                    <p className="mt-3 text-sm text-red-600">{resumeError}</p>
-                  )}
                 </section>
 
-                {/* Security */}
-                <section className={`mt-6 rounded-2xl border p-6 shadow-sm ${
-                  isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-                }`}>
-                  <h2 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Security
-                  </h2>
-                  <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Manage password and sign-in settings.
-                  </p>
+                {/* Danger Zone - Delete Account */}
+                <section className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-sm font-semibold text-red-900 flex items-center gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Danger Zone
+                      </h2>
+                      <p className="mt-1 text-sm text-red-700">
+                        Once you delete your account, there is no going back. Please be certain.
+                      </p>
+                    </div>
 
-                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <ActionCard
-                      title="Change Password"
-                      description="Update your password for email + password login."
-                      buttonLabel="Change"
-                      onClick={() => {
-                        // TODO: open modal or route to /profile/account/password
-                        alert("Hook up Change Password flow here.");
-                      }}
-                      loading={pwLoading}
-                      icon={<Shield className={`h-4 w-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />}
-                      isDarkMode={isDarkMode}
-                    />
-
-                    <ActionCard
-                      title="Sign out"
-                      description="Log out of this device."
-                      buttonLabel="Log out"
-                      onClick={logout}
-                      loading={false}
-                      icon={<LogOut className={`h-4 w-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />}
-                      isDarkMode={isDarkMode}
-                    />
+                    <button
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete Account
+                    </button>
                   </div>
-
-                  <p className={`mt-4 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                    If you signed up with Google/GitHub only, password features may be unavailable until you set a password.
-                  </p>
                 </section>
-
-                <div className="h-10" />
               </div>
             </main>
           </div>
         </div>
       </div>
+
+      {/* Crop Modal */}
+      {/* Crop Modal */}
+      {isCropOpen && selectedImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900">
+                Crop your avatar
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsCropOpen(false)}
+                className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="relative h-[320px] bg-gray-100">
+              <ReactCropper
+                image={selectedImageUrl}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            <div className="p-4 flex items-center justify-between gap-3">
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.01}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="w-full"
+              />
+
+              <button
+                type="button"
+                onClick={applyCrop}
+                className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+
+              <h3 className="mt-4 text-center text-lg font-semibold text-gray-900">
+                Confirm Account Deletion
+              </h3>
+
+              <p className="mt-2 text-center text-sm text-gray-600">
+                Are you absolutely sure you wish to delete your InterviewAI account?
+              </p>
+
+              <p className="mt-3 text-center text-sm text-red-600 font-medium">
+                This action is irreversible and all your data, progress, and settings will be permanently lost.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white hover:bg-red-700"
+                >
+                  Yes, permanently delete my account
+                </button>
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                >
+                  No, keep my account
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ---------- Small UI helpers ---------- */
+async function getCroppedImageDataUrl(
+  imageSrc: string,
+  cropPixels: { x: number; y: number; width: number; height: number }
+): Promise<string> {
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.crossOrigin = "anonymous";
+    img.src = imageSrc;
+  });
+
+  const MAX = 512;
+  const scale = Math.min(MAX / cropPixels.width, MAX / cropPixels.height, 1);
+
+  const outW = Math.round(cropPixels.width * scale);
+  const outH = Math.round(cropPixels.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get canvas context");
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  ctx.drawImage(
+    image,
+    cropPixels.x,
+    cropPixels.y,
+    cropPixels.width,
+    cropPixels.height,
+    0,
+    0,
+    outW,
+    outH
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.8);
+}
+
+/*  Small UI helpers  */
 
 function SidebarLink({
   href,
   label,
   icon,
-  isDarkMode,
 }: {
   href: string;
   label: string;
   icon: React.ReactNode;
-  isDarkMode: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
-        isDarkMode 
-          ? 'text-gray-300 hover:bg-gray-700' 
-          : 'text-gray-700 hover:bg-gray-50'
-      }`}
+      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
     >
-      <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>{icon}</span>
+      <span className="text-gray-500">{icon}</span>
       {label}
     </Link>
   );
@@ -590,19 +763,15 @@ function SidebarGroup({
   label,
   icon,
   children,
-  isDarkMode,
 }: {
   label: string;
   icon: React.ReactNode;
   children: React.ReactNode;
-  isDarkMode: boolean;
 }) {
   return (
     <div className="mt-1">
-      <div className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
-        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-      }`}>
-        <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>{icon}</span>
+      <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700">
+        <span className="text-gray-500">{icon}</span>
         {label}
       </div>
       <div className="ml-9 flex flex-col gap-1">{children}</div>
@@ -610,189 +779,132 @@ function SidebarGroup({
   );
 }
 
-// Updated: now supports linking (href) and active styling
 function SidebarSubLink({
   label,
   icon,
   active,
   href,
-  isDarkMode,
 }: {
   label: string;
   icon: React.ReactNode;
   active?: boolean;
   href: string;
-  isDarkMode: boolean;
 }) {
   return (
     <Link
       href={href}
       className={[
         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
-        active 
-          ? "bg-blue-50 text-blue-700 font-semibold" 
-          : isDarkMode 
-            ? "text-gray-400 hover:bg-gray-700" 
-            : "text-gray-600 hover:bg-gray-50",
+        active ? "bg-blue-50 text-blue-700 font-semibold" : "text-gray-600 hover:bg-gray-50",
       ].join(" ")}
     >
-      <span className={active ? "text-blue-600" : isDarkMode ? "text-gray-500" : "text-gray-400"}>
-        {icon}
-      </span>
+      <span className={active ? "text-blue-600" : "text-gray-400"}>{icon}</span>
       {label}
     </Link>
   );
 }
 
-function ReadOnlyField({
+function Input({
   label,
-  value,
   icon,
-  helper,
-  isDarkMode,
+  value,
+  onChange,
+  readOnly = false,
+  placeholder,
 }: {
   label: string;
-  value: string;
   icon: React.ReactNode;
-  helper?: string;
-  isDarkMode: boolean;
+  value: string;
+  onChange?: (value: string) => void;
+  readOnly?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${
-        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-      }`}>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
-      <div className={`flex items-center gap-2 rounded-xl border px-3 py-3 ${
-        isDarkMode 
-          ? 'border-gray-700 bg-gray-900' 
-          : 'border-gray-200 bg-gray-50'
-      }`}>
+
+      <div
+        className={[
+          "flex items-center gap-2 rounded-xl border px-3 py-3",
+          readOnly ? "border-gray-200 bg-gray-50" : "border-gray-300 bg-white",
+          "focus-within:ring-2 focus-within:ring-blue-500",
+        ].join(" ")}
+      >
         {icon}
-        <div className={`text-sm font-semibold truncate ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-900'
-        }`}>
-          {value || "-"}
-        </div>
+        <input
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange?.(e.target.value)}
+          readOnly={readOnly}
+          className={[
+            "w-full bg-transparent text-sm outline-none placeholder:text-gray-400",
+            readOnly ? "text-gray-500" : "text-gray-900",
+          ].join(" ")}
+        />
       </div>
-      {helper && (
-        <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-          {helper}
+
+      {readOnly && (
+        <p className="mt-1 text-xs text-gray-500">
+          Email is tied to your login and can't be changed here.
         </p>
       )}
     </div>
   );
 }
 
-function ProviderRow({
-  name,
-  connected,
-  onConnect,
-  onDisconnect,
-  isDarkMode,
-}: {
-  name: "Google" | "GitHub";
-  connected: boolean;
-  onConnect: () => void;
-  onDisconnect: () => void;
-  isDarkMode: boolean;
-}) {
-  return (
-    <div className={`rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
-      isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'
-    }`}>
-      <div className="flex items-center gap-3">
-        <div className={`h-10 w-10 rounded-lg border flex items-center justify-center ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-        }`}>
-          <LinkIcon className={`h-4 w-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-        </div>
-        <div>
-          <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            {name}
-          </p>
-          <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-            {connected ? "Connected" : "Not connected"}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {connected ? (
-          <button
-            onClick={onDisconnect}
-            className={`rounded-lg border px-3 py-2 text-sm font-semibold ${
-              isDarkMode 
-                ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600' 
-                : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-            }`}
-          >
-            Disconnect
-          </button>
-        ) : (
-          <button
-            onClick={onConnect}
-            className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-          >
-            Connect
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ActionCard({
-  title,
-  description,
-  buttonLabel,
+function ToggleButton({
+  active,
   onClick,
-  loading,
-  icon,
-  isDarkMode,
+  label,
 }: {
-  title: string;
-  description: string;
-  buttonLabel: string;
+  active: boolean;
   onClick: () => void;
-  loading: boolean;
-  icon: React.ReactNode;
-  isDarkMode: boolean;
+  label: string;
 }) {
   return (
-    <div className={`rounded-xl border p-4 ${
-      isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-gray-200 bg-white'
-    }`}>
-      <div className="flex items-start gap-3">
-        <div className={`h-10 w-10 rounded-lg border flex items-center justify-center ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-        }`}>
-          {icon}
-        </div>
-        <div className="min-w-0">
-          <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            {title}
-          </p>
-          <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-            {description}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <button
-          onClick={onClick}
-          disabled={loading}
-          className={`w-full rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-60 ${
-            isDarkMode 
-              ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600' 
-              : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-          }`}
-        >
-          {loading ? "Please wait..." : buttonLabel}
-        </button>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "rounded-lg border px-3 py-2 text-sm font-semibold",
+        active
+          ? "border-blue-600 bg-blue-600 text-white"
+          : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50",
+      ].join(" ")}
+    >
+      {label}
+    </button>
   );
 }
+
+function ColorDot({
+  active,
+  onClick,
+  color,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  color: string;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      className={[
+        "h-6 w-6 rounded-full border",
+        active ? "ring-2 ring-offset-2 ring-gray-900" : "ring-0",
+      ].join(" ")}
+      style={{
+        backgroundColor: color,
+        borderColor: color.toLowerCase() === "#ffffff" ? "#D1D5DB" : color, // visible border for white
+      }}
+      aria-label={`Select ${label} border color`}
+    />
+  );
+}
+
