@@ -417,7 +417,7 @@ export default function ProfilePage() {
                         <p className={`text-sm ${
                           isDarkMode ? 'text-gray-400' : 'text-gray-500'
                         }`}>
-                          Profile Settings
+                          Personal Settings
                         </p>
                         <h1 className={`mt-1 text-xl font-semibold tracking-tight ${
                           isDarkMode ? 'text-white' : 'text-gray-900'

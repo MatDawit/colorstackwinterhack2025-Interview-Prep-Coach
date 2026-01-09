@@ -151,14 +151,14 @@ export default function PreferencesPage() {
                   <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} />
 
                   <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />}>
-                    <SidebarSubLink href="/profile/account" label="Account" icon={<User className="h-4 w-4" />} />
-                    <SidebarSubLink href="/profile" label="Profile" icon={<UserCircle2 className="h-4 w-4" />} />
                     <SidebarSubLink
                       href="/profile/preferences"
                       label="Preferences"
                       icon={<SlidersHorizontal className="h-4 w-4" />}
                       active
                     />
+                    <SidebarSubLink href="/profile/account" label="Account" icon={<User className="h-4 w-4" />} />
+                    <SidebarSubLink href="/profile" label="Personal" icon={<UserCircle2 className="h-4 w-4" />} />
                   </SidebarGroup>
 
                   <div className="my-3 h-px bg-gray-100" />
