@@ -37,7 +37,13 @@ export default function AccountPage() {
   const router = useRouter();
   
   // Get theme state and toggle function from context
-  const { isDarkMode, toggleTheme } = useTheme();
+const { isDarkMode, toggleTheme, mounted } = useTheme();
+
+const pageBg = !mounted
+  ? "min-h-screen bg-gray-50"     // default to light mode until mounted
+  : isDarkMode
+    ? "min-h-screen bg-gray-900"
+    : "min-h-screen bg-gray-50";
 
   const [loading, setLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -59,6 +65,7 @@ export default function AccountPage() {
   // password UI state (placeholders)
   const [pwLoading, setPwLoading] = useState(false);
 
+  
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsSignedIn(!!token);
@@ -193,7 +200,7 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div className={isDarkMode ? "min-h-screen bg-gray-900" : "min-h-screen bg-gray-50"}>
+      <div className={pageBg}>
         <Navbar />
         <div className={`pt-24 px-4 max-w-3xl mx-auto text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
           Loading account...
@@ -204,7 +211,7 @@ export default function AccountPage() {
 
   if (!isSignedIn) {
     return (
-      <div className={isDarkMode ? "min-h-screen bg-gray-900" : "min-h-screen bg-white"}>
+      <div className={pageBg}>
         <Navbar />
         <div className="pt-24 px-4">
           <div className="max-w-3xl mx-auto">
@@ -229,7 +236,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className={isDarkMode ? "min-h-screen bg-gray-900" : "min-h-screen bg-gray-50"}>
+    <div className={pageBg}>
       <Navbar />
 
       <div className="pt-16">
