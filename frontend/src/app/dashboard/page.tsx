@@ -125,7 +125,7 @@ export default function Dashboard() {
                     </div>
                     
                     <p className="text-xs text-gray-500">
-                      Practice {sessionsToMilestone} more session{sessionsToMilestone !== 1 ? 's' : ''} to reach your next badge!
+                      Practice {sessionsToMilestone} more session{sessionsToMilestone !== 1 ? 's' : ''} to complete this set !
                     </p>
                   </div>
                 </>
