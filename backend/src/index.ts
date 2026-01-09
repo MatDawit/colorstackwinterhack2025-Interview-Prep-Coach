@@ -10,6 +10,7 @@ import analyticsRouter from "./routes/analytics.routes";
 import profileRouter from "./routes/profile.routes";
 import passport from "passport"
 import {configurePassport} from "./config/passport"
+import path from "path";
 
 // read the env file
 dotenv.config();
@@ -25,6 +26,10 @@ app.use(passport.initialize());
 // middleware are fxn that run before the routes
 app.use(cors()); // allows the frontend to make requests to the backend while they are on diff ports
 app.use(express.json()); // parses the json from requests body
+
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // register the auth routes give them all a starting name
 // sign up url will be /api/auth/signup
@@ -48,6 +53,7 @@ app.use("/api/analytics", analyticsRouter);
 
 // register profile routes
 app.use("/api/profile", profileRouter);
+
 
 // check if backend is running
 app.get("/health", (req, res) => {

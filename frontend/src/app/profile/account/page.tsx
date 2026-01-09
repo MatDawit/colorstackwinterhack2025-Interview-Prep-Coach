@@ -29,6 +29,7 @@ type AccountData = {
   email: string;
   providerGoogleConnected: boolean;
   providerGithubConnected: boolean;
+  resumeUrl?: string | null;
   resumeFileName?: string | null;
   resumeUpdatedAt?: string | null;
 };
@@ -57,10 +58,13 @@ const pageBg = !mounted
     resumeUpdatedAt: null,
   });
 
+  
   // resume upload UI state
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
+
+  const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
 
   // password UI state (placeholders)
   const [pwLoading, setPwLoading] = useState(false);
@@ -72,38 +76,47 @@ const pageBg = !mounted
 
     // Load account info
     async function loadAccount() {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+        if (!token) {
+            setLoading(false);
+            return;
+        }
 
-      try {
-        // TODO: Replace with your real endpoint
-        // const res = await fetch("http://localhost:5000/api/profile", { headers: { Authorization: `Bearer ${token}` } });
-        // const data = await res.json();
-        // setAccount({
-        //   email: data.user.email ?? "",
-        //   providerGoogleConnected: !!data.user.googleId,
-        //   providerGithubConnected: !!data.user.githubId,
-        //   resumeFileName: data.user.resumeFileName ?? null,
-        //   resumeUpdatedAt: data.user.resumeUpdatedAt ?? null,
-        // });
+        try {
+            // 1) Profile for email + providers
+            const profileRes = await fetch("http://localhost:5000/api/profile", {
+            headers: { Authorization: `Bearer ${token}` },
+            });
 
-        // temporary defaults so page renders nicely
-        setAccount((prev) => ({
-          ...prev,
-          email: "you@example.com",
-          providerGoogleConnected: true,
-          providerGithubConnected: false,
-          resumeFileName: null,
-          resumeUpdatedAt: null,
-        }));
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+            const profileData = await profileRes.json();
+            if (!profileRes.ok) throw new Error(profileData.error || "Failed to load profile");
+
+            // 2) Resume metadata (Resume table)
+            const resumeRes = await fetch("http://localhost:5000/api/profile/resume", {
+            headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const resumeData = await resumeRes.json();
+            if (!resumeRes.ok) throw new Error(resumeData.error || "Failed to load resume");
+
+            setAccount({
+            email: profileData.user.email ?? "",
+            providerGoogleConnected: !!profileData.user.googleId,
+            providerGithubConnected: !!profileData.user.githubId,
+
+            resumeUrl: resumeData.resume?.resumeUrl ?? null,
+            resumeFileName: resumeData.resume?.resumeFileName ?? null,
+            resumeUpdatedAt: resumeData.resume?.resumeUpdatedAt ?? null,
+            });
+
+            // clear local preview if backend has no resume
+            if (!resumeData.resume?.resumeUrl) setResumePreviewUrl(null);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     }
+
 
     loadAccount();
   }, []);
@@ -154,11 +167,37 @@ const pageBg = !mounted
       // setAccount(prev => ({ ...prev, resumeFileName: data.fileName, resumeUpdatedAt: data.updatedAt }));
 
       // UI-only simulation
-      setAccount((prev) => ({
-        ...prev,
-        resumeFileName: file.name,
-        resumeUpdatedAt: new Date().toISOString(),
-      }));
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not authenticated");
+
+    const formData = new FormData();
+    formData.append("resume", file);
+
+    // local instant preview (PDF)
+    if (file.type === "application/pdf") {
+    const localUrl = URL.createObjectURL(file);
+    setResumePreviewUrl(localUrl);
+    }
+
+    const res = await fetch("http://localhost:5000/api/profile/resume", {
+    method: "POST",
+    headers: {
+        Authorization: `Bearer ${token}`,
+        // DO NOT set Content-Type manually for FormData
+    },
+    body: formData,
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Upload failed");
+
+    setAccount((prev) => ({
+    ...prev,
+    resumeUrl: data.resume.resumeUrl,
+    resumeFileName: data.resume.resumeFileName,
+    resumeUpdatedAt: data.resume.resumeUpdatedAt,
+    }));
+
     } catch (err) {
       console.error(err);
       setResumeError("Upload failed. Please try again.");
@@ -168,10 +207,36 @@ const pageBg = !mounted
     }
   }
 
-  function removeResume() {
-    // TODO: call backend DELETE /api/profile/resume
-    setAccount((prev) => ({ ...prev, resumeFileName: null, resumeUpdatedAt: null }));
+async function removeResume() {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not authenticated");
+
+    const res = await fetch("http://localhost:5000/api/profile/resume", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Remove failed");
+
+    setAccount((prev) => ({
+      ...prev,
+      resumeUrl: null,
+      resumeFileName: null,
+      resumeUpdatedAt: null,
+    }));
+
+    if (resumePreviewUrl) {
+      try { URL.revokeObjectURL(resumePreviewUrl); } catch {}
+    }
+    setResumePreviewUrl(null);
+  } catch (e) {
+    console.error(e);
+    setResumeError("Remove failed. Please try again.");
   }
+}
+
 
   function connectGoogle() {
     // For your OAuth flow: redirect to backend
@@ -494,6 +559,31 @@ const pageBg = !mounted
                       </div>
                     )}
                   </div>
+                    
+                {/* Large PDF Preview */}
+                {(resumePreviewUrl || account.resumeUrl) && (
+                <div className={`mt-6 rounded-2xl border overflow-hidden ${
+                    isDarkMode ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-white"
+                }`}>
+                    <div className={`px-4 py-3 text-sm font-semibold ${
+                    isDarkMode ? "text-white border-b border-gray-700" : "text-gray-900 border-b border-gray-200"
+                    }`}>
+                    Resume Preview
+                    </div>
+
+                    <div className="h-[750px] w-full">
+                    <iframe
+                        title="Resume Preview"
+                        className="h-full w-full"
+                        src={
+                        resumePreviewUrl ||
+                        `http://localhost:5000${account.resumeUrl}`
+                        }
+                    />
+                    </div>
+                </div>
+                )}
+
 
                   {resumeError && (
                     <p className="mt-3 text-sm text-red-600">{resumeError}</p>

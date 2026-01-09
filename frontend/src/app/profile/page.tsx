@@ -471,7 +471,7 @@ export default function ProfilePage() {
                     Update your personal details and contact information.
                   </p>
 
-                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-5 grid grid-cols-3 md:grid-cols-1 gap-4">
                     <Input
                       label="Name"
                       icon={<User className="h-4 w-4 text-gray-400" />}
@@ -489,14 +489,14 @@ export default function ProfilePage() {
                       isDarkMode={isDarkMode}
                     />
 
-                    <Input
+                    {/* <Input
                       label="Display Name"
                       icon={<AtSign className="h-4 w-4 text-gray-400" />}
                       value={form.displayName}
                       onChange={(v) => updateField("displayName", v)}
                       placeholder="e.g. John Doe"
                       isDarkMode={isDarkMode}
-                    />
+                    /> */}
 
                     <Input
                       label="Location"

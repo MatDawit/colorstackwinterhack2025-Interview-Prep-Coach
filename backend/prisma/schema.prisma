@@ -42,12 +42,26 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
+  resume        Resume?
+
   // Relations
   // attempts      Attempt[]
   //mockInterviews MockInterview[]
   sessions      Session[] // Practice Sessions
 
   @@index([email])
+}
+
+//Stores information on Resume
+model Resume {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  resumeUrl     String
+  resumeFileName String
+  resumeUpdatedAt DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // User's practice attempts

@@ -1,9 +1,45 @@
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db_connection";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET as string;
+
+const resumesDir = path.join(process.cwd(), "uploads", "resumes");
+fs.mkdirSync(resumesDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, resumesDir),
+  filename: (_req, file, cb) => {
+    const safe = file.originalname.replace(/[^\w.-]+/g, "_");
+    cb(null, `${Date.now()}-${safe}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (_req, file, cb) => {
+    const ok = file.mimetype === "application/pdf";
+    if (!ok) {
+        return cb(new Error("Only PDF files are supported."));
+    }
+    return cb(null, true);
+    },
+});
+
+function requireAuth(req: Request, _res: Response, next: Function) {
+  try {
+    (req as any).userId = getUserIdFromRequest(req);
+    next();
+  } catch (e) {
+    next(e);
+  }
+}
 
 // 1) A tiny helper to get the logged-in user's id from the JWT
 function getUserIdFromRequest(req: Request): string {
@@ -92,6 +128,98 @@ router.delete("/delete", async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 });
+
+router.get("/resume", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromRequest(req);
+
+    const resume = await prisma.resume.findUnique({
+      where: { userId },
+      select: {
+        resumeUrl: true,
+        resumeFileName: true,
+        resumeUpdatedAt: true,
+      },
+    });
+
+    return res.json({ ok: true, resume: resume ?? null });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+router.post("/resume", requireAuth, upload.single("resume"), async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromRequest(req);
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Missing resume file" });
+    }
+
+    const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+    const resumeFileName = req.file.originalname;
+
+    // If they already had a resume, delete the old file (best-effort)
+    const existing = await prisma.resume.findUnique({
+      where: { userId },
+      select: { resumeUrl: true },
+    });
+
+    if (existing?.resumeUrl) {
+      const absOld = path.join(process.cwd(), existing.resumeUrl.replace("/uploads/", "uploads/"));
+      try { fs.unlinkSync(absOld); } catch {}
+    }
+
+    // Upsert record (one resume per user)
+    const saved = await prisma.resume.upsert({
+      where: { userId },
+      update: {
+        resumeUrl,
+        resumeFileName,
+        // resumeUpdatedAt auto-updates because of @updatedAt
+      },
+      create: {
+        userId,
+        resumeUrl,
+        resumeFileName,
+      },
+      select: {
+        resumeUrl: true,
+        resumeFileName: true,
+        resumeUpdatedAt: true,
+      },
+    });
+
+    return res.json({ ok: true, resume: saved });
+  } catch (error: any) {
+    console.error(error);
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete("/resume", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromRequest(req);
+
+    const existing = await prisma.resume.findUnique({
+      where: { userId },
+      select: { resumeUrl: true },
+    });
+
+    if (existing?.resumeUrl) {
+      const abs = path.join(process.cwd(), existing.resumeUrl.replace("/uploads/", "uploads/"));
+      try { fs.unlinkSync(abs); } catch {}
+    }
+
+    await prisma.resume.deleteMany({ where: { userId } });
+
+    return res.json({ ok: true });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+
  /* GET /profile
  * Returns the current user's profile (safe fields only).
  */
