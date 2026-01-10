@@ -11,6 +11,7 @@ import profileRouter from "./routes/profile.routes";
 import passport from "passport"
 import {configurePassport} from "./config/passport"
 import path from "path";
+import preferencesRouter from "./routes/preferences.routes";
 
 // read the env file
 dotenv.config();
@@ -54,6 +55,7 @@ app.use("/api/analytics", analyticsRouter);
 // register profile routes
 app.use("/api/profile", profileRouter);
 
+app.use("/api/profile/preferences", preferencesRouter);
 
 // check if backend is running
 app.get("/health", (req, res) => {

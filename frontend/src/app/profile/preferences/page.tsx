@@ -68,32 +68,89 @@ export default function PreferencesPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsSignedIn(!!token);
+    async function loadPrefs() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-    // UI-only: load from localStorage for now
-    try {
-      const saved = localStorage.getItem("preferences");
-      if (saved) setPrefs(JSON.parse(saved));
-    } catch (e) {
-      console.error(e);
-    } finally {
+      setLoading(true);
+      setIsSignedIn(true);
+
+      const res = await fetch("http://localhost:5000/api/profile/preferences", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const raw = await res.text();
+      let data: any;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        console.error("Non-JSON response:", raw);
+        throw new Error("Backend returned non-JSON");
+      }
+
+      if (!res.ok) throw new Error(data.error || "Failed to load preferences");
+
+      // 🔍 log it once to see shape
+      console.log("preferences response:", data);
+
+      const p = data.preferences ?? data.preference ?? data.prefs; // fallback keys if your backend differs
+      if (!p) {
+        throw new Error("Missing preferences in response. Check backend route response shape.");
+      }
+
+      setPrefs({
+        defaultRole: p.defaultRole ?? DEFAULT_PREFS.defaultRole,
+        defaultDifficulty: (p.defaultDifficulty ?? DEFAULT_PREFS.defaultDifficulty) as Preferences["defaultDifficulty"],
+        questionFocus: {
+          behavioral: p.focusBehavioral ?? DEFAULT_PREFS.questionFocus.behavioral,
+          technical: p.focusTechnical ?? DEFAULT_PREFS.questionFocus.technical,
+          systemDesign: p.focusSystemDesign ?? DEFAULT_PREFS.questionFocus.systemDesign,
+        },
+        autoStartNext: p.autoStartNext ?? DEFAULT_PREFS.autoStartNext,
+        feedbackTone: (p.feedbackTone ?? DEFAULT_PREFS.feedbackTone) as Preferences["feedbackTone"],
+        feedbackDetail: (p.feedbackDetail ?? DEFAULT_PREFS.feedbackDetail) as Preferences["feedbackDetail"],
+        showSampleAnswer: p.showSampleAnswer ?? DEFAULT_PREFS.showSampleAnswer,
+        enableTimer: p.enableTimer ?? DEFAULT_PREFS.enableTimer,
+        countdownSeconds: (p.countdownSeconds ?? DEFAULT_PREFS.countdownSeconds) as Preferences["countdownSeconds"],
+        autoSubmitOnSilence: p.autoSubmitOnSilence ?? DEFAULT_PREFS.autoSubmitOnSilence,
+      });
+
       setLoading(false);
     }
+    loadPrefs().catch(console.error);
   }, []);
 
+
   async function savePreferences() {
-    setSaveStatus("saving");
-    try {
-      // UI-only storage for now
-      localStorage.setItem("preferences", JSON.stringify(prefs));
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 1200);
-    } catch (e) {
-      console.error(e);
-      setSaveStatus("error");
-    }
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const res = await fetch("http://localhost:5000/api/profile/preferences", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        defaultRole: prefs.defaultRole,
+        defaultDifficulty: prefs.defaultDifficulty,
+        focusBehavioral: prefs.questionFocus.behavioral,
+        focusTechnical: prefs.questionFocus.technical,
+        focusSystemDesign: prefs.questionFocus.systemDesign,
+        autoStartNext: prefs.autoStartNext,
+        feedbackTone: prefs.feedbackTone,
+        feedbackDetail: prefs.feedbackDetail,
+        showSampleAnswer: prefs.showSampleAnswer,
+        enableTimer: prefs.enableTimer,
+        countdownSeconds: prefs.countdownSeconds,
+        autoSubmitOnSilence: prefs.autoSubmitOnSilence,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to save preferences");
   }
+
 
   function resetDefaults() {
     setPrefs(DEFAULT_PREFS);
@@ -371,7 +428,7 @@ export default function PreferencesPage() {
 
                   <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <SelectField
-                      label="Countdown before recording"
+                      label="Countdown before recording (seconds)"
                       value={String(prefs.countdownSeconds)}
                       onChange={(v) =>
                         setPrefs((p) => ({ ...p, countdownSeconds: Number(v) as Preferences["countdownSeconds"] }))

@@ -49,6 +49,8 @@ model User {
   //mockInterviews MockInterview[]
   sessions      Session[] // Practice Sessions
 
+  Preferences Preferences?
+
   @@index([email])
 }
 
@@ -62,6 +64,36 @@ model Resume {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Preferences {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+
+  // Interview defaults
+  defaultRole         String   @default("Software Engineering")
+  defaultDifficulty   String   @default("Basic") // "Basic" | "Intermediate" | "Advanced"
+
+  focusBehavioral     Boolean  @default(true)
+  focusTechnical      Boolean  @default(true)
+  focusSystemDesign   Boolean  @default(false)
+
+  autoStartNext       Boolean  @default(false)
+
+  // Feedback prefs
+  feedbackTone        String   @default("Encouraging") // Encouraging | Direct | Strict
+  feedbackDetail      String   @default("Standard")    // Brief | Standard | Deep
+  showSampleAnswer    Boolean  @default(true)
+
+  // Practice flow
+  enableTimer         Boolean  @default(false)
+  countdownSeconds    Int      @default(30) // 
+  autoSubmitOnSilence Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // User's practice attempts
