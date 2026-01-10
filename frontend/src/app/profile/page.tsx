@@ -10,6 +10,7 @@ import {
   Settings,
   Settings2,
   SunMoon,
+  SlidersHorizontal,
   User,
   UserCircle2,
   BrainCircuit,
@@ -338,7 +339,7 @@ export default function ProfilePage() {
                     <SidebarSubLink
                       href="/profile/preferences"
                       label="Preferences"
-                      icon={<Settings2 className="h-4 w-4" />}
+                      icon={<SlidersHorizontal className="h-4 w-4" />}
                       isDarkMode={isDarkMode}
                     />
                     <SidebarSubLink

@@ -8,7 +8,7 @@ import { useTheme } from "../../context/ThemeContext";
 import {
   Home,
   Settings,
-  Settings2,
+  SlidersHorizontal,
   SunMoon,
   User,
   UserCircle2,
@@ -322,7 +322,7 @@ async function removeResume() {
                   <SidebarLink href="/dashboard" label="Home" icon={<Home className="h-4 w-4" />} isDarkMode={isDarkMode} />
 
                   <SidebarGroup label="Settings" icon={<Settings className="h-4 w-4" />} isDarkMode={isDarkMode}>
-                    <SidebarSubLink href="/profile/preferences" label="Preferences" icon={<Settings2 className="h-4 w-4" />} isDarkMode={isDarkMode} />
+                    <SidebarSubLink href="/profile/preferences" label="Preferences" icon={<SlidersHorizontal className="h-4 w-4" />} isDarkMode={isDarkMode} />
                     <SidebarSubLink href="/profile/account" label="Account" active icon={<User className="h-4 w-4" />} isDarkMode={isDarkMode} />
                     <SidebarSubLink href="/profile" label="Personal" icon={<UserCircle2 className="h-4 w-4" />} isDarkMode={isDarkMode} />
                   </SidebarGroup>

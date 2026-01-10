@@ -9,6 +9,7 @@ import {
   BrainCircuit,
   ChartNoAxesColumn,
   CircleUserRound,
+  FileUser,
   Menu, // hamburger icon
   X, // close icon
 } from "lucide-react";
@@ -69,6 +70,8 @@ export default function Navbar() {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Practice", href: "/practice", icon: BrainCircuit },
     { label: "Analytics", href: "/analytics", icon: ChartNoAxesColumn },
+    // { label: "Res", href: "/analytics", icon: ChartNoAxesColumn },
+
   ];
 
   // close the mobile menu automatically when route changes

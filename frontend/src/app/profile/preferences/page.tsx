@@ -234,20 +234,20 @@ export default function PreferencesPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
                     <SelectField
-                      label="Default Role"
+                      label="What should we empahasize in your feedback?"
                       value={prefs.defaultRole}
                       onChange={(v) => setPrefs((p) => ({ ...p, defaultRole: v }))}
                       options={[
-                        "Software Engineering",
-                        "Data Science",
-                        "Product Management",
-                        "Cybersecurity",
-                        "General",
+                        "Balance",
+                        "Clarity",
+                        "Storytelling",
+                        "Confidence",
+                        "Technical Depth",
                       ]}
                     />
-
+{/* 
                     <SelectField
                       label="Default Difficulty"
                       value={prefs.defaultDifficulty}
@@ -255,7 +255,7 @@ export default function PreferencesPage() {
                         setPrefs((p) => ({ ...p, defaultDifficulty: v as Preferences["defaultDifficulty"] }))
                       }
                       options={["Basic", "Intermediate", "Advanced"]}
-                    />
+                    /> */}
                   </div>
 
                   <div className="mt-4">
