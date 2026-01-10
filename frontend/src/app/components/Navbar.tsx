@@ -70,7 +70,7 @@ export default function Navbar() {
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Practice", href: "/practice", icon: BrainCircuit },
     { label: "Analytics", href: "/analytics", icon: ChartNoAxesColumn },
-    // { label: "Res", href: "/analytics", icon: ChartNoAxesColumn },
+    { label: "Resume", href: "/resume", icon: FileUser },
 
   ];
 
@@ -135,12 +135,12 @@ export default function Navbar() {
       <div className="mx-auto w-full max-w-6xl h-full px-4 sm:px-8 flex items-center justify-between">
         {/* LEFT: Hamburger + Brand */}
         <div className="flex items-center gap-2 sm:gap-10">
-          {/* ✅ Hamburger (ONLY on small screens) */}
+          {/* Hamburger (ONLY on small screens) */}
           <button
             type="button"
             aria-label="Open menu"
             onClick={() => setMobileOpen((prev) => !prev)}
-            className={`sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg ${
+            className={`md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg ${
               isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
             }`}
           >
@@ -162,7 +162,7 @@ export default function Navbar() {
           </div>
 
           {/*  Desktop links (hidden on small screens) */}
-          <nav className="hidden sm:flex items-center gap-2">
+          <nav className="hidden md:flex items-center gap-2">
             {links.map((link) => {
               const isActive = pathname?.startsWith(link.href);
               const Icon = link.icon;
@@ -205,9 +205,9 @@ export default function Navbar() {
 
       </div>
 
-      {/* ✅ Mobile dropdown menu (ONLY on small screens, and only when open) */}
+      {/* Mobile dropdown menu (ONLY on small screens, and only when open) */}
       {mobileOpen && (
-        <div className={`sm:hidden border-t ${
+        <div className={`md:hidden border-t ${
           isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-white'
         }`}>
           <nav className="px-4 py-3 flex flex-col gap-1">
