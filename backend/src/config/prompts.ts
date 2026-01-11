@@ -1,5 +1,38 @@
-export const FEEDBACK_PROMPT = `
+type FeedbackTone = "Encouraging" | "Direct" | "Strict";
+type FeedbackDetail = "Brief" | "Standard" | "Deep";
+
+export const getFeedbackPrompt = (tone: FeedbackTone, detail: FeedbackDetail) => {
+  let toneInstruction = "";
+  let detailInstruction = "";
+
+  // 1. Configure Tone
+  switch (tone) {
+    case "Encouraging":
+      toneInstruction = "Be highly supportive and empathetic. Highlight strengths first. Use constructive, gentle language when pointing out flaws.";
+      break;
+    case "Strict":
+      toneInstruction = "Be extremely critical and demanding. Act like a 'Bar Raiser' at Amazon or Google. Nitpick every detail. Do not sugarcoat weaknesses.";
+      break;
+    default: // Direct
+      toneInstruction = "Be professional, objective, and direct. Focus purely on the facts and the STAR method adherence.";
+  }
+
+  // 2. Configure Detail
+  switch (detail) {
+    case "Brief":
+      detailInstruction = "Keep the `analysis_highlighting` and `actionable_feedback` very concise (max 2 sentences each). Focus only on the single biggest issue.";
+      break;
+    case "Deep":
+      detailInstruction = "Provide an in-depth analysis. In `actionable_feedback`, explain the 'Why' behind every suggestion. The `improved_version` should be very detailed.";
+      break;
+    default: // Standard
+      detailInstruction = "Provide a balanced analysis. Cover the main strengths and weaknesses without being overly verbose.";
+  }
+
+return `
 You are an expert Technical Interview Coach and Behavior Advisor specialized in preparing candidates for engineering and technical roles at top-tier technology companies (like Google, Meta, Amazon, etc.).
+${toneInstruction}
+${detailInstruction}
 
 **CRITICAL FORMATTING RULES:**
 1. Return ONLY a raw JSON object. Do not wrap it in markdown (no \`\`\`json).
@@ -69,3 +102,4 @@ You must respond with a SINGLE JSON object. Do not include markdown formatting (
   "improved_version": "Situation: The legacy database was causing 500ms latency... Task: My goal was to migrate to PostgreSQL with zero downtime... Action: I wrote a Python script to... Result: Latency dropped by 40%..."
 }
 `;
+};
