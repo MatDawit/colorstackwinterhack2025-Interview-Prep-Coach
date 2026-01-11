@@ -41,13 +41,17 @@ async function main() {
           question: q.question,
 
           // Optional fields with schema defaults
-          role: q.role ?? "General",
+          role: q.role ?? "Software Engineering",
           difficulty: q.difficulty ?? "Basic",
-          sampleAnswers: q.sampleAnswers ?? {}, // Added this line
+          focus: q.focus ?? "Behavioral",
         },
       });
 
-      console.log(`✅ Seeded: ${q.category} | ${q.role ?? "General"}`);
+      console.log(
+        `✅ Seeded: ${q.category} | ${q.focus ?? "Behavioral"} | ${
+          q.difficulty ?? "Basic"
+        }`
+      );
     }
 
     console.log("✨ Seeding complete");
