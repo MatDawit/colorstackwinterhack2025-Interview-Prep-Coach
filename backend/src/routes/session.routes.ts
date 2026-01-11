@@ -201,7 +201,8 @@ router.get("/:id/attempts", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const attempts = await prisma.sessionAttempt.findMany({
+    // 1. Fetch ALL attempts (including retries)
+    const allAttempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: id },
       include: {
         question: {
@@ -214,11 +215,43 @@ router.get("/:id/attempts", async (req: Request, res: Response) => {
       orderBy: { createdAt: "asc" },
     });
 
-    res.json({ attempts });
+    // 2. Filter: Keep only the BEST attempt per Question ID
+    const bestAttemptsMap = new Map<string, (typeof allAttempts)[0]>();
+
+    for (const attempt of allAttempts) {
+      const existing = bestAttemptsMap.get(attempt.questionId);
+
+      if (!existing) {
+        // If first time seeing this question, add it
+        bestAttemptsMap.set(attempt.questionId, attempt);
+      } else {
+        // If we already have an attempt for this question, compare them
+        const existingScore = existing.score || 0;
+        const newScore = attempt.score || 0;
+
+        if (newScore > existingScore) {
+          // Rule 1: Higher Score Wins
+          bestAttemptsMap.set(attempt.questionId, attempt);
+        } else if (newScore === existingScore) {
+          // Rule 2: Tie-breaker -> Most Recent Wins
+          if (new Date(attempt.createdAt) > new Date(existing.createdAt)) {
+            bestAttemptsMap.set(attempt.questionId, attempt);
+          }
+        }
+      }
+    }
+
+    // 3. Convert Map back to Array
+    // We sort by createdAt so they appear in the order the user *finally* answered them
+    const uniqueAttempts = Array.from(bestAttemptsMap.values()).sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
+    res.json({ attempts: uniqueAttempts });
   } catch (error: any) {
     console.error("Error fetching session attempts:", error);
     res.status(500).json({ error: error.message });
   }
 });
-
 export default router;
