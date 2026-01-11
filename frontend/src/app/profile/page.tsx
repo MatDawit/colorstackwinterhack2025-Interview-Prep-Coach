@@ -294,11 +294,15 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div
+        className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-gray-50"}`}
+      >
         <Navbar />
-        <div className={`pt-24 px-4 max-w-3xl mx-auto text-sm ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-        }`}>
+        <div
+          className={`pt-24 px-4 max-w-3xl mx-auto text-sm ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
           Loading profile...
         </div>
       </div>
@@ -306,7 +310,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <div
+      className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-gray-50"}`}
+    >
       <Navbar />
 
       <div className="pt-16">
@@ -314,23 +320,22 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
             {/* Sidebar */}
             <aside className="lg:sticky lg:top-24 h-fit">
-              <div className={`rounded-2xl border shadow-sm p-3 ${
-                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-              }`}>
-                <div className={`px-3 pt-2 pb-3 text-xs font-semibold uppercase tracking-wide ${
-                  isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                }`}>
+              <div
+                className={`rounded-2xl border shadow-sm p-3 ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <div
+                  className={`px-3 pt-2 pb-3 text-xs font-semibold uppercase tracking-wide ${
+                    isDarkMode ? "text-gray-500" : "text-gray-500"
+                  }`}
+                >
                   Navigation
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarLink
-                    href="/dashboard"
-                    label="Home"
-                    icon={<Home className="h-4 w-4" />}
-                    isDarkMode={isDarkMode}
-                  />
-
                   <SidebarGroup
                     label="Settings"
                     icon={<Settings className="h-4 w-4" />}
@@ -356,21 +361,6 @@ export default function ProfilePage() {
                       isDarkMode={isDarkMode}
                     />
                   </SidebarGroup>
-
-                  <div className={`my-3 h-px ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`} />
-
-                  <SidebarLink
-                    href="/practice"
-                    label="Practice"
-                    icon={<BrainCircuit className="h-4 w-4" />}
-                    isDarkMode={isDarkMode}
-                  />
-                  <SidebarLink
-                    href="/analytics"
-                    label="Analytics"
-                    icon={<ChartNoAxesColumn className="h-4 w-4" />}
-                    isDarkMode={isDarkMode}
-                  />
                 </nav>
               </div>
             </aside>
@@ -379,16 +369,22 @@ export default function ProfilePage() {
             <main className="min-w-0">
               <div className="max-w-4xl">
                 {/* Header card */}
-                <section className={`rounded-2xl border shadow-sm p-6 ${
-                  isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                }`}>
+                <section
+                  className={`rounded-2xl border shadow-sm p-6 ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-4">
                       {/* Avatar preview */}
                       <div
                         className={[
                           "h-14 w-14 flex items-center justify-center overflow-hidden",
-                          avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                          avatarShape === "circle"
+                            ? "rounded-full"
+                            : "rounded-2xl",
                           "border-2",
                           isDarkMode ? "bg-gray-700" : "bg-gray-100",
                         ].join(" ")}
@@ -401,9 +397,11 @@ export default function ProfilePage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <span className={`font-semibold ${
-                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                          }`}>
+                          <span
+                            className={`font-semibold ${
+                              isDarkMode ? "text-gray-300" : "text-gray-600"
+                            }`}
+                          >
                             {(form.name || "User")
                               .split(" ")
                               .filter(Boolean)
@@ -415,19 +413,25 @@ export default function ProfilePage() {
                       </div>
 
                       <div>
-                        <p className={`text-sm ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
+                        <p
+                          className={`text-sm ${
+                            isDarkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
                           Personal Settings
                         </p>
-                        <h1 className={`mt-1 text-xl font-semibold tracking-tight ${
-                          isDarkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
+                        <h1
+                          className={`mt-1 text-xl font-semibold tracking-tight ${
+                            isDarkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
                           Manage Your Profile
                         </h1>
-                        <p className={`mt-1 text-sm ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>
+                        <p
+                          className={`mt-1 text-sm ${
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
                           {form.email || "Signed in"}
                         </p>
                       </div>
@@ -439,8 +443,8 @@ export default function ProfilePage() {
                         onClick={handleSignOut}
                         className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${
                           isDarkMode
-                            ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600'
-                            : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
+                            ? "border-gray-600 bg-gray-700 text-white hover:bg-gray-600"
+                            : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                         }`}
                       >
                         <LogOut className="h-4 w-4" />
@@ -458,17 +462,25 @@ export default function ProfilePage() {
                 </section>
 
                 {/* Basic Info */}
-                <section className={`mt-6 rounded-2xl border shadow-sm p-6 ${
-                  isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                }`}>
-                  <h2 className={`text-sm font-semibold ${
-                    isDarkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
+                <section
+                  className={`mt-6 rounded-2xl border shadow-sm p-6 ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
+                  <h2
+                    className={`text-sm font-semibold ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}
+                  >
                     Basic Information
                   </h2>
-                  <p className={`mt-1 text-sm ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
+                  <p
+                    className={`mt-1 text-sm ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
                     Update your personal details and contact information.
                   </p>
 
@@ -510,9 +522,11 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="mt-4">
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
                       Bio
                     </label>
                     <textarea
@@ -521,27 +535,35 @@ export default function ProfilePage() {
                       placeholder="Tell us a little about yourself..."
                       className={`w-full min-h-[110px] rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDarkMode
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400'
-                          : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'
+                          ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
+                          : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                       }`}
                     />
                   </div>
                 </section>
 
                 {/* Avatar */}
-                <section className={`mt-6 rounded-2xl border shadow-sm p-6 ${
-                  isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                }`}>
+                <section
+                  className={`mt-6 rounded-2xl border shadow-sm p-6 ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-200"
+                  }`}
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h2 className={`text-sm font-semibold ${
-                        isDarkMode ? 'text-white' : 'text-gray-900'
-                      }`}>
+                      <h2
+                        className={`text-sm font-semibold ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
                         Avatar
                       </h2>
-                      <p className={`mt-1 text-sm ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
+                      <p
+                        className={`mt-1 text-sm ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
                         Upload a profile picture and customize its appearance.
                       </p>
                     </div>
@@ -552,8 +574,8 @@ export default function ProfilePage() {
                         onClick={openFilePicker}
                         className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${
                           isDarkMode
-                            ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600'
-                            : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
+                            ? "border-gray-600 bg-gray-700 text-white hover:bg-gray-600"
+                            : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                         }`}
                       >
                         <Upload className="h-4 w-4" />
@@ -572,9 +594,11 @@ export default function ProfilePage() {
 
                   <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <div>
-                      <p className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
+                      <p
+                        className={`text-sm font-medium ${
+                          isDarkMode ? "text-gray-300" : "text-gray-700"
+                        }`}
+                      >
                         Shape
                       </p>
                       <div className="mt-2 flex gap-2">
@@ -593,16 +617,21 @@ export default function ProfilePage() {
                       </div>
 
                       <div className="mt-5">
-                        <p className={`text-sm font-medium ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
+                        <p
+                          className={`text-sm font-medium ${
+                            isDarkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
                           Border Color
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {BORDER_COLORS.map((c) => (
                             <ColorDot
                               key={c.hex}
-                              active={borderColor.toLowerCase() === c.hex.toLowerCase()}
+                              active={
+                                borderColor.toLowerCase() ===
+                                c.hex.toLowerCase()
+                              }
                               onClick={() => setBorderColor(c.hex)}
                               color={c.hex}
                               label={c.name}
@@ -613,13 +642,19 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Preview */}
-                    <div className={`flex flex-col items-center justify-center rounded-2xl border p-6 ${
-                      isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'
-                    }`}>
+                    <div
+                      className={`flex flex-col items-center justify-center rounded-2xl border p-6 ${
+                        isDarkMode
+                          ? "bg-gray-900 border-gray-700"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
                       <div
                         className={[
                           "h-24 w-24 flex items-center justify-center overflow-hidden shadow-sm",
-                          avatarShape === "circle" ? "rounded-full" : "rounded-2xl",
+                          avatarShape === "circle"
+                            ? "rounded-full"
+                            : "rounded-2xl",
                           "border-4",
                           isDarkMode ? "bg-gray-700" : "bg-white",
                         ].join(" ")}
@@ -632,9 +667,11 @@ export default function ProfilePage() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <span className={`font-semibold text-lg ${
-                            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                          }`}>
+                          <span
+                            className={`font-semibold text-lg ${
+                              isDarkMode ? "text-gray-300" : "text-gray-600"
+                            }`}
+                          >
                             {(form.name || "User")
                               .split(" ")
                               .filter(Boolean)
@@ -644,9 +681,11 @@ export default function ProfilePage() {
                           </span>
                         )}
                       </div>
-                      <p className={`mt-3 text-sm ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
+                      <p
+                        className={`mt-3 text-sm ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
                         Preview
                       </p>
                     </div>
@@ -662,7 +701,8 @@ export default function ProfilePage() {
                         Danger Zone
                       </h2>
                       <p className="mt-1 text-sm text-red-700">
-                        Once you delete your account, there is no going back. Please be certain.
+                        Once you delete your account, there is no going back.
+                        Please be certain.
                       </p>
                     </div>
 
@@ -684,31 +724,41 @@ export default function ProfilePage() {
       {/* Crop Modal */}
       {isCropOpen && selectedImageUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className={`w-full max-w-lg rounded-2xl shadow-xl overflow-hidden ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className={`p-4 border-b flex items-center justify-between ${
-              isDarkMode ? 'border-gray-700' : 'border-gray-200'
-            }`}>
-              <p className={`text-sm font-semibold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+          <div
+            className={`w-full max-w-lg rounded-2xl shadow-xl overflow-hidden ${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            }`}
+          >
+            <div
+              className={`p-4 border-b flex items-center justify-between ${
+                isDarkMode ? "border-gray-700" : "border-gray-200"
+              }`}
+            >
+              <p
+                className={`text-sm font-semibold ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 Crop your avatar
               </p>
               <button
                 type="button"
                 onClick={() => setIsCropOpen(false)}
                 className={`text-sm font-semibold ${
-                  isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'
+                  isDarkMode
+                    ? "text-gray-400 hover:text-white"
+                    : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 Close
               </button>
             </div>
 
-            <div className={`relative h-[320px] ${
-              isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
-            }`}>
+            <div
+              className={`relative h-[320px] ${
+                isDarkMode ? "bg-gray-900" : "bg-gray-100"
+              }`}
+            >
               <ReactCropper
                 image={selectedImageUrl}
                 crop={crop}
@@ -746,28 +796,36 @@ export default function ProfilePage() {
       {/* Delete Account Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className={`w-full max-w-md rounded-2xl shadow-xl overflow-hidden ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
+          <div
+            className={`w-full max-w-md rounded-2xl shadow-xl overflow-hidden ${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            }`}
+          >
             <div className="p-6">
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto">
                 <Trash2 className="h-6 w-6 text-red-600" />
               </div>
 
-              <h3 className={`mt-4 text-center text-lg font-semibold ${
-                isDarkMode ? 'text-white' : 'text-gray-900'
-              }`}>
+              <h3
+                className={`mt-4 text-center text-lg font-semibold ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 Confirm Account Deletion
               </h3>
 
-              <p className={`mt-2 text-center text-sm ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Are you absolutely sure you wish to delete your InterviewAI account?
+              <p
+                className={`mt-2 text-center text-sm ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                Are you absolutely sure you wish to delete your InterviewAI
+                account?
               </p>
 
               <p className="mt-3 text-center text-sm text-red-600 font-medium">
-                This action is irreversible and all your data, progress, and settings will be permanently lost.
+                This action is irreversible and all your data, progress, and
+                settings will be permanently lost.
               </p>
 
               <div className="mt-6 flex flex-col gap-3">
@@ -781,8 +839,8 @@ export default function ProfilePage() {
                   onClick={() => setIsDeleteModalOpen(false)}
                   className={`w-full rounded-lg border px-4 py-3 text-sm font-semibold ${
                     isDarkMode
-                      ? 'border-gray-600 bg-gray-700 text-white hover:bg-gray-600'
-                      : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
+                      ? "border-gray-600 bg-gray-700 text-white hover:bg-gray-600"
+                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
                   }`}
                 >
                   No, keep my account
@@ -857,11 +915,13 @@ function SidebarLink({
       href={href}
       className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
         isDarkMode
-          ? 'text-gray-300 hover:bg-gray-700'
-          : 'text-gray-700 hover:bg-gray-50'
+          ? "text-gray-300 hover:bg-gray-700"
+          : "text-gray-700 hover:bg-gray-50"
       }`}
     >
-      <span className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>{icon}</span>
+      <span className={isDarkMode ? "text-gray-500" : "text-gray-500"}>
+        {icon}
+      </span>
       {label}
     </Link>
   );
@@ -880,10 +940,14 @@ function SidebarGroup({
 }) {
   return (
     <div className="mt-1">
-      <div className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
-        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-      }`}>
-        <span className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>{icon}</span>
+      <div
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${
+          isDarkMode ? "text-gray-300" : "text-gray-700"
+        }`}
+      >
+        <span className={isDarkMode ? "text-gray-500" : "text-gray-500"}>
+          {icon}
+        </span>
         {label}
       </div>
       <div className="ml-9 flex flex-col gap-1">{children}</div>
@@ -916,7 +980,15 @@ function SidebarSubLink({
           : "text-gray-600 hover:bg-gray-50",
       ].join(" ")}
     >
-      <span className={active ? "text-blue-600" : isDarkMode ? "text-gray-500" : "text-gray-400"}>
+      <span
+        className={
+          active
+            ? "text-blue-600"
+            : isDarkMode
+            ? "text-gray-500"
+            : "text-gray-400"
+        }
+      >
         {icon}
       </span>
       {label}
@@ -943,9 +1015,11 @@ function Input({
 }) {
   return (
     <div>
-      <label className={`block text-sm font-medium mb-2 ${
-        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-      }`}>
+      <label
+        className={`block text-sm font-medium mb-2 ${
+          isDarkMode ? "text-gray-300" : "text-gray-700"
+        }`}
+      >
         {label}
       </label>
 
@@ -982,9 +1056,11 @@ function Input({
       </div>
 
       {readOnly && (
-        <p className={`mt-1 text-xs ${
-          isDarkMode ? 'text-gray-500' : 'text-gray-500'
-        }`}>
+        <p
+          className={`mt-1 text-xs ${
+            isDarkMode ? "text-gray-500" : "text-gray-500"
+          }`}
+        >
           Email is tied to your login and can't be changed here.
         </p>
       )}
