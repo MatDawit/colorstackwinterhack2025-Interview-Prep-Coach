@@ -31,18 +31,24 @@ export default function Practice() {
   const isMounted = useRef(true);
 
   // --- STATE ---
+  const [prefs, setPrefs] = useState({
+    enableTimer: true,
+    countdownSeconds: 0,
+    autoSubmitOnSilence: false,
+  });
+
+  const [countdown, setCountdown] = useState<number | null>(null);
+
   const [interviewType, setInterviewType] = useState("Software Engineering");
   const [difficulty, setDifficulty] = useState("Basic");
   const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // LOGIC: Track if session is active
   const isSessionActive = !!sessionId;
 
   const [qId, setQId] = useState("");
   const [question, setQuestion] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
 
-  // LOGIC: Start false
   const [loadingQuestion, setLoadingQuestion] = useState(false);
 
   const [mode, setMode] = useState<Mode>("record");
@@ -77,8 +83,42 @@ export default function Practice() {
     };
   }, []);
 
-  // --- HELPER FUNCTIONS ---
+  // --- PREFERENCES ---
+  useEffect(() => {
+    const fetchPrefs = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch(
+          "http://localhost:5000/api/profile/preferences",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          const p = data.preferences;
+          if (p) {
+            setPrefs({
+              enableTimer: p.enableTimer ?? true,
+              countdownSeconds: p.countdownSeconds ?? 0,
+              autoSubmitOnSilence: p.autoSubmitOnSilence ?? false,
+            });
 
+            if (!existingSessionId) {
+              if (p.defaultRole) setInterviewType(p.defaultRole);
+              if (p.defaultDifficulty) setDifficulty(p.defaultDifficulty);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load prefs", e);
+      }
+    };
+    fetchPrefs();
+  }, [existingSessionId]);
+
+  // --- HELPER FUNCTIONS ---
   const fetchSessionDetails = async (id: string) => {
     setLoadingQuestion(true);
     try {
@@ -153,7 +193,6 @@ export default function Practice() {
     }
   };
 
-  // LOGIC: Reset Handler
   const handleStartOver = () => {
     router.replace("/practice");
     setSessionId(null);
@@ -161,8 +200,6 @@ export default function Practice() {
     setQuestion("");
     setLoadingQuestion(false);
   };
-
-  // --- HANDLERS ---
 
   const handleTypeChange = (newType: string) => {
     setInterviewType(newType);
@@ -172,7 +209,6 @@ export default function Practice() {
     setDifficulty(newDiff);
   };
 
-  // --- INITIAL EFFECT ---
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -190,7 +226,6 @@ export default function Practice() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingSessionId]);
 
-  // --- AUDIO & TIMER HELPERS ---
   function clearTimer() {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -211,7 +246,6 @@ export default function Practice() {
     setShowErrorModal(true);
   }
 
-  // UI Cleanup Effect
   useEffect(() => {
     setTypedAnswer("");
     handleRerecord();
@@ -294,6 +328,16 @@ export default function Practice() {
   async function startRecording() {
     setSubmitError(null);
     if (recordingState === "recording") return;
+
+    if (prefs.countdownSeconds > 0 && countdown === null) {
+      setCountdown(prefs.countdownSeconds);
+      return;
+    }
+
+    await triggerRecording();
+  }
+
+  async function triggerRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicPermission("granted");
@@ -327,6 +371,18 @@ export default function Practice() {
       stopMicStream();
     }
   }
+
+  useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown((c) => c! - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setCountdown(null);
+      triggerRecording();
+    }
+  }, [countdown]);
 
   function stopMicStream() {
     if (streamRef.current) {
@@ -377,6 +433,15 @@ export default function Practice() {
   return (
     <div className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-white"}`}>
       <Navbar />
+
+      {countdown !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all">
+          <div className="text-9xl font-bold text-white animate-pulse">
+            {countdown}
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mt-12 mx-auto px-4 pt-8">
         {/* --- SETTINGS CARD --- */}
         <div
@@ -406,7 +471,6 @@ export default function Practice() {
               </p>
             </div>
 
-            {/* Start Over Button (Visible only when session is active) */}
             {isSessionActive && (
               <button
                 onClick={handleStartOver}
@@ -419,7 +483,6 @@ export default function Practice() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            {/* ROLE FIELD */}
             <div>
               <label
                 className={`block text-sm font-medium mb-2 ${
@@ -457,7 +520,6 @@ export default function Practice() {
               )}
             </div>
 
-            {/* DIFFICULTY FIELD */}
             <div>
               <label
                 className={`block text-sm font-medium mb-2 ${
@@ -493,7 +555,6 @@ export default function Practice() {
               )}
             </div>
 
-            {/* Start Button (Visible only when session is NOT active) */}
             {!isSessionActive && (
               <div className="md:col-span-2 mt-2">
                 <button
@@ -517,7 +578,6 @@ export default function Practice() {
               : "bg-white border-gray-200"
           }`}
         >
-          {/* LOGIC: IF SESSION IS ACTIVE... */}
           {isSessionActive && (
             <>
               {loadingQuestion ? (
@@ -542,7 +602,6 @@ export default function Practice() {
                 </div>
               ) : (
                 <>
-                  {/* --- ORIGINAL AESTHETIC RESTORED --- */}
                   <div
                     className={`mt-4 rounded-lg border p-4 ${
                       isDarkMode ? "border-gray-700" : "border-gray-200"
@@ -571,7 +630,6 @@ export default function Practice() {
                     </p>
                   </div>
 
-                  {/* Toggle - Original Width and Style */}
                   <div className="mt-6 flex justify-center">
                     <div
                       className={`grid grid-cols-2 rounded-lg p-1 w-full max-w-2xl ${
@@ -613,14 +671,26 @@ export default function Practice() {
                   {mode === "record" ? (
                     <>
                       <div className="mt-6 text-center">
-                        {/* Original 4xl size */}
-                        <div
-                          className={`text-4xl font-bold ${
-                            isDarkMode ? "text-white" : "text-gray-900"
-                          }`}
-                        >
-                          {timeLabel}
-                        </div>
+                        {prefs.enableTimer ? (
+                          <div
+                            className={`text-4xl font-bold ${
+                              isDarkMode ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {timeLabel}
+                          </div>
+                        ) : (
+                          <div
+                            className={`text-xl font-medium mb-2 ${
+                              isDarkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
+                            {recordingState === "recording"
+                              ? "Recording in progress..."
+                              : "Ready"}
+                          </div>
+                        )}
+
                         <div
                           className={`mt-2 text-sm flex items-center justify-center gap-2 ${
                             isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -635,16 +705,19 @@ export default function Practice() {
                         </div>
                       </div>
 
+                      {/* --- BUTTON CHANGE STARTS HERE --- */}
                       <div className="mt-6 flex items-center justify-center gap-3">
-                        {recordingState !== "recording" ? (
-                          // Original Button Styles (px-10 py-2)
+                        {/* Only show "Start" if we are IDLE. If we are STOPPED, we hide it to prevent overwrites. */}
+                        {recordingState === "idle" && (
                           <button
                             onClick={startRecording}
                             className="px-10 py-2 rounded-lg border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium"
                           >
                             Start Recording
                           </button>
-                        ) : (
+                        )}
+
+                        {recordingState === "recording" && (
                           <button
                             onClick={stopRecording}
                             className="px-10 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-medium"
@@ -657,9 +730,11 @@ export default function Practice() {
                           onClick={handleRerecord}
                           className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
                         >
-                          Re-record
+                          {/* Label change for clarity: Re-record if stopped, Reset if idle */}
+                          {recordingState === "stopped" ? "Re-record" : "Reset"}
                         </button>
                       </div>
+                      {/* --- BUTTON CHANGE ENDS HERE --- */}
 
                       {audioUrl && (
                         <div className="mt-6">
@@ -729,7 +804,6 @@ export default function Practice() {
             </>
           )}
 
-          {/* LOGIC: IF NO SESSION, SHOW PLACEHOLDER */}
           {!isSessionActive && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p
@@ -745,7 +819,6 @@ export default function Practice() {
         </div>
       </div>
 
-      {/* Error Modal */}
       {showErrorModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div
