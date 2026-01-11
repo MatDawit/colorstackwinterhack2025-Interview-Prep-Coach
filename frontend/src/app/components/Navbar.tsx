@@ -21,16 +21,19 @@ export default function Navbar() {
     name: string | null;
     avatarUrl: string | null;
     avatarShape: string | null; // "circle" | "square"
-    avatarBorder: string | null; // e.g. "#3D7AF5" OR "blue"/"green" depending on what you store
+    avatarBorder: string | null;
   };
 
   const [me, setMe] = useState<Me | null>(null);
+  // 1. ADD LOADING STATE
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadMe() {
       const token = localStorage.getItem("token");
       if (!token) {
         setMe(null);
+        setLoading(false); // Stop loading immediately if no token
         return;
       }
 
@@ -39,7 +42,6 @@ export default function Navbar() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // If backend returned HTML/401/etc, avoid JSON crash
         if (!res.ok) {
           setMe(null);
           return;
@@ -54,6 +56,9 @@ export default function Navbar() {
         });
       } catch {
         setMe(null);
+      } finally {
+        // 2. STOP LOADING WHEN DONE (Success or Fail)
+        setLoading(false);
       }
     }
 
@@ -61,8 +66,6 @@ export default function Navbar() {
   }, []);
 
   const pathname = usePathname();
-
-  //controls whether the mobile menu is open
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const links = [
@@ -72,21 +75,30 @@ export default function Navbar() {
     { label: "Resume", href: "/resume", icon: FileUser },
   ];
 
-  // close the mobile menu automatically when route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
+  // 3. UPDATE COMPONENT TO HANDLE LOADING
   function ProfileAvatar({
     me,
+    isLoading,
   }: {
-    me: {
-      name: string | null;
-      avatarUrl: string | null;
-      avatarShape: string | null;
-      avatarBorder: string | null;
-    } | null;
+    me: Me | null;
+    isLoading: boolean;
   }) {
+    // A. Show Skeleton if loading
+    if (isLoading) {
+      return (
+        <div
+          className={`w-9 h-9 rounded-full animate-pulse ${
+            isDarkMode ? "bg-gray-700" : "bg-gray-200"
+          }`}
+        />
+      );
+    }
+
+    // B. Normal Render Logic
     const initials =
       (me?.name ?? "U")
         .split(" ")
@@ -97,8 +109,6 @@ export default function Navbar() {
 
     const isCircle = (me?.avatarShape ?? "circle") === "circle";
 
-    // If you store hex in DB, use it directly.
-    // If you store "blue"/"green", map it.
     const border = me?.avatarBorder?.startsWith("#")
       ? me.avatarBorder
       : me?.avatarBorder === "green"
@@ -144,7 +154,6 @@ export default function Navbar() {
       <div className="mx-auto w-full max-w-6xl h-full px-4 sm:px-8 flex items-center justify-between">
         {/* LEFT: Hamburger + Brand */}
         <div className="flex items-center gap-2 sm:gap-10">
-          {/* Hamburger (ONLY on small screens) */}
           <button
             type="button"
             aria-label="Open menu"
@@ -168,7 +177,6 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Brand Logo */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#3D7AF5] rounded-lg flex items-center justify-center">
               <BrainCircuit className="text-white w-5 h-5" />
@@ -181,7 +189,6 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/*  Desktop links (hidden on small screens) */}
           <nav className="hidden md:flex items-center gap-2">
             {links.map((link) => {
               const isActive = pathname?.startsWith(link.href);
@@ -216,7 +223,7 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* RIGHT: Profile icon (links to profile page) */}
+        {/* RIGHT: Profile icon */}
         <Link
           href="/profile"
           className={`mt-1 flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-semibold ${
@@ -226,13 +233,13 @@ export default function Navbar() {
           }`}
         >
           <div className="shrink-0">
-            <ProfileAvatar me={me} />
+            {/* Pass loading state here */}
+            <ProfileAvatar me={me} isLoading={loading} />
           </div>
           Profile
         </Link>
       </div>
 
-      {/* Mobile dropdown menu (ONLY on small screens, and only when open) */}
       {mobileOpen && (
         <div
           className={`md:hidden border-t ${
@@ -277,13 +284,12 @@ export default function Navbar() {
               aria-label="Profile"
               className="w-9 h-9 flex items-center justify-center hover:opacity-90 transition-opacity"
             >
-              <ProfileAvatar me={me} />
+              <ProfileAvatar me={me} isLoading={loading} />
             </Link>
           </nav>
         </div>
       )}
 
-      {/* Bottom Separator Line */}
       <div
         className={`absolute bottom-0 left-0 w-full border-b ${
           isDarkMode ? "border-gray-700" : "border-[#F4F4F4]"
