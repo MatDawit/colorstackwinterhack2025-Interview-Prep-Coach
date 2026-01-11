@@ -45,7 +45,7 @@ const DEFAULT_PREFS: Preferences = {
   defaultDifficulty: "Basic",
   questionFocus: {
     behavioral: true,
-    technical: true,
+    technical: false,
     systemDesign: false,
   },
   autoStartNext: false,
