@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import { GoogleGenAI } from "@google/genai";
 import { prisma } from "../db_connection";
-import { FEEDBACK_PROMPT } from "../config/prompts";
+import { getFeedbackPrompt } from "../config/prompts";
 import { jsonrepair } from "jsonrepair";
 import fs from "fs/promises";
 
@@ -41,6 +41,28 @@ router.post(
         return;
       }
 
+      const sessionData = await prisma.session.findUnique({
+        where: { id: sessionId },
+        select: { userId: true },
+      });
+
+      let userPrefs = null;
+      if (sessionData) {
+        userPrefs = await prisma.preferences.findUnique({
+          where: { userId: sessionData.userId },
+        });
+      }
+
+      // Defaults
+      const tone = (userPrefs?.feedbackTone || "Encouraging") as
+        | "Encouraging"
+        | "Direct"
+        | "Strict";
+      const detail = (userPrefs?.feedbackDetail || "Standard") as
+        | "Brief"
+        | "Standard"
+        | "Deep";
+
       // 3. Handle Audio (Transcription)
       let finalAnswerText = answerText || "";
       let audioUrlPath = null;
@@ -74,7 +96,7 @@ router.post(
       const analysis = await generation_ai.models.generateContent({
         model: "gemini-2.5-flash-lite",
         config: {
-          systemInstruction: FEEDBACK_PROMPT,
+          systemInstruction: getFeedbackPrompt(tone, detail),
           responseMimeType: "application/json",
         },
         contents: [
