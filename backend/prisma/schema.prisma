@@ -7,158 +7,153 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  //url      = env("DATABASE_URL") //We'll remove it in Prisma 7
 }
 
 // --- Enums for session status ---
 enum SessionStatus {
-  IN_PROGRESS  // User is currently answering
-  COMPLETED    // User finished all questions successfully
-  ABANDONED    // User clicked away/reset mid-session
+  IN_PROGRESS // User is currently answering
+  COMPLETED // User finished all questions successfully
+  ABANDONED // User clicked away/reset mid-session
 }
 
 // User authentication and profile 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique 
-  name          String?
-  passwordHash  String?
-  
-  //google auth info
-  googleId      String?   @unique
+  id           String  @id @default(uuid())
+  email        String  @unique
+  name         String?
+  passwordHash String?
 
-  githubId     String?  @unique
-  githubLogin  String?
+  googleId    String? @unique
+  githubId    String? @unique
+  githubLogin String?
 
-  // Profile info
-  targetRole    String?   // "Software Engineer Intern", etc.
-  experienceLevel String? // "Student", "Entry-level", etc.
+  targetRole      String?
+  experienceLevel String?
   bio             String?
   location        String?
-  avatarUrl       String?   // path or URL to avatar image
-  avatarShape     String?   // "circle" | "square" (optional)
-  avatarBorder    String?   // hex like "#3D7AF5" (optional)
+  avatarUrl       String?
+  avatarShape     String?
+  avatarBorder    String?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  resume        Resume?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // Relations
-  sessions      Session[] // Practice Sessions
-
+  resume      Resume?
+  sessions    Session[]
   Preferences Preferences?
 
   @@index([email])
 }
 
-//Stores information on Resume
 model Resume {
-  id            String   @id @default(uuid())
-  userId        String   @unique
-  resumeUrl     String
-  resumeFileName String
-  resumeUpdatedAt DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  resumeUrl       String
+  resumeFileName  String
+  resumeUpdatedAt DateTime @default(now())
+  storagePath     String?  // ✅ make optional
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])
 }
 
+
+
 model Preferences {
-  id                 String   @id @default(uuid())
-  userId             String   @unique
+  id     String @id @default(uuid())
+  userId String @unique
 
   // Interview defaults
-  defaultRole         String   @default("Software Engineering")
-  defaultDifficulty   String   @default("Basic") // "Basic" | "Intermediate" | "Advanced"
+  defaultRole       String @default("Software Engineering")
+  defaultDifficulty String @default("Basic") // "Basic" | "Intermediate" | "Advanced"
 
-  focusBehavioral     Boolean  @default(true)
-  focusTechnical      Boolean  @default(false)
-  focusSystemDesign   Boolean  @default(false)
+  focusBehavioral   Boolean @default(true)
+  focusTechnical    Boolean @default(false)
+  focusSystemDesign Boolean @default(false)
 
-  autoStartNext       Boolean  @default(false)
+  autoStartNext Boolean @default(false)
 
   // Feedback prefs
-  feedbackEmphasize   String   @default("Balance") // Balance | Clarity | Storytelling | Confidence | Technical Depth
-  feedbackTone        String   @default("Encouraging") // Encouraging | Direct | Strict
-  feedbackDetail      String   @default("Standard")    // Brief | Standard | Deep
-  showSampleAnswer    Boolean  @default(true)
+  feedbackEmphasize String  @default("Balance") // Balance | Clarity | Storytelling | Confidence | Technical Depth
+  feedbackTone      String  @default("Encouraging") // Encouraging | Direct | Strict
+  feedbackDetail    String  @default("Standard") // Brief | Standard | Deep
+  showSampleAnswer  Boolean @default(true)
 
   // Practice flow
-  enableTimer         Boolean  @default(true)
-  countdownSeconds    Int      @default(0)
-  autoSubmitOnSilence Boolean  @default(false)
+  enableTimer         Boolean @default(true)
+  countdownSeconds    Int     @default(0)
+  autoSubmitOnSilence Boolean @default(false)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Question bank (seeded from JSON)
 model Question {
-  id            String    @id @default(uuid())
-  category      String
-  question      String    @db.Text
-  role          String    @default("Software Engineering")
-  difficulty    String    @default("Basic")
-  focus         String    @default("Behavioral")
-  
-  createdAt     DateTime  @default(now())
-  
-  attempts      SessionAttempt[]
+  id         String @id @default(uuid())
+  category   String
+  question   String @db.Text
+  role       String @default("Software Engineering")
+  difficulty String @default("Basic")
+  focus      String @default("Behavioral")
+
+  createdAt DateTime @default(now())
+
+  attempts          SessionAttempt[]
   currentInSessions Session[]
-  
+
   @@index([category])
 }
 
 model Session {
-  id            String        @id @default(uuid())
-  userId        String
-  
+  id     String @id @default(uuid())
+  userId String
+
   // Metadata
-  interviewType String        // "Software Engineering", "Product Mgmt"
-  status        SessionStatus @default(IN_PROGRESS)
+  interviewType     String // "Software Engineering", "Product Mgmt"
+  status            SessionStatus @default(IN_PROGRESS)
   currentQuestionId String?
-  difficulty    String    @default("Basic")
-  
-  overallScore  Float?        // Average score of attempts
-  totalDuration Int?          // Total seconds
-  
-  createdAt     DateTime      @default(now())
-  endedAt       DateTime?
+  difficulty        String        @default("Basic")
+
+  overallScore  Float? // Average score of attempts
+  totalDuration Int? // Total seconds
+
+  createdAt DateTime  @default(now())
+  endedAt   DateTime?
 
   // Relations
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  attempts      SessionAttempt[]
-  currentQuestion   Question?  @relation(fields: [currentQuestionId], references: [id])
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts        SessionAttempt[]
+  currentQuestion Question?        @relation(fields: [currentQuestionId], references: [id])
 
   @@index([userId])
 }
 
 model SessionAttempt {
-  id            String    @id @default(uuid())
-  
-  sessionId     String
-  questionId    String
-  
+  id String @id @default(uuid())
+
+  sessionId  String
+  questionId String
+
   // User Content
-  transcription String    @db.Text
-  audioUrl      String?   
-  duration      Int?      // Duration of this specific answer
+  transcription String  @db.Text
+  audioUrl      String?
+  duration      Int? // Duration of this specific answer
 
   // AI Scoring & Feedback
-  score         Int?      // 0-100
-  checklist     Json?     // { specific_examples: true... }
-  feedback      String?   @db.Text
-  improvedVersion    String?   @db.Text
-  actionableFeedback String?   @db.Text 
+  score              Int? // 0-100
+  checklist          Json? // { specific_examples: true... }
+  feedback           String? @db.Text
+  improvedVersion    String? @db.Text
+  actionableFeedback String? @db.Text
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   // Relations
-  session       Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question      Question  @relation(fields: [questionId], references: [id])
+  session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id])
 
-  @@index([sessionId]) 
+  @@index([sessionId])
 }

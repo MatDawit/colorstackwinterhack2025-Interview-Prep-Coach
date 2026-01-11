@@ -1,42 +1,26 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 import { requireAuth } from '../services/auth.middleware';
 import { prisma } from '../db_connection';
+import { supabase } from '../config/supabase';
+import { parseResumeFromBuffer } from '../services/resume-parser.service';
 
 const router = Router();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/resumes');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const userId = req.authenticatedUser?.id;
-    const ext = path.extname(file.originalname);
-    const filename = `${userId}_${Date.now()}${ext}`;
-    cb(null, filename);
-  }
-});
-
+/* -------------------- MULTER CONFIG -------------------- */
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['.pdf', '.doc', '.docx'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedTypes.includes(ext)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF and Word documents are allowed'));
-    }
+    if (allowedTypes.includes(ext)) cb(null, true);
+    else cb(new Error('Only PDF and Word documents are allowed'));
   }
 });
 
+/* -------------------- GET METADATA -------------------- */
 router.get('/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.authenticatedUser!.id;
@@ -45,9 +29,7 @@ router.get('/profile/resume', requireAuth, async (req: Request, res: Response) =
       where: { userId }
     });
 
-    if (!resume) {
-      return res.json({ resume: null });
-    }
+    if (!resume) return res.json({ resume: null });
 
     res.json({
       resume: {
@@ -56,85 +38,138 @@ router.get('/profile/resume', requireAuth, async (req: Request, res: Response) =
         resumeUpdatedAt: resume.resumeUpdatedAt.toISOString()
       }
     });
-  } catch (error) {
-    console.error('Error fetching resume:', error);
+  } catch (err) {
+    console.error('Error fetching resume:', err);
     res.status(500).json({ error: 'Failed to fetch resume' });
   }
 });
 
-router.post('/profile/resume/upload', requireAuth, upload.single('resume'), async (req: Request, res: Response) => {
+/* -------------------- UPLOAD RESUME -------------------- */
+router.post(
+  '/profile/resume/upload',
+  requireAuth,
+  upload.single('resume'),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.authenticatedUser!.id;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // 🔥 Storage path is ALWAYS: userId/filename
+      const fileExt = path.extname(file.originalname);
+      const filePath = `${userId}/${Date.now()}${fileExt}`;
+
+      console.log('Uploading resume to Supabase:', filePath);
+
+      // Delete old resume if exists
+      const existing = await prisma.resume.findUnique({ where: { userId } });
+
+      if (existing?.storagePath) {
+        await supabase.storage.from('resumes').remove([existing.storagePath]);
+      }
+
+      // Upload
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error(uploadError);
+        throw uploadError;
+      }
+
+      // Public URL
+      const { data } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(filePath);
+
+      // Save metadata
+      const resume = await prisma.resume.upsert({
+        where: { userId },
+        update: {
+          resumeUrl: data.publicUrl,
+          resumeFileName: file.originalname,
+          resumeUpdatedAt: new Date(),
+          storagePath: filePath
+        },
+        create: {
+          userId,
+          resumeUrl: data.publicUrl,
+          resumeFileName: file.originalname,
+          storagePath: filePath
+        }
+      });
+
+      res.json({
+        resume: {
+          resumeUrl: resume.resumeUrl,
+          resumeFileName: resume.resumeFileName,
+          resumeUpdatedAt: resume.resumeUpdatedAt.toISOString()
+        }
+      });
+    } catch (err) {
+      console.error('Upload error:', err);
+      res.status(500).json({ error: 'Failed to upload resume' });
+    }
+  }
+);
+
+/* -------------------- PARSE RESUME -------------------- */
+router.get('api/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.authenticatedUser!.id;
-    const file = req.file;
 
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    const resume = await prisma.resume.findUnique({ where: { userId } });
+
+    if (!resume || !resume.storagePath) {
+      return res.status(404).json({ error: 'Resume not found' });
     }
 
-    const existingResume = await prisma.resume.findUnique({
-      where: { userId }
-    });
+    console.log('Downloading resume:', resume.storagePath);
 
-    if (existingResume) {
-      const oldFilePath = path.join(__dirname, '../../', existingResume.resumeUrl);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
-      }
+    const { data, error } = await supabase.storage
+      .from('resumes')
+      .download(resume.storagePath);
+
+    if (error || !data) {
+      console.error(error);
+      return res.status(404).json({ error: 'Failed to download resume' });
     }
 
-    const resumeUrl = `/uploads/resumes/${file.filename}`;
+    const buffer = Buffer.from(await data.arrayBuffer());
 
-    const resume = await prisma.resume.upsert({
-      where: { userId },
-      update: {
-        resumeUrl,
-        resumeFileName: file.originalname,
-        resumeUpdatedAt: new Date()
-      },
-      create: {
-        userId,
-        resumeUrl,
-        resumeFileName: file.originalname
-      }
-    });
+    const parsed = await parseResumeFromBuffer(buffer);
 
-    res.json({
-      resume: {
-        resumeUrl: resume.resumeUrl,
-        resumeFileName: resume.resumeFileName,
-        resumeUpdatedAt: resume.resumeUpdatedAt.toISOString()
-      }
-    });
-  } catch (error) {
-    console.error('Error uploading resume:', error);
-    res.status(500).json({ error: 'Failed to upload resume' });
+    res.json({ parsed });
+  } catch (err) {
+    console.error('Parse error:', err);
+    res.status(500).json({ error: 'Failed to parse resume' });
   }
 });
 
+/* -------------------- DELETE RESUME -------------------- */
 router.delete('/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.authenticatedUser!.id;
 
-    const resume = await prisma.resume.findUnique({
-      where: { userId }
-    });
+    const resume = await prisma.resume.findUnique({ where: { userId } });
+    if (!resume) return res.status(404).json({ error: 'No resume found' });
 
-    if (!resume) {
-      return res.status(404).json({ error: 'No resume found' });
+    if (resume.storagePath) {
+      await supabase.storage.from('resumes').remove([resume.storagePath]);
     }
 
-    const filePath = path.join(__dirname, '../../', resume.resumeUrl);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    await prisma.resume.delete({
-      where: { userId }
-    });
+    await prisma.resume.delete({ where: { userId } });
 
     res.json({ message: 'Resume deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting resume:', error);
+  } catch (err) {
+    console.error('Delete error:', err);
     res.status(500).json({ error: 'Failed to delete resume' });
   }
 });

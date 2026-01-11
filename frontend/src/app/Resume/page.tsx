@@ -21,9 +21,9 @@ type ResumeMeta = {
 };
 
 type ParsedResume = {
-  headline: string; // e.g. "Computer Engineering Student | ML Projects | ..."
+  headline: string;
   summary: string;
-  skills: string[]; // tags
+  skills: string[];
   roles: Array<{
     company: string;
     title: string;
@@ -55,44 +55,6 @@ type ResumeQA = {
   tips: string[];
 };
 
-const DEFAULT_PARSED: ParsedResume = {
-  headline: "",
-  summary: "",
-  skills: ["Python", "C++", "React", "Tailwind", "Prisma"],
-  roles: [
-    {
-      company: "Example Lab / Internship",
-      title: "Research Assistant",
-      location: "Baltimore, MD",
-      start: "2025-06",
-      end: "2025-08",
-      bullets: [
-        "Built a data pipeline to clean and analyze experimental results.",
-        "Implemented a model to predict outcomes and improved accuracy by X%.",
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "InterviewAI (Hack Project)",
-      tech: ["Next.js", "Express", "Prisma", "Postgres"],
-      bullets: [
-        "Built an AI interview prep tool with practice sessions and feedback.",
-        "Implemented authentication and profile customization.",
-      ],
-    },
-  ],
-  education: [
-    {
-      school: "UMBC",
-      degree: "B.S. Computer Engineering & Mathematics",
-      start: "2024",
-      end: "2027",
-      gpa: "",
-    },
-  ],
-};
-
 export default function ResumePage() {
   const { isDarkMode, mounted } = useTheme();
   const pageBg = !mounted
@@ -102,17 +64,18 @@ export default function ResumePage() {
     : "min-h-screen bg-gray-50";
 
   const [loading, setLoading] = useState(true);
+  const [parsing, setParsing] = useState(false);
   const [meta, setMeta] = useState<ResumeMeta | null>(null);
 
-  // Parsed resume fields (editable)
-  const [parsed, setParsed] = useState<ParsedResume>(DEFAULT_PARSED);
+  // Parsed resume fields (editable) - Start with null instead of default
+  const [parsed, setParsed] = useState<ParsedResume | null>(null);
 
   // Q/A coaching UI state
   const [qa, setQa] = useState<ResumeQA>({
     generatedQuestions: [
       "Tell me about a project where you used these skills: React + Node.",
       "Walk me through a time you improved a process or system.",
-      "What’s a technical challenge you faced and how did you solve it?",
+      "What's a technical challenge you faced and how did you solve it?",
     ],
     selectedQuestionIndex: 0,
     answerDraft: "",
@@ -132,7 +95,7 @@ export default function ResumePage() {
       }
 
       try {
-        // 1) fetch resume metadata from backend
+        // 1) Fetch resume metadata from backend
         const res = await fetch("http://localhost:5000/api/profile/resume", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -147,10 +110,26 @@ export default function ResumePage() {
             resumeUpdatedAt: data.resume.resumeUpdatedAt,
           });
 
-          // 2) later: fetch parsed data from backend:
-          // const parsedRes = await fetch("http://localhost:5000/api/profile/resume/parse", { headers: { Authorization: `Bearer ${token}` } });
-          // const parsedData = await parsedRes.json();
-          // setParsed(parsedData.parsed);
+          // 2) Fetch parsed data from backend
+          console.log('Fetching parsed resume data...');
+          try {
+            const parsedRes = await fetch("http://localhost:5000/api/profile/resume/parse", {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            console.log('Parse response status:', parsedRes.status);
+            
+            if (parsedRes.ok) {
+              const parsedData = await parsedRes.json();
+              console.log('Parsed resume data received:', parsedData);
+              setParsed(parsedData.parsed);
+            } else {
+              const errorData = await parsedRes.json();
+              console.error('Failed to parse resume:', errorData);
+            }
+          } catch (parseError) {
+            console.error('Error fetching parsed data:', parseError);
+          }
         } else {
           setMeta(null);
         }
@@ -167,7 +146,8 @@ export default function ResumePage() {
 
   const resumePreviewSrc = useMemo(() => {
     if (!meta?.resumeUrl) return null;
-    return `http://localhost:5000${meta.resumeUrl}`;
+    // Supabase URLs are full URLs, don't prepend localhost
+    return meta.resumeUrl;
   }, [meta]);
 
   function formatDate(iso?: string) {
@@ -175,11 +155,30 @@ export default function ResumePage() {
     return new Date(iso).toLocaleString();
   }
 
-  // UI-only actions (hook to backend later)
+  // Re-parse the resume
   async function reparseResume() {
-    // Later: call backend parse endpoint to regenerate structured fields
-    // For now, just show a stub behavior
-    alert("Re-parse will call the backend parser later.");
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      setParsing(true);
+      const parsedRes = await fetch("http://localhost:5000/api/profile/resume/parse", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (parsedRes.ok) {
+        const parsedData = await parsedRes.json();
+        setParsed(parsedData.parsed);
+        alert("Resume re-parsed successfully!");
+      } else {
+        alert("Failed to re-parse resume");
+      }
+    } catch (error) {
+      console.error('Error re-parsing:', error);
+      alert("Error re-parsing resume");
+    } finally {
+      setParsing(false);
+    }
   }
 
   async function saveEdits() {
@@ -188,8 +187,8 @@ export default function ResumePage() {
   }
 
   async function generateQuestions() {
-    // Later: generate Qs based on parsed resume
-    // For now: generate from skills + roles
+    if (!parsed) return;
+    
     const skillLine = parsed.skills.slice(0, 5).join(", ");
     const company = parsed.roles?.[0]?.company || "your experience";
     setQa((prev) => ({
@@ -205,7 +204,6 @@ export default function ResumePage() {
   }
 
   async function critiqueAnswer() {
-    // Later: call backend to critique answer based on selected question + resume context
     if (!qa.answerDraft.trim()) {
       alert("Write an answer first.");
       return;
@@ -257,14 +255,15 @@ export default function ResumePage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={reparseResume}
+                  disabled={parsing || !meta}
                   className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${
                     isDarkMode
-                      ? "border-gray-600 bg-gray-700 text-white hover:bg-gray-600"
-                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
+                      ? "border-gray-600 bg-gray-700 text-white hover:bg-gray-600 disabled:opacity-50"
+                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 disabled:opacity-50"
                   }`}
                 >
-                  <RefreshCcw className="h-4 w-4" />
-                  Re-parse
+                  <RefreshCcw className={`h-4 w-4 ${parsing ? 'animate-spin' : ''}`} />
+                  {parsing ? 'Parsing...' : 'Re-parse'}
                 </button>
 
                 <button
@@ -342,48 +341,58 @@ export default function ResumePage() {
               </div>
 
               <div className="mt-5 space-y-5">
-                <TextField
-                  label="Headline"
-                  value={parsed.headline}
-                  onChange={(v) => setParsed((p) => ({ ...p, headline: v }))}
-                  isDarkMode={isDarkMode}
-                  placeholder="e.g., Computer Engineering Student | ML Projects | Full-stack"
-                />
+                {parsed ? (
+                  <>
+                    <TextField
+                      label="Headline"
+                      value={parsed.headline}
+                      onChange={(v) => setParsed((p) => p ? ({ ...p, headline: v }) : null)}
+                      isDarkMode={isDarkMode}
+                      placeholder="e.g., Computer Engineering Student | ML Projects | Full-stack"
+                    />
 
-                <TextArea
-                  label="Summary"
-                  value={parsed.summary}
-                  onChange={(v) => setParsed((p) => ({ ...p, summary: v }))}
-                  isDarkMode={isDarkMode}
-                  placeholder="2–4 lines summarizing your strengths, interests, and target roles…"
-                />
+                    <TextArea
+                      label="Summary"
+                      value={parsed.summary}
+                      onChange={(v) => setParsed((p) => p ? ({ ...p, summary: v }) : null)}
+                      isDarkMode={isDarkMode}
+                      placeholder="2–4 lines summarizing your strengths, interests, and target roles…"
+                    />
 
-                <TagsEditor
-                  label="Skills"
-                  tags={parsed.skills}
-                  onChange={(tags) => setParsed((p) => ({ ...p, skills: tags }))}
-                  isDarkMode={isDarkMode}
-                />
+                    <TagsEditor
+                      label="Skills"
+                      tags={parsed.skills}
+                      onChange={(tags) => setParsed((p) => p ? ({ ...p, skills: tags }) : null)}
+                      isDarkMode={isDarkMode}
+                    />
 
-                <MiniListEditor
-                  label="Experience"
-                  items={parsed.roles.map((r) => `${r.title} — ${r.company}`)}
-                  isDarkMode={isDarkMode}
-                  helper="Later you can expand this to edit each role’s bullets."
-                />
+                    <MiniListEditor
+                      label="Experience"
+                      items={parsed.roles.map((r) => `${r.title} — ${r.company}`)}
+                      isDarkMode={isDarkMode}
+                      helper="Later you can expand this to edit each role's bullets."
+                    />
 
-                <MiniListEditor
-                  label="Projects"
-                  items={parsed.projects.map((p) => p.name)}
-                  isDarkMode={isDarkMode}
-                  helper="Later: edit tech stack + bullets for each project."
-                />
+                    <MiniListEditor
+                      label="Projects"
+                      items={parsed.projects.map((p) => p.name)}
+                      isDarkMode={isDarkMode}
+                      helper="Later: edit tech stack + bullets for each project."
+                    />
 
-                <MiniListEditor
-                  label="Education"
-                  items={parsed.education.map((e) => `${e.degree} — ${e.school}`)}
-                  isDarkMode={isDarkMode}
-                />
+                    <MiniListEditor
+                      label="Education"
+                      items={parsed.education.map((e) => `${e.degree} — ${e.school}`)}
+                      isDarkMode={isDarkMode}
+                    />
+                  </>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {loading || parsing ? 'Parsing your resume...' : 'Upload a resume to see parsed data'}
+                    </p>
+                  </div>
+                )}
               </div>
             </section>
           </div>
@@ -411,7 +420,8 @@ export default function ResumePage() {
 
                 <button
                   onClick={generateQuestions}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                  disabled={!parsed}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                 >
                   <Sparkles className="h-4 w-4" />
                   Generate
