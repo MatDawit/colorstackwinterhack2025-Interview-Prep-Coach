@@ -26,41 +26,80 @@ router.post("/start", async (req: Request, res: Response) => {
 
     const { interviewType, difficulty } = req.body;
 
-    // 3. Close old sessions
+    // 1. Close old sessions
     await prisma.session.updateMany({
       where: { userId: userId, status: "IN_PROGRESS" },
       data: { status: "ABANDONED", endedAt: new Date() },
     });
 
-    // 4. Create new Session
+    // 2. Create new Session
     const session = await prisma.session.create({
       data: {
         userId,
-        interviewType: interviewType || "General",
+        interviewType: interviewType || "Software Engineering",
         difficulty: difficulty || "Basic",
         status: "IN_PROGRESS",
       },
     });
 
-    // A. Count questions that are either "General" OR match the specific interview type
-    const whereCondition = {
-      role: interviewType, // Exact Match (e.g. "Software Engineering")
-      difficulty: difficulty, // Exact Match (e.g. "Basic")
+    // 3. Prepare First Question Logic
+    // Base Filter: Allow specific role OR "General"
+    const roleFilter = { in: [interviewType, "General"] };
+
+    let whereCondition: any = {
+      role: roleFilter,
+      difficulty: difficulty || "Basic",
     };
 
-    // 2. Count matching questions
+    // --- NEW LOGIC: Apply "Focus" Preferences to First Question ---
+    const prefs = await prisma.preferences.findUnique({
+      where: { userId: userId },
+    });
+
+    let applyFocusFilter = false;
+    const allowedFocuses: string[] = [];
+
+    if (prefs) {
+      if (prefs.focusBehavioral) allowedFocuses.push("Behavioral");
+      if (prefs.focusTechnical) allowedFocuses.push("Technical");
+      if (prefs.focusSystemDesign) allowedFocuses.push("System Design");
+
+      if (allowedFocuses.length > 0) {
+        applyFocusFilter = true;
+      }
+    }
+
+    // Try to apply strict focus filter
+    if (applyFocusFilter) {
+      const strictCondition = {
+        ...whereCondition,
+        focus: { in: allowedFocuses },
+      };
+
+      const count = await prisma.question.count({ where: strictCondition });
+
+      if (count > 0) {
+        // We found matches! Use the strict filter
+        whereCondition = strictCondition;
+      } else {
+        // 0 matches. Fallback to default (Ignore focus)
+        console.warn(
+          "First question preference fallback: No strict matches found."
+        );
+      }
+    }
+    // -------------------------------------------------------------
+
+    // 4. Select the Question
     const count = await prisma.question.count({ where: whereCondition });
 
     if (count > 0) {
       const skip = Math.floor(Math.random() * count);
-
-      // 3. Find question
       const firstQuestion = await prisma.question.findFirst({
         where: whereCondition,
         skip: skip,
       });
 
-      // D. Bookmark it
       if (firstQuestion) {
         await prisma.session.update({
           where: { id: session.id },
