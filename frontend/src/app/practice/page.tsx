@@ -294,7 +294,7 @@ export default function Practice() {
     const average = sum / dataArray.length;
 
     const SILENCE_THRESHOLD = 10;
-    const SILENCE_DURATION_MS = 6000; // 6 seconds
+    const SILENCE_DURATION_MS = 3000; // 3 seconds
 
     if (average < SILENCE_THRESHOLD) {
       if (silenceStartRef.current === null) {
@@ -360,7 +360,9 @@ export default function Practice() {
       form.append("questionId", qId);
       form.append("question", question);
       form.append("mode", mode);
-      form.append("duration", String(elapsedTime));
+
+      // --- LOGIC CHANGE START ---
+      let finalDuration = elapsedTime;
 
       if (mode === "type") {
         if (!typedAnswer.trim()) {
@@ -369,31 +371,36 @@ export default function Practice() {
           return;
         }
         form.append("answerText", typedAnswer);
+
+        // 1. Count Words
+        const wordCount = typedAnswer.trim().split(/\s+/).length;
+
+        // 2. Average Speaking Rate = 130 Words Per Minute (WPM)
+        // Formula: (Words / 130) * 60 seconds
+        const estimatedSeconds = Math.ceil((wordCount / 130) * 60);
+
+        // 3. Use the estimated time instead of the timer
+        finalDuration = estimatedSeconds;
       } else {
-        // If recording state is still 'recording', stop it (safeguard)
+        // ... (Recording logic remains the same)
         if (recordingState === "recording") {
-          stopRecording(); // This is async, so we might need to rely on the blob effect
-          // For manual submission while recording, usually we'd show error.
-          // But if called via auto-submit, recordingState is handled.
+          // Optional: Stop recording automatically if they forgot
+          if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
         }
 
         if (!audioBlob && !isAutoSubmittingRef.current) {
-          // We allow submission if it's currently processing the auto-blob
-          // otherwise show error
-          if (recordingState === "recording") {
-            showError("Recording In Progress", "Stop recording first.");
-            setSubmitting(false);
-            return;
-          }
           showError("No Recording", "Please record your answer.");
           setSubmitting(false);
           return;
         }
-
         if (audioBlob) {
           form.append("audio", audioBlob, "answer.webm");
         }
       }
+
+      // 4. Append the calculated duration
+      form.append("duration", String(finalDuration));
+      // --- LOGIC CHANGE END ---
 
       const res = await fetch("http://localhost:5000/api/feedback/submit", {
         method: "POST",
