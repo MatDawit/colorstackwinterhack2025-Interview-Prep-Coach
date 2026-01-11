@@ -55,7 +55,7 @@ const DEFAULT_PREFS: Preferences = {
   showSampleAnswer: true,
 
   enableTimer: false,
-  countdownSeconds: 3,
+  countdownSeconds: 0,
   autoSubmitOnSilence: false,
 };
 

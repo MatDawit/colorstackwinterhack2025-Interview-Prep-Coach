@@ -84,8 +84,8 @@ model Preferences {
   showSampleAnswer    Boolean  @default(true)
 
   // Practice flow
-  enableTimer         Boolean  @default(false)
-  countdownSeconds    Int      @default(30) // 
+  enableTimer         Boolean  @default(true)
+  countdownSeconds    Int      @default(0)
   autoSubmitOnSilence Boolean  @default(false)
 
   createdAt           DateTime @default(now())
