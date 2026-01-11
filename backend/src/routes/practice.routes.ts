@@ -14,9 +14,10 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // 1. Get Session Info AND User ID
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
-      select: { interviewType: true, difficulty: true },
+      select: { interviewType: true, difficulty: true, userId: true },
     });
 
     if (!session) {
@@ -24,25 +25,23 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 1. Check if the session is already completed or full
+    // 2. Check for Max Attempts (Standard Logic)
     const existingAttempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
       select: { questionId: true, score: true, duration: true },
     });
 
-    // 2. Get UNIQUE questions answered so far
     const uniqueQuestionIds = new Set(
       existingAttempts.map((a) => a.questionId)
     );
 
-    // 3. Check limit based on UNIQUE questions
     if (uniqueQuestionIds.size >= 4) {
+      // Calculate Stats (Unchanged logic)
       let totalSessionDuration = 0;
       existingAttempts.forEach(
         (a) => (totalSessionDuration += a.duration || 0)
       );
 
-      // B. Calculate Best Scores per Question
       const bestScores = new Map<string, number>();
       existingAttempts.forEach((attempt) => {
         const currentMax = bestScores.get(attempt.questionId) || 0;
@@ -51,14 +50,11 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
         }
       });
 
-      // C. Average the Best Scores
       let totalScore = 0;
       bestScores.forEach((score) => (totalScore += score));
       const finalScore =
         bestScores.size > 0 ? Math.round(totalScore / bestScores.size) : 0;
-      // ---------------------------------
 
-      // D. Update Session (Status + Stats)
       await prisma.session.update({
         where: { id: sessionId },
         data: {
@@ -72,27 +68,74 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 4. Filter out questions we've already done
+    // 4. Construct Query Filter
     const attemptedIds = Array.from(uniqueQuestionIds);
 
-    const whereCondition = {
+    // FIX 1: Role Fallback.
+    // Allow questions that match the specific role OR are "General".
+    // This prevents empty results if a specific role has no questions yet.
+    const roleFilter = { in: [session.interviewType, "General"] };
+
+    let whereCondition: any = {
       id: { notIn: attemptedIds },
-      role: session.interviewType, // Exact Match
-      difficulty: session.difficulty, // Exact Match
+      role: roleFilter,
+      difficulty: session.difficulty,
     };
 
+    // 4. Apply "Focus" Preferences (Fail-Safe)
+    const prefs = await prisma.preferences.findUnique({
+      where: { userId: session.userId },
+    });
+
+    let applyFocusFilter = false;
+    const allowedFocuses: string[] = [];
+
+    if (prefs) {
+      // FIX 2: Map preferences to valid Schema strings
+      // Ensure these strings ("Behavioral", etc.) match exactly what is in your DB 'focus' column
+      if (prefs.focusBehavioral) allowedFocuses.push("Behavioral");
+      if (prefs.focusTechnical) allowedFocuses.push("Technical");
+      if (prefs.focusSystemDesign) allowedFocuses.push("System Design");
+
+      if (allowedFocuses.length > 0) {
+        applyFocusFilter = true;
+      }
+    }
+
+    if (applyFocusFilter) {
+      // FIX 3: Target the 'focus' column (not 'category')
+      const strictCondition = {
+        ...whereCondition,
+        focus: { in: allowedFocuses },
+      };
+
+      const count = await prisma.question.count({ where: strictCondition });
+
+      if (count > 0) {
+        // We have matching questions! Apply the filter.
+        whereCondition = strictCondition;
+      } else {
+        // FIX 4: Fallback
+        // User wanted "Technical" questions but none exist for this Role/Difficulty.
+        // We revert to the base query (ignoring focus) so we don't return 404.
+        console.warn(
+          "Preference filter returned 0 results. Falling back to default pool."
+        );
+      }
+    }
+
+    // 5. Final Fetch
     const unattemptedCount = await prisma.question.count({
       where: whereCondition,
     });
 
     if (unattemptedCount === 0) {
-      res
-        .status(404)
-        .json({ error: "No more questions available for this level." });
+      res.status(404).json({
+        error: `No questions found for Role: ${session.interviewType} (${session.difficulty}).`,
+      });
       return;
     }
 
-    // Pick random next question
     const skip = Math.floor(Math.random() * unattemptedCount);
     const nextQuestions = await prisma.question.findMany({
       where: whereCondition,
@@ -102,12 +145,10 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
 
     const nextQuestion = nextQuestions[0];
 
-    // 6. Update Session Bookmark
+    // Update Session
     await prisma.session.update({
       where: { id: sessionId },
-      data: {
-        currentQuestionId: nextQuestion.id,
-      },
+      data: { currentQuestionId: nextQuestion.id },
     });
 
     res.json({ ok: true, nextQuestionId: nextQuestion.id });
@@ -131,6 +172,8 @@ router.get(
           id: true,
           status: true,
           currentQuestionId: true,
+          interviewType: true,
+          difficulty: true,
           currentQuestion: {
             select: {
               id: true,
