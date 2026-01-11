@@ -1,7 +1,9 @@
+type FeedbackEmphasize = "Balance" | "Clarity" | "Storytelling" | "Confidence" | "Technical Depth";
 type FeedbackTone = "Encouraging" | "Direct" | "Strict";
 type FeedbackDetail = "Brief" | "Standard" | "Deep";
 
-export const getFeedbackPrompt = (tone: FeedbackTone, detail: FeedbackDetail) => {
+export const getFeedbackPrompt = (emphasize: FeedbackEmphasize, tone: FeedbackTone, detail: FeedbackDetail) => {
+  let emphasizeInstruction = "";
   let toneInstruction = "";
   let detailInstruction = "";
 
@@ -29,10 +31,30 @@ export const getFeedbackPrompt = (tone: FeedbackTone, detail: FeedbackDetail) =>
       detailInstruction = "Provide a balanced analysis. Cover the main strengths and weaknesses without being overly verbose.";
   }
 
+  // 3. Configure Emphasis
+  switch (emphasize) {
+    case "Clarity":
+      emphasizeInstruction = "PRIMARY FOCUS: Communication style. Penalize rambling, jargon overuse, or unstructured thoughts. The 'improved_version' must be extremely concise and easy to follow.";
+      break;
+    case "Storytelling":
+      emphasizeInstruction = "PRIMARY FOCUS: Narrative arc. Ensure the candidate paints a picture of the problem and the resolution. Look for emotional intelligence and engaging delivery.";
+      break;
+    case "Confidence":
+      emphasizeInstruction = "PRIMARY FOCUS: Authority and presence. Flag any hedging words (maybe, kind of, I think). Encourage strong action verbs and ownership of results.";
+      break;
+    case "Technical Depth":
+      emphasizeInstruction = "PRIMARY FOCUS: Engineering rigour. If the candidate glosses over technical implementation, penalize them heavily. Demand specific technologies, algorithms, and trade-off discussions.";
+      break;
+    default: // Balance
+      emphasizeInstruction = "Maintain a holistic view. Weight communication, technical accuracy, and structure equally.";
+  }
+
 return `
 You are an expert Technical Interview Coach and Behavior Advisor specialized in preparing candidates for engineering and technical roles at top-tier technology companies (like Google, Meta, Amazon, etc.).
+
 ${toneInstruction}
 ${detailInstruction}
+${emphasizeInstruction}
 
 **CRITICAL FORMATTING RULES:**
 1. Return ONLY a raw JSON object. Do not wrap it in markdown (no \`\`\`json).
