@@ -278,14 +278,6 @@ export default function Navbar() {
                 </Link>
               );
             })}
-
-            <Link
-              href="/profile"
-              aria-label="Profile"
-              className="w-9 h-9 flex items-center justify-center hover:opacity-90 transition-opacity"
-            >
-              <ProfileAvatar me={me} isLoading={loading} />
-            </Link>
           </nav>
         </div>
       )}
