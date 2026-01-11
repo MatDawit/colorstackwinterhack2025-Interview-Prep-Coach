@@ -31,7 +31,7 @@ export default function Practice() {
   const isMounted = useRef(true);
 
   // --- STATE ---
-  const [interviewType, setInterviewType] = useState("General");
+  const [interviewType, setInterviewType] = useState("Software Engineering");
   const [difficulty, setDifficulty] = useState("Basic");
   const [sessionId, setSessionId] = useState<string | null>(null);
 
@@ -448,7 +448,6 @@ export default function Practice() {
                       : "bg-white border-gray-300 text-black"
                   }`}
                 >
-                  <option value="General">General</option>
                   <option value="Software Engineering">
                     Software Engineering
                   </option>
