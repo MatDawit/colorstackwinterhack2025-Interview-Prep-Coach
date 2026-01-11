@@ -53,7 +53,7 @@ const DEFAULT_PREFS: Preferences = {
   feedbackTone: "Encouraging",
   feedbackDetail: "Standard",
   showSampleAnswer: true,
-  enableTimer: false,
+  enableTimer: true,
   countdownSeconds: 0,
   autoSubmitOnSilence: false,
 };
@@ -212,6 +212,7 @@ export default function PreferencesPage() {
 
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
+      router.push("/profile");
     } catch (error) {
       setSaveStatus("error");
       console.error(error);
