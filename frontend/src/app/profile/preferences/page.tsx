@@ -168,6 +168,29 @@ export default function PreferencesPage() {
     setSaveStatus("idle");
   }
 
+  const handleFocusToggle = (key: keyof Preferences["questionFocus"]) => {
+    setPrefs((current) => {
+      const isCurrentlyActive = current.questionFocus[key];
+      const totalActive = Object.values(current.questionFocus).filter(
+        Boolean
+      ).length;
+
+      // If we are trying to turn OFF an item, and it's the ONLY one active:
+      if (isCurrentlyActive && totalActive <= 1) {
+        // Do not update state (effectively blocks the action)
+        return current;
+      }
+
+      return {
+        ...current,
+        questionFocus: {
+          ...current.questionFocus,
+          [key]: !isCurrentlyActive,
+        },
+      };
+    });
+  };
+
   if (loading) {
     return (
       <div
@@ -470,43 +493,19 @@ export default function PreferencesPage() {
                       <PillToggle
                         label="Behavioral"
                         active={prefs.questionFocus.behavioral}
-                        onClick={() =>
-                          setPrefs((p) => ({
-                            ...p,
-                            questionFocus: {
-                              ...p.questionFocus,
-                              behavioral: !p.questionFocus.behavioral,
-                            },
-                          }))
-                        }
+                        onClick={() => handleFocusToggle("behavioral")}
                         isDarkMode={isDarkMode}
                       />
                       <PillToggle
                         label="Technical"
                         active={prefs.questionFocus.technical}
-                        onClick={() =>
-                          setPrefs((p) => ({
-                            ...p,
-                            questionFocus: {
-                              ...p.questionFocus,
-                              technical: !p.questionFocus.technical,
-                            },
-                          }))
-                        }
+                        onClick={() => handleFocusToggle("technical")}
                         isDarkMode={isDarkMode}
                       />
                       <PillToggle
                         label="System Design"
                         active={prefs.questionFocus.systemDesign}
-                        onClick={() =>
-                          setPrefs((p) => ({
-                            ...p,
-                            questionFocus: {
-                              ...p.questionFocus,
-                              systemDesign: !p.questionFocus.systemDesign,
-                            },
-                          }))
-                        }
+                        onClick={() => handleFocusToggle("systemDesign")}
                         isDarkMode={isDarkMode}
                       />
                     </div>
