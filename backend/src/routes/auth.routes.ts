@@ -2,14 +2,25 @@ import { Router } from "express"
 import { Request } from "express"
 import { Response } from "express"
 import { login, signup } from '../services/auth.service'
+import bcrypt from 'bcrypt'
 import passport from "passport"
 import jwt from "jsonwebtoken";
-
+import { prisma } from "../db_connection";
 // create the router
 // this is where i'll add new endpoints
 const router  = Router()
 const JWT_SECRET = process.env.JWT_SECRET!;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+function getUserIdFromAuthHeader(req: Request): string {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("Unauthorized: No token provided");
+  }
+  const token = authHeader.split(" ")[1];
+  const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string };
+  if (!decoded.userId) throw new Error("Unauthorized: Invalid token");
+  return decoded.userId;
+}
 
 // routers accept requests from the front end and then extract data from those requests, calls fxns and then sends response back to the frontend
 // create abn endpoint that accepts post requests and (r.post)
@@ -116,5 +127,51 @@ router.get(
     }
 );
 
+// PATCH /api/auth/password
+router.patch("/password", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromAuthHeader(req);
+
+    const { currentPassword, newPassword } = req.body as {
+      currentPassword?: string;
+      newPassword?: string;
+    };
+
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ error: "New password must be at least 8 characters." });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // If user already has a password, require currentPassword
+    if (user.passwordHash) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: "Current password is required." });
+      }
+
+      const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!ok) {
+        return res.status(401).json({ error: "Current password is incorrect." });
+      }
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashed },
+    });
+
+    return res.json({ ok: true });
+  } catch (e: any) {
+    console.error(e);
+    return res.status(401).json({ error: e.message || "Unauthorized" });
+  }
+});
 // export the router
 export default router
