@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import { Search, Filter, BookOpen, Loader2, Database } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
+import { useRouter } from "next/navigation";
 
 type Question = {
   id: string;
@@ -15,6 +16,7 @@ type Question = {
 };
 
 export default function QuestionBank() {
+  const router = useRouter();
   const { isDarkMode } = useTheme();
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -26,12 +28,36 @@ export default function QuestionBank() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
 
-  // 1. Fetch Questions on Mount
+  // 1. Check Authentication First
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+  }, [router]);
+
+  // 2. Fetch Questions (Protected)
   useEffect(() => {
     const fetchQuestions = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
       try {
-        // You might need to add Authorization header if your route is protected
-        const res = await fetch("http://localhost:5000/api/questions");
+        const res = await fetch("http://localhost:5000/api/questions", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // Handle Token Expiry / Invalid Token
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+
         if (!res.ok) throw new Error("Failed to fetch questions");
         const data = await res.json();
         setQuestions(data.questions || []);
@@ -44,9 +70,9 @@ export default function QuestionBank() {
     };
 
     fetchQuestions();
-  }, []);
+  }, [router]);
 
-  // 2. Filter Logic
+  // 3. Filter Logic
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
       const matchesSearch = q.question
@@ -87,6 +113,18 @@ export default function QuestionBank() {
           : "bg-gray-100 text-gray-600";
     }
   };
+
+  if (loading) {
+    return (
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          isDarkMode ? "bg-gray-900" : "bg-[#F8F9FA]"
+        }`}
+      >
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -197,14 +235,7 @@ export default function QuestionBank() {
         </div>
 
         {/* --- CONTENT --- */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-10 h-10 animate-spin text-blue-500 mb-4" />
-            <p className={isDarkMode ? "text-gray-400" : "text-gray-500"}>
-              Loading questions...
-            </p>
-          </div>
-        ) : error ? (
+        {error ? (
           <div
             className={`text-center py-10 rounded-xl border ${
               isDarkMode
