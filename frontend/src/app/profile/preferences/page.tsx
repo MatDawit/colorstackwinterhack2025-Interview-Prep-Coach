@@ -20,6 +20,12 @@ import { useTheme } from "../../context/ThemeContext";
 type Preferences = {
   defaultRole: string;
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
+  feedbackEmphasize:
+    | "Balance"
+    | "Clarity"
+    | "Storytelling"
+    | "Confidence"
+    | "Technical Depth";
   questionFocus: {
     behavioral: boolean;
     technical: boolean;
@@ -37,6 +43,7 @@ type Preferences = {
 const DEFAULT_PREFS: Preferences = {
   defaultRole: "Software Engineering",
   defaultDifficulty: "Basic",
+  feedbackEmphasize: "Balance",
   questionFocus: {
     behavioral: true,
     technical: false,
@@ -127,6 +134,8 @@ export default function PreferencesPage() {
               systemDesign:
                 p.focusSystemDesign ?? DEFAULT_PREFS.questionFocus.systemDesign,
             },
+            feedbackEmphasize: (p.feedbackEmphasize ??
+              DEFAULT_PREFS.feedbackEmphasize) as Preferences["feedbackEmphasize"],
             autoStartNext: p.autoStartNext ?? DEFAULT_PREFS.autoStartNext,
             feedbackTone: (p.feedbackTone ??
               DEFAULT_PREFS.feedbackTone) as Preferences["feedbackTone"],
@@ -474,10 +483,10 @@ export default function PreferencesPage() {
 
                   <div className="mt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
                     <SelectField
-                      label="What should we empahasize in your feedback?"
-                      value={prefs.defaultRole}
+                      label="What should we emphasize in your feedback?"
+                      value={prefs.feedbackEmphasize}
                       onChange={(v) =>
-                        setPrefs((p) => ({ ...p, defaultRole: v }))
+                        setPrefs((p) => ({ ...p, feedbackEmphasize: v as any }))
                       }
                       options={[
                         "Balance",

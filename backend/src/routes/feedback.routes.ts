@@ -54,6 +54,12 @@ router.post(
       }
 
       // Defaults
+      const emphasize = (userPrefs?.feedbackEmphasize || "Balance") as
+        | "Balance"
+        | "Clarity"
+        | "Storytelling"
+        | "Confidence"
+        | "Technical Depth";
       const tone = (userPrefs?.feedbackTone || "Encouraging") as
         | "Encouraging"
         | "Direct"
@@ -96,7 +102,7 @@ router.post(
       const analysis = await generation_ai.models.generateContent({
         model: "gemini-2.5-flash-lite",
         config: {
-          systemInstruction: getFeedbackPrompt(tone, detail),
+          systemInstruction: getFeedbackPrompt(emphasize, tone, detail),
           responseMimeType: "application/json",
         },
         contents: [
