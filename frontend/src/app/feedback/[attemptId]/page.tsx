@@ -597,7 +597,7 @@ const PracticeFeedback = () => {
                     className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
                       data.isLastQuestion
                         ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100"
-                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
                     } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
                   >
                     {isGenerating ? (
