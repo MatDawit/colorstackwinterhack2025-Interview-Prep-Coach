@@ -101,6 +101,7 @@ model Question {
   question      String    @db.Text
   role          String    @default("Software Engineering")
   difficulty    String    @default("Basic")
+  focus         String    @default("Behavioral")
   
   createdAt     DateTime  @default(now())
   
