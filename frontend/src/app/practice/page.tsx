@@ -31,10 +31,14 @@ export default function Practice() {
   const isMounted = useRef(true);
 
   // --- STATE ---
+
+  // 1. NEW: Add Loading State for Settings
+  const [isSettingsLoading, setIsSettingsLoading] = useState(true);
+
   const [prefs, setPrefs] = useState({
     enableTimer: true,
     countdownSeconds: 0,
-    autoSubmitOnSilence: false, // 1. Default state (matches your DB default)
+    autoSubmitOnSilence: false,
   });
 
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -90,7 +94,7 @@ export default function Practice() {
     };
   }, []);
 
-  // --- 2. FETCH PREFERENCES FROM DB ---
+  // --- 2. UPDATE PREFS FETCH ---
   useEffect(() => {
     const fetchPrefs = async () => {
       const token = localStorage.getItem("token");
@@ -109,18 +113,20 @@ export default function Practice() {
             setPrefs({
               enableTimer: p.enableTimer ?? true,
               countdownSeconds: p.countdownSeconds ?? 0,
-              // Update state with value from DB
               autoSubmitOnSilence: p.autoSubmitOnSilence ?? false,
             });
 
+            // If we are STARTING FRESH, apply defaults and stop loading here
             if (!existingSessionId) {
               if (p.defaultRole) setInterviewType(p.defaultRole);
               if (p.defaultDifficulty) setDifficulty(p.defaultDifficulty);
+              setIsSettingsLoading(false); // <--- Stop loading
             }
           }
         }
       } catch (e) {
         console.error("Failed to load prefs", e);
+        if (!existingSessionId) setIsSettingsLoading(false);
       }
     };
     fetchPrefs();
@@ -129,6 +135,7 @@ export default function Practice() {
   // --- HELPER FUNCTIONS ---
   const fetchSessionDetails = async (id: string) => {
     setLoadingQuestion(true);
+    // Don't set isSettingsLoading(true) here, or it flickers when changing questions
     try {
       const res = await fetch(
         `http://localhost:5000/api/practice/session/${id}`
@@ -157,6 +164,7 @@ export default function Practice() {
       console.error("Error fetching session:", error);
     } finally {
       setLoadingQuestion(false);
+      setIsSettingsLoading(false); // <--- Stop loading (for existing session)
     }
   };
 
@@ -207,6 +215,7 @@ export default function Practice() {
     setCurrentQuestion(null);
     setQuestion("");
     setLoadingQuestion(false);
+    // Note: We don't set isSettingsLoading(true) here because we want to keep current selections
   };
 
   const handleTypeChange = (newType: string) => {
@@ -230,6 +239,7 @@ export default function Practice() {
     } else {
       setSessionId(null);
       setLoadingQuestion(false);
+      // If no session ID, fetchPrefs (above) will handle the loading state turn-off
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingSessionId]);
@@ -599,91 +609,100 @@ export default function Practice() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-            <div>
-              <label
-                className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Role
-              </label>
-              {isSessionActive ? (
-                <div
-                  className={`w-full rounded-lg border px-3 py-2.5 text-sm font-medium ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-gray-300"
-                      : "bg-gray-50 border-gray-200 text-gray-600"
-                  }`}
-                >
-                  {interviewType}
-                </div>
-              ) : (
-                <select
-                  value={interviewType}
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-black"
-                  }`}
-                >
-                  <option value="Software Engineering">
-                    Software Engineering
-                  </option>
-                  <option value="Product Management">Product Management</option>
-                  <option value="Data Science">Data Science</option>
-                </select>
-              )}
+          {/* 3. CONDITIONAL LOADING STATE */}
+          {isSettingsLoading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
             </div>
-
-            <div>
-              <label
-                className={`block text-sm font-medium mb-2 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
-                Difficulty
-              </label>
-              {isSessionActive ? (
-                <div
-                  className={`w-full rounded-lg border px-3 py-2.5 text-sm font-medium ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-gray-300"
-                      : "bg-gray-50 border-gray-200 text-gray-600"
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+              <div>
+                <label
+                  className={`block text-sm font-medium mb-2 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
                   }`}
                 >
-                  {difficulty}
-                </div>
-              ) : (
-                <select
-                  value={difficulty}
-                  onChange={(e) => handleDifficultyChange(e.target.value)}
-                  className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-black"
-                  }`}
-                >
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              )}
-            </div>
-
-            {!isSessionActive && (
-              <div className="md:col-span-2 mt-2">
-                <button
-                  onClick={startNewSession}
-                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold transition shadow-md hover:shadow-lg"
-                >
-                  <Play size={18} fill="currentColor" />
-                  Start Interview Session
-                </button>
+                  Role
+                </label>
+                {isSessionActive ? (
+                  <div
+                    className={`w-full rounded-lg border px-3 py-2.5 text-sm font-medium ${
+                      isDarkMode
+                        ? "bg-gray-700 border-gray-600 text-gray-300"
+                        : "bg-gray-50 border-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {interviewType}
+                  </div>
+                ) : (
+                  <select
+                    value={interviewType}
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+                      isDarkMode
+                        ? "bg-gray-700 border-gray-600 text-white"
+                        : "bg-white border-gray-300 text-black"
+                    }`}
+                  >
+                    <option value="Software Engineering">
+                      Software Engineering
+                    </option>
+                    <option value="Product Management">
+                      Product Management
+                    </option>
+                    <option value="Data Science">Data Science</option>
+                  </select>
+                )}
               </div>
-            )}
-          </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-medium mb-2 ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  Difficulty
+                </label>
+                {isSessionActive ? (
+                  <div
+                    className={`w-full rounded-lg border px-3 py-2.5 text-sm font-medium ${
+                      isDarkMode
+                        ? "bg-gray-700 border-gray-600 text-gray-300"
+                        : "bg-gray-50 border-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {difficulty}
+                  </div>
+                ) : (
+                  <select
+                    value={difficulty}
+                    onChange={(e) => handleDifficultyChange(e.target.value)}
+                    className={`w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${
+                      isDarkMode
+                        ? "bg-gray-700 border-gray-600 text-white"
+                        : "bg-white border-gray-300 text-black"
+                    }`}
+                  >
+                    <option value="Basic">Basic</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                  </select>
+                )}
+              </div>
+
+              {!isSessionActive && (
+                <div className="md:col-span-2 mt-2">
+                  <button
+                    onClick={startNewSession}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-bold transition shadow-md hover:shadow-lg"
+                  >
+                    <Play size={18} fill="currentColor" />
+                    Start Interview Session
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -695,6 +714,7 @@ export default function Practice() {
               : "bg-white border-gray-200"
           }`}
         >
+          {/* ... Rest of the question card (unchanged) ... */}
           {isSessionActive && (
             <>
               {loadingQuestion ? (
