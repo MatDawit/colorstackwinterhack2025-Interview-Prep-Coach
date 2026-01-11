@@ -178,7 +178,6 @@ export default function AnalyticsPage() {
   const availableCategories = useMemo(() => {
     return Array.from(
       new Set([
-        "General",
         "Software Engineering",
         "Product Management",
         "Data Science",
