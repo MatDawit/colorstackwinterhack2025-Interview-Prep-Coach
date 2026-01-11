@@ -34,7 +34,7 @@ export default function Practice() {
   const [prefs, setPrefs] = useState({
     enableTimer: true,
     countdownSeconds: 0,
-    autoSubmitOnSilence: false,
+    autoSubmitOnSilence: false, // 1. Default state (matches your DB default)
   });
 
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -74,6 +74,13 @@ export default function Practice() {
 
   const isCreatingSession = useRef(false);
 
+  // --- SILENCE REFS ---
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const silenceStartRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const isAutoSubmittingRef = useRef(false);
+
   const timeLabel = useMemo(() => formatTime(elapsedTime), [elapsedTime]);
 
   useEffect(() => {
@@ -83,7 +90,7 @@ export default function Practice() {
     };
   }, []);
 
-  // --- PREFERENCES ---
+  // --- 2. FETCH PREFERENCES FROM DB ---
   useEffect(() => {
     const fetchPrefs = async () => {
       const token = localStorage.getItem("token");
@@ -102,6 +109,7 @@ export default function Practice() {
             setPrefs({
               enableTimer: p.enableTimer ?? true,
               countdownSeconds: p.countdownSeconds ?? 0,
+              // Update state with value from DB
               autoSubmitOnSilence: p.autoSubmitOnSilence ?? false,
             });
 
@@ -252,6 +260,83 @@ export default function Practice() {
     setSubmitError(null);
   }, [qId]);
 
+  // --- SILENCE LOGIC START ---
+
+  // 3. Setup Logic: Check Preference Here
+  const setupSilenceDetection = (stream: MediaStream) => {
+    // If user's preference is FALSE, we simply exit.
+    // The Web Audio API never initializes, saving resources.
+    if (!prefs.autoSubmitOnSilence) return;
+
+    const AudioContext =
+      window.AudioContext || (window as any).webkitAudioContext;
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const analyser = audioContext.createAnalyser();
+
+    analyser.fftSize = 256;
+    source.connect(analyser);
+
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    silenceStartRef.current = null;
+
+    detectSilenceLoop();
+  };
+
+  const detectSilenceLoop = () => {
+    if (!analyserRef.current || recordingState === "stopped") return;
+
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+
+    const sum = dataArray.reduce((a, b) => a + b, 0);
+    const average = sum / dataArray.length;
+
+    const SILENCE_THRESHOLD = 10;
+    const SILENCE_DURATION_MS = 6000; // 6 seconds
+
+    if (average < SILENCE_THRESHOLD) {
+      if (silenceStartRef.current === null) {
+        silenceStartRef.current = Date.now();
+      } else {
+        const diff = Date.now() - silenceStartRef.current;
+        if (diff > SILENCE_DURATION_MS) {
+          console.log("Silence detected. Auto-submitting...");
+          isAutoSubmittingRef.current = true;
+          stopRecording(); // Stops media recorder -> triggers useEffect -> submits
+          return;
+        }
+      }
+    } else {
+      silenceStartRef.current = null;
+    }
+
+    animationFrameRef.current = requestAnimationFrame(detectSilenceLoop);
+  };
+
+  const cleanupAudioAnalysis = () => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
+  };
+
+  // Watch for Blob to Trigger Submit
+  useEffect(() => {
+    if (audioBlob && isAutoSubmittingRef.current && !submitting) {
+      submitForAnalysis();
+      isAutoSubmittingRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioBlob]);
+  // --- SILENCE LOGIC END ---
+
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
@@ -285,17 +370,29 @@ export default function Practice() {
         }
         form.append("answerText", typedAnswer);
       } else {
+        // If recording state is still 'recording', stop it (safeguard)
         if (recordingState === "recording") {
-          showError("Recording In Progress", "Stop recording first.");
-          setSubmitting(false);
-          return;
+          stopRecording(); // This is async, so we might need to rely on the blob effect
+          // For manual submission while recording, usually we'd show error.
+          // But if called via auto-submit, recordingState is handled.
         }
-        if (!audioBlob) {
+
+        if (!audioBlob && !isAutoSubmittingRef.current) {
+          // We allow submission if it's currently processing the auto-blob
+          // otherwise show error
+          if (recordingState === "recording") {
+            showError("Recording In Progress", "Stop recording first.");
+            setSubmitting(false);
+            return;
+          }
           showError("No Recording", "Please record your answer.");
           setSubmitting(false);
           return;
         }
-        form.append("audio", audioBlob, "answer.webm");
+
+        if (audioBlob) {
+          form.append("audio", audioBlob, "answer.webm");
+        }
       }
 
       const res = await fetch("http://localhost:5000/api/feedback/submit", {
@@ -342,12 +439,17 @@ export default function Practice() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicPermission("granted");
       streamRef.current = stream;
+
+      // 4. Hook up the detection logic to the stream
+      setupSilenceDetection(stream);
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       setAudioBlob(null);
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
+
       mediaRecorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
@@ -359,6 +461,7 @@ export default function Practice() {
         setRecordingState("stopped");
         clearTimer();
         stopMicStream();
+        cleanupAudioAnalysis(); // Clean up on stop
       };
       mediaRecorder.start();
       setRecordingState("recording");
@@ -393,18 +496,24 @@ export default function Practice() {
 
   function stopRecording() {
     setSubmitError(null);
-    if (recordingState !== "recording") return;
-    const recorder = mediaRecorderRef.current;
-    if (recorder) recorder.stop();
-    mediaRecorderRef.current = null;
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
     clearTimer();
+    cleanupAudioAnalysis(); // Ensure analysis stops
   }
 
   function handleRerecord() {
     setSubmitError(null);
+    isAutoSubmittingRef.current = false; // Reset auto flag on manual reset
     if (recordingState === "recording") stopRecording();
     clearTimer();
     stopMicStream();
+    cleanupAudioAnalysis();
     setElapsedTime(0);
     setRecordingState("idle");
     audioChunksRef.current = [];
@@ -426,6 +535,7 @@ export default function Practice() {
     return () => {
       clearTimer();
       stopMicStream();
+      cleanupAudioAnalysis();
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
@@ -705,9 +815,7 @@ export default function Practice() {
                         </div>
                       </div>
 
-                      {/* --- BUTTON CHANGE STARTS HERE --- */}
                       <div className="mt-6 flex items-center justify-center gap-3">
-                        {/* Only show "Start" if we are IDLE. If we are STOPPED, we hide it to prevent overwrites. */}
                         {recordingState === "idle" && (
                           <button
                             onClick={startRecording}
@@ -730,11 +838,9 @@ export default function Practice() {
                           onClick={handleRerecord}
                           className="px-10 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 font-medium"
                         >
-                          {/* Label change for clarity: Re-record if stopped, Reset if idle */}
                           {recordingState === "stopped" ? "Re-record" : "Reset"}
                         </button>
                       </div>
-                      {/* --- BUTTON CHANGE ENDS HERE --- */}
 
                       {audioUrl && (
                         <div className="mt-6">
