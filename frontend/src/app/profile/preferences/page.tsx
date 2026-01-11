@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   Home,
   Settings,
-  Keyboard,
   User,
   UserCircle2,
   BrainCircuit,
@@ -19,7 +18,6 @@ import {
 import { useTheme } from "../../context/ThemeContext";
 
 type Preferences = {
-  // Interview defaults
   defaultRole: string;
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
   questionFocus: {
@@ -28,13 +26,9 @@ type Preferences = {
     systemDesign: boolean;
   };
   autoStartNext: boolean;
-
-  // Feedback style
   feedbackTone: "Encouraging" | "Direct" | "Strict";
   feedbackDetail: "Brief" | "Standard" | "Deep";
   showSampleAnswer: boolean;
-
-  // Practice flow
   enableTimer: boolean;
   countdownSeconds: 0 | 3 | 5 | 10;
   autoSubmitOnSilence: boolean;
@@ -49,11 +43,9 @@ const DEFAULT_PREFS: Preferences = {
     systemDesign: false,
   },
   autoStartNext: false,
-
   feedbackTone: "Encouraging",
   feedbackDetail: "Standard",
   showSampleAnswer: true,
-
   enableTimer: false,
   countdownSeconds: 0,
   autoSubmitOnSilence: false,
@@ -61,106 +53,160 @@ const DEFAULT_PREFS: Preferences = {
 
 export default function PreferencesPage() {
   const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
-  const [isSignedIn, setIsSignedIn] = useState(false);
   const { isDarkMode } = useTheme();
 
+  // --- STATE ---
+  // Removed isSignedIn state to match AnalyticsPage pattern
+  const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
+  // --- EFFECTS ---
+
+  // 1. Check Authentication First (Matches AnalyticsPage)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+  }, [router]);
+
+  // 2. Fetch Data (Matches AnalyticsPage logic)
   useEffect(() => {
     async function loadPrefs() {
       const token = localStorage.getItem("token");
-      if (!token) return;
+      if (!token) {
+        router.push("/login");
+        return;
+      }
 
-      setLoading(true);
-      setIsSignedIn(true);
-
-      const res = await fetch("http://localhost:5000/api/profile/preferences", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const raw = await res.text();
-      let data: any;
       try {
-        data = JSON.parse(raw);
-      } catch {
-        console.error("Non-JSON response:", raw);
-        throw new Error("Backend returned non-JSON");
-      }
-
-      if (!res.ok) throw new Error(data.error || "Failed to load preferences");
-
-      // 🔍 log it once to see shape
-      console.log("preferences response:", data);
-
-      const p = data.preferences ?? data.preference ?? data.prefs; // fallback keys if your backend differs
-      if (!p) {
-        throw new Error(
-          "Missing preferences in response. Check backend route response shape."
+        const res = await fetch(
+          "http://localhost:5000/api/profile/preferences",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
+
+        // Handle Token Expiry
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+
+        const raw = await res.text();
+        let data: any;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          console.error("Non-JSON response:", raw);
+          throw new Error("Backend returned non-JSON");
+        }
+
+        if (!res.ok)
+          throw new Error(data.error || "Failed to load preferences");
+
+        const p = data.preferences ?? data.preference ?? data.prefs;
+        if (!p) {
+          // If 200 OK but no prefs, we just keep defaults (or handle as error)
+          // For now, keeping logic to assume defaults if missing
+        } else {
+          setPrefs({
+            defaultRole: p.defaultRole ?? DEFAULT_PREFS.defaultRole,
+            defaultDifficulty: (p.defaultDifficulty ??
+              DEFAULT_PREFS.defaultDifficulty) as Preferences["defaultDifficulty"],
+            questionFocus: {
+              behavioral:
+                p.focusBehavioral ?? DEFAULT_PREFS.questionFocus.behavioral,
+              technical:
+                p.focusTechnical ?? DEFAULT_PREFS.questionFocus.technical,
+              systemDesign:
+                p.focusSystemDesign ?? DEFAULT_PREFS.questionFocus.systemDesign,
+            },
+            autoStartNext: p.autoStartNext ?? DEFAULT_PREFS.autoStartNext,
+            feedbackTone: (p.feedbackTone ??
+              DEFAULT_PREFS.feedbackTone) as Preferences["feedbackTone"],
+            feedbackDetail: (p.feedbackDetail ??
+              DEFAULT_PREFS.feedbackDetail) as Preferences["feedbackDetail"],
+            showSampleAnswer:
+              p.showSampleAnswer ?? DEFAULT_PREFS.showSampleAnswer,
+            enableTimer: p.enableTimer ?? DEFAULT_PREFS.enableTimer,
+            countdownSeconds: (p.countdownSeconds ??
+              DEFAULT_PREFS.countdownSeconds) as Preferences["countdownSeconds"],
+            autoSubmitOnSilence:
+              p.autoSubmitOnSilence ?? DEFAULT_PREFS.autoSubmitOnSilence,
+          });
+        }
+      } catch (err) {
+        console.error("Error loading preferences:", err);
+      } finally {
+        setLoading(false);
       }
-
-      setPrefs({
-        defaultRole: p.defaultRole ?? DEFAULT_PREFS.defaultRole,
-        defaultDifficulty: (p.defaultDifficulty ??
-          DEFAULT_PREFS.defaultDifficulty) as Preferences["defaultDifficulty"],
-        questionFocus: {
-          behavioral:
-            p.focusBehavioral ?? DEFAULT_PREFS.questionFocus.behavioral,
-          technical: p.focusTechnical ?? DEFAULT_PREFS.questionFocus.technical,
-          systemDesign:
-            p.focusSystemDesign ?? DEFAULT_PREFS.questionFocus.systemDesign,
-        },
-        autoStartNext: p.autoStartNext ?? DEFAULT_PREFS.autoStartNext,
-        feedbackTone: (p.feedbackTone ??
-          DEFAULT_PREFS.feedbackTone) as Preferences["feedbackTone"],
-        feedbackDetail: (p.feedbackDetail ??
-          DEFAULT_PREFS.feedbackDetail) as Preferences["feedbackDetail"],
-        showSampleAnswer: p.showSampleAnswer ?? DEFAULT_PREFS.showSampleAnswer,
-        enableTimer: p.enableTimer ?? DEFAULT_PREFS.enableTimer,
-        countdownSeconds: (p.countdownSeconds ??
-          DEFAULT_PREFS.countdownSeconds) as Preferences["countdownSeconds"],
-        autoSubmitOnSilence:
-          p.autoSubmitOnSilence ?? DEFAULT_PREFS.autoSubmitOnSilence,
-      });
-
-      setLoading(false);
     }
-    loadPrefs().catch(console.error);
-  }, []);
+    loadPrefs();
+  }, [router]);
 
   async function savePreferences() {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
-    const res = await fetch("http://localhost:5000/api/profile/preferences", {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        defaultRole: prefs.defaultRole,
-        defaultDifficulty: prefs.defaultDifficulty,
-        focusBehavioral: prefs.questionFocus.behavioral,
-        focusTechnical: prefs.questionFocus.technical,
-        focusSystemDesign: prefs.questionFocus.systemDesign,
-        autoStartNext: prefs.autoStartNext,
-        feedbackTone: prefs.feedbackTone,
-        feedbackDetail: prefs.feedbackDetail,
-        showSampleAnswer: prefs.showSampleAnswer,
-        enableTimer: prefs.enableTimer,
-        countdownSeconds: prefs.countdownSeconds,
-        autoSubmitOnSilence: prefs.autoSubmitOnSilence,
-      }),
-    });
+    // UI Validation
+    const activeFocusCount = Object.values(prefs.questionFocus).filter(
+      Boolean
+    ).length;
+    if (activeFocusCount === 0) {
+      alert("Please select at least one Question Focus area.");
+      return;
+    }
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to save preferences");
+    setSaveStatus("saving");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/profile/preferences", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          defaultRole: prefs.defaultRole,
+          defaultDifficulty: prefs.defaultDifficulty,
+          focusBehavioral: prefs.questionFocus.behavioral,
+          focusTechnical: prefs.questionFocus.technical,
+          focusSystemDesign: prefs.questionFocus.systemDesign,
+          autoStartNext: prefs.autoStartNext,
+          feedbackTone: prefs.feedbackTone,
+          feedbackDetail: prefs.feedbackDetail,
+          showSampleAnswer: prefs.showSampleAnswer,
+          enableTimer: prefs.enableTimer,
+          countdownSeconds: prefs.countdownSeconds,
+          autoSubmitOnSilence: prefs.autoSubmitOnSilence,
+        }),
+      });
+
+      // Handle 401 on Save
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        router.push("/login");
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save preferences");
+
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (error) {
+      setSaveStatus("error");
+      console.error(error);
+    }
   }
 
   function resetDefaults() {
@@ -175,9 +221,7 @@ export default function PreferencesPage() {
         Boolean
       ).length;
 
-      // If we are trying to turn OFF an item, and it's the ONLY one active:
       if (isCurrentlyActive && totalActive <= 1) {
-        // Do not update state (effectively blocks the action)
         return current;
       }
 
@@ -194,55 +238,29 @@ export default function PreferencesPage() {
   if (loading) {
     return (
       <div
-        className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-gray-50"}`}
+        className={`min-h-screen flex items-center justify-center ${
+          isDarkMode ? "bg-gray-900" : "bg-gray-50"
+        }`}
       >
+        {/* Using Navbar here just to keep layout consistent while loading */}
         <Navbar />
-        <div
-          className={`pt-24 px-4 max-w-3xl mx-auto text-sm ${
-            isDarkMode ? "text-gray-400" : "text-gray-600"
-          }`}
-        >
-          Loading preferences...
-        </div>
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
-    return (
-      <div
-        className={`min-h-screen ${isDarkMode ? "bg-gray-900" : "bg-white"}`}
-      >
-        <Navbar />
-        <div className="pt-24 px-4">
-          <div className="max-w-3xl mx-auto">
-            <h1
-              className={`text-2xl font-semibold ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              } tracking-tight`}
-            >
-              Preferences
-            </h1>
-            <p
-              className={`mt-2 text-sm ${
-                isDarkMode ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              You must be signed in to view this page.
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={() => router.push("/login")}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Go to Login
-              </button>
-            </div>
+        {/* Simple Loading UI matching AnalyticsPage style */}
+        <div className={`flex flex-col items-center pt-24`}>
+          {/* Using simple text or you can import Loader2 like in AnalyticsPage */}
+          <div
+            className={`text-sm ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            Loading preferences...
           </div>
         </div>
       </div>
     );
   }
+
+  // Removed the "if (!isSignedIn)" return block entirely
+  // because the useEffect handles the redirect now.
 
   return (
     <div
@@ -470,15 +488,6 @@ export default function PreferencesPage() {
                       ]}
                       isDarkMode={isDarkMode}
                     />
-                    {/* 
-                    <SelectField
-                      label="Default Difficulty"
-                      value={prefs.defaultDifficulty}
-                      onChange={(v) =>
-                        setPrefs((p) => ({ ...p, defaultDifficulty: v as Preferences["defaultDifficulty"] }))
-                      }
-                      options={["Basic", "Intermediate", "Advanced"]}
-                    /> */}
                   </div>
 
                   <div className="mt-4">
@@ -487,7 +496,10 @@ export default function PreferencesPage() {
                         isDarkMode ? "text-gray-200" : "text-gray-700"
                       } mb-2`}
                     >
-                      Question Focus
+                      Question Focus{" "}
+                      <span className="text-gray-400 font-normal ml-1">
+                        (Select at least one)
+                      </span>
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <PillToggle
