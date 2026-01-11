@@ -2,23 +2,21 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { authenticateToken } from '../middleware/auth';
-import prisma from '../lib/prisma';
+import { requireAuth } from '../services/auth.middleware';
+import { prisma } from '../db_connection';
 
 const router = Router();
 
-// Configure multer for resume uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, '../../uploads/resumes');
-    // Create directory if it doesn't exist
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const userId = (req as any).user.userId;
+    const userId = req.authenticatedUser?.id;
     const ext = path.extname(file.originalname);
     const filename = `${userId}_${Date.now()}${ext}`;
     cb(null, filename);
@@ -27,7 +25,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['.pdf', '.doc', '.docx'];
     const ext = path.extname(file.originalname).toLowerCase();
@@ -39,10 +37,9 @@ const upload = multer({
   }
 });
 
-// GET /api/profile/resume - Get user's resume metadata
-router.get('/profile/resume', authenticateToken, async (req: Request, res: Response) => {
+router.get('/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.authenticatedUser!.id;
 
     const resume = await prisma.resume.findUnique({
       where: { userId }
@@ -65,17 +62,15 @@ router.get('/profile/resume', authenticateToken, async (req: Request, res: Respo
   }
 });
 
-// POST /api/profile/resume/upload - Upload or update resume
-router.post('/profile/resume/upload', authenticateToken, upload.single('resume'), async (req: Request, res: Response) => {
+router.post('/profile/resume/upload', requireAuth, upload.single('resume'), async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.authenticatedUser!.id;
     const file = req.file;
 
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Delete old resume file if it exists
     const existingResume = await prisma.resume.findUnique({
       where: { userId }
     });
@@ -87,10 +82,8 @@ router.post('/profile/resume/upload', authenticateToken, upload.single('resume')
       }
     }
 
-    // Store relative path for serving
     const resumeUrl = `/uploads/resumes/${file.filename}`;
 
-    // Upsert resume in database
     const resume = await prisma.resume.upsert({
       where: { userId },
       update: {
@@ -118,10 +111,9 @@ router.post('/profile/resume/upload', authenticateToken, upload.single('resume')
   }
 });
 
-// DELETE /api/profile/resume - Delete resume
-router.delete('/profile/resume', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = req.authenticatedUser!.id;
 
     const resume = await prisma.resume.findUnique({
       where: { userId }
@@ -131,13 +123,11 @@ router.delete('/profile/resume', authenticateToken, async (req: Request, res: Re
       return res.status(404).json({ error: 'No resume found' });
     }
 
-    // Delete file from filesystem
     const filePath = path.join(__dirname, '../../', resume.resumeUrl);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
 
-    // Delete from database
     await prisma.resume.delete({
       where: { userId }
     });
