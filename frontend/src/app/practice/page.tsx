@@ -487,6 +487,7 @@ export default function Practice() {
                   }`}
                 >
                   <option value="Basic">Basic</option>
+                  <option value="Intermediate">Intermediate</option>
                   <option value="Advanced">Advanced</option>
                 </select>
               )}
