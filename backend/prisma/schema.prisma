@@ -79,6 +79,7 @@ model Preferences {
   autoStartNext       Boolean  @default(false)
 
   // Feedback prefs
+  feedbackEmphasize   String   @default("Balance") // Balance | Clarity | Storytelling | Confidence | Technical Depth
   feedbackTone        String   @default("Encouraging") // Encouraging | Direct | Strict
   feedbackDetail      String   @default("Standard")    // Brief | Standard | Deep
   showSampleAnswer    Boolean  @default(true)
