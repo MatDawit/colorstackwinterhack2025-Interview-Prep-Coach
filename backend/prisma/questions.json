@@ -1,508 +1,1300 @@
 {
   "questions": [
     {
-      "id": "q01_software_engineering_leadership_basic_25",
+      "id": "q01_software_engineering_behavioral_basic_leadership",
       "role": "Software Engineering",
       "category": "Leadership",
       "difficulty": "Basic",
-      "question": "Describe a hackathon or team coding event where you stepped up as a coordinator. How did you divide tasks?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to coordinate a group project for a class assignment. How did you ensure everyone contributed?"
     },
     {
-      "id": "q02_software_engineering_leadership_basic_26",
+      "id": "q02_software_engineering_technical_basic_leadership",
       "role": "Software Engineering",
       "category": "Leadership",
       "difficulty": "Basic",
-      "question": "Tell me about mentoring a new intern or teammate. What approach did you take to get them productive?"
+      "focus": "Technical",
+      "question": "Describe how you would set up a version control strategy for a small student project."
     },
     {
-      "id": "q01_software_engineering_leadership_advanced_27",
+      "id": "q03_software_engineering_system_design_basic_leadership",
+      "role": "Software Engineering",
+      "category": "Leadership",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a URL shortener service for a class project."
+    },
+    {
+      "id": "q04_software_engineering_behavioral_basic_teamwork",
+      "role": "Software Engineering",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about a time when you disagreed with a teammate on how to implement a feature. How did you resolve it?"
+    },
+    {
+      "id": "q05_software_engineering_technical_basic_teamwork",
+      "role": "Software Engineering",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe how you handled merge conflicts in a group project."
+    },
+    {
+      "id": "q06_software_engineering_system_design_basic_teamwork",
+      "role": "Software Engineering",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a shared database schema for a team project."
+    },
+    {
+      "id": "q07_software_engineering_behavioral_basic_problem_solving",
+      "role": "Software Engineering",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe a particularly challenging bug you encountered in a school project and how you debugged it."
+    },
+    {
+      "id": "q08_software_engineering_technical_basic_problem_solving",
+      "role": "Software Engineering",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe a time when you had to debug a memory leak or performance issue."
+    },
+    {
+      "id": "q09_software_engineering_system_design_basic_problem_solving",
+      "role": "Software Engineering",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a search feature for a small e-commerce site."
+    },
+    {
+      "id": "q10_software_engineering_behavioral_basic_failure",
+      "role": "Software Engineering",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe a time when you missed a deadline for a project. What happened and what did you learn?"
+    },
+    {
+      "id": "q11_software_engineering_technical_basic_failure",
+      "role": "Software Engineering",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe a time when your code broke the build. How did you fix it?"
+    },
+    {
+      "id": "q12_software_engineering_system_design_basic_failure",
+      "role": "Software Engineering",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe a time when your initial database design caused performance issues."
+    },
+    {
+      "id": "q13_software_engineering_behavioral_basic_communication",
+      "role": "Software Engineering",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to present a technical project to an audience."
+    },
+    {
+      "id": "q14_software_engineering_technical_basic_communication",
+      "role": "Software Engineering",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe how you documented your API endpoints for a project."
+    },
+    {
+      "id": "q15_software_engineering_system_design_basic_communication",
+      "role": "Software Engineering",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would document your system design decisions."
+    },
+    {
+      "id": "q16_software_engineering_behavioral_basic_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe a time when you went beyond the requirements of a class project."
+    },
+    {
+      "id": "q17_software_engineering_technical_basic_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe a time when you automated a repetitive task in your development workflow."
+    },
+    {
+      "id": "q18_software_engineering_system_design_basic_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe a time when you redesigned a system to improve its scalability."
+    },
+    {
+      "id": "q19_software_engineering_behavioral_intermediate_leadership",
+      "role": "Software Engineering",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about mentoring a junior developer or intern during a summer internship."
+    },
+    {
+      "id": "q20_software_engineering_technical_intermediate_leadership",
+      "role": "Software Engineering",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe how you would architect a microservices solution for a growing application."
+    },
+    {
+      "id": "q21_software_engineering_system_design_intermediate_leadership",
+      "role": "Software Engineering",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design a real-time messaging system like a simple Slack."
+    },
+    {
+      "id": "q22_software_engineering_behavioral_intermediate_teamwork",
+      "role": "Software Engineering",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to integrate your code with a large existing codebase from another team."
+    },
+    {
+      "id": "q23_software_engineering_technical_intermediate_teamwork",
+      "role": "Software Engineering",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe a time when you had to design a shared library used by multiple teams."
+    },
+    {
+      "id": "q24_software_engineering_system_design_intermediate_teamwork",
+      "role": "Software Engineering",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design a service that integrates with third-party payment processors."
+    },
+    {
+      "id": "q25_software_engineering_behavioral_intermediate_problem_solving",
+      "role": "Software Engineering",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to debug a production issue with limited information."
+    },
+    {
+      "id": "q26_software_engineering_technical_intermediate_problem_solving",
+      "role": "Software Engineering",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe a time when you had to troubleshoot a distributed systems issue."
+    },
+    {
+      "id": "q27_software_engineering_system_design_intermediate_problem_solving",
+      "role": "Software Engineering",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design a recommendation engine."
+    },
+    {
+      "id": "q28_software_engineering_behavioral_intermediate_failure",
+      "role": "Software Engineering",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when your technical design was rejected. How did you handle it?"
+    },
+    {
+      "id": "q29_software_engineering_technical_intermediate_failure",
+      "role": "Software Engineering",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe a time when your load testing failed to catch a production issue."
+    },
+    {
+      "id": "q30_software_engineering_system_design_intermediate_failure",
+      "role": "Software Engineering",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe a time when your system design couldn't handle a traffic spike."
+    },
+    {
+      "id": "q31_software_engineering_behavioral_intermediate_communication",
+      "role": "Software Engineering",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to explain a technical trade-off to product managers."
+    },
+    {
+      "id": "q32_software_engineering_technical_intermediate_communication",
+      "role": "Software Engineering",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe how you wrote a post-mortem after a technical incident."
+    },
+    {
+      "id": "q33_software_engineering_system_design_intermediate_communication",
+      "role": "Software Engineering",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would present a system design proposal to stakeholders."
+    },
+    {
+      "id": "q34_software_engineering_behavioral_intermediate_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when you identified and fixed a critical bug before it was reported."
+    },
+    {
+      "id": "q35_software_engineering_technical_intermediate_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe a time when you implemented observability improvements across services."
+    },
+    {
+      "id": "q36_software_engineering_system_design_intermediate_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe a time when you designed a system with built-in observability."
+    },
+    {
+      "id": "q37_software_engineering_behavioral_advanced_leadership",
       "role": "Software Engineering",
       "category": "Leadership",
       "difficulty": "Advanced",
-      "question": "Describe a time you inherited a legacy codebase and a junior team. How did you balance delivery with upskilling?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to lead a project with engineers more senior than you."
     },
     {
-      "id": "q02_software_engineering_leadership_advanced_28",
+      "id": "q38_software_engineering_technical_advanced_leadership",
       "role": "Software Engineering",
       "category": "Leadership",
       "difficulty": "Advanced",
-      "question": "Tell me about driving adoption of engineering standards across multiple squads. How did you handle resistance?"
+      "focus": "Technical",
+      "question": "Describe a time when you had to make a build vs buy decision for critical infrastructure."
     },
     {
-      "id": "q01_software_engineering_teamwork_basic_29",
+      "id": "q39_software_engineering_system_design_advanced_leadership",
       "role": "Software Engineering",
-      "category": "Teamwork",
-      "difficulty": "Basic",
-      "question": "Give an example of resolving a merge conflict or code-review disagreement with a peer."
+      "category": "Leadership",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design a distributed transaction system."
     },
     {
-      "id": "q02_software_engineering_teamwork_basic_30",
-      "role": "Software Engineering",
-      "category": "Teamwork",
-      "difficulty": "Basic",
-      "question": "Describe a pair-programming session where you learned something new from your partner."
-    },
-    {
-      "id": "q01_software_engineering_teamwork_advanced_31",
+      "id": "q40_software_engineering_behavioral_advanced_teamwork",
       "role": "Software Engineering",
       "category": "Teamwork",
       "difficulty": "Advanced",
-      "question": "Tell me about coordinating a multi-team refactor. How did you maintain API compatibility and team morale?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to work with a remote or distributed team across time zones."
     },
     {
-      "id": "q02_software_engineering_teamwork_advanced_32",
+      "id": "q41_software_engineering_technical_advanced_teamwork",
       "role": "Software Engineering",
       "category": "Teamwork",
       "difficulty": "Advanced",
-      "question": "Describe a time you mediated between DevOps and feature teams on deployment timelines. What compromise emerged?"
+      "focus": "Technical",
+      "question": "Describe a time when you had to integrate services across different cloud providers."
     },
     {
-      "id": "q01_software_engineering_problem_solving_basic_33",
+      "id": "q42_software_engineering_system_design_advanced_teamwork",
       "role": "Software Engineering",
-      "category": "Problem Solving",
-      "difficulty": "Basic",
-      "question": "Describe a bug that took you longer than expected to fix. How did you finally isolate it?"
+      "category": "Teamwork",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design a platform that multiple engineering teams build upon."
     },
     {
-      "id": "q02_software_engineering_problem_solving_basic_34",
-      "role": "Software Engineering",
-      "category": "Problem Solving",
-      "difficulty": "Basic",
-      "question": "Tell me about optimizing a slow SQL query or script. What steps did you follow?"
-    },
-    {
-      "id": "q01_software_engineering_problem_solving_advanced_35",
+      "id": "q43_software_engineering_behavioral_advanced_problem_solving",
       "role": "Software Engineering",
       "category": "Problem Solving",
       "difficulty": "Advanced",
-      "question": "Describe a distributed-system outage you diagnosed with limited observability. How did you trace the root cause?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to solve a performance issue at scale."
     },
     {
-      "id": "q02_software_engineering_problem_solving_advanced_36",
+      "id": "q44_software_engineering_technical_advanced_problem_solving",
       "role": "Software Engineering",
       "category": "Problem Solving",
       "difficulty": "Advanced",
-      "question": "Tell me about reducing service latency by 50% without rewriting the core algorithm. What creative tweaks worked?"
+      "focus": "Technical",
+      "question": "Describe a time when you had to design a system to handle millions of concurrent users."
     },
     {
-      "id": "q01_software_engineering_failure_basic_37",
+      "id": "q45_software_engineering_system_design_advanced_problem_solving",
       "role": "Software Engineering",
-      "category": "Failure",
-      "difficulty": "Basic",
-      "question": "Share a time you broke the build or caused a regression. How did you fix and prevent it next time?"
+      "category": "Problem Solving",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design a stock trading system with low latency requirements."
     },
     {
-      "id": "q02_software_engineering_failure_basic_38",
-      "role": "Software Engineering",
-      "category": "Failure",
-      "difficulty": "Basic",
-      "question": "Describe a feature you estimated incorrectly. How did you communicate the new timeline?"
-    },
-    {
-      "id": "q01_software_engineering_failure_advanced_39",
+      "id": "q46_software_engineering_behavioral_advanced_failure",
       "role": "Software Engineering",
       "category": "Failure",
       "difficulty": "Advanced",
-      "question": "Tell me about a microservice you designed that created unexpected data-consistency issues in production. How did you remediate?"
+      "focus": "Behavioral",
+      "question": "Describe a time when a project you led was canceled. How did you handle the aftermath?"
     },
     {
-      "id": "q02_software_engineering_failure_advanced_40",
+      "id": "q47_software_engineering_technical_advanced_failure",
       "role": "Software Engineering",
       "category": "Failure",
       "difficulty": "Advanced",
-      "question": "Describe a security vulnerability discovered in your code after release. What was your incident-response process?"
+      "focus": "Technical",
+      "question": "Describe a time when your disaster recovery plan failed during an actual incident."
     },
     {
-      "id": "q01_software_engineering_communication_basic_41",
+      "id": "q48_software_engineering_system_design_advanced_failure",
       "role": "Software Engineering",
-      "category": "Communication",
-      "difficulty": "Basic",
-      "question": "Give an example of documenting your code so teammates could onboard quickly. What did you include?"
+      "category": "Failure",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe a time when your distributed system design had a single point of failure."
     },
     {
-      "id": "q02_software_engineering_communication_basic_42",
-      "role": "Software Engineering",
-      "category": "Communication",
-      "difficulty": "Basic",
-      "question": "Tell me about presenting a technical topic at a meetup or internal lunch-and-learn. How did you prep?"
-    },
-    {
-      "id": "q01_software_engineering_communication_advanced_43",
+      "id": "q49_software_engineering_behavioral_advanced_communication",
       "role": "Software Engineering",
       "category": "Communication",
       "difficulty": "Advanced",
-      "question": "Describe a time you convinced non-technical stakeholders to invest in refactoring over new features. What language worked?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to present a technical post-mortem to leadership."
     },
     {
-      "id": "q02_software_engineering_communication_advanced_44",
+      "id": "q50_software_engineering_technical_advanced_communication",
       "role": "Software Engineering",
       "category": "Communication",
       "difficulty": "Advanced",
-      "question": "Tell me about writing a post-mortem that balanced transparency with protecting team morale. How did you frame the narrative?"
+      "focus": "Technical",
+      "question": "Describe how you explained a critical security vulnerability to executives."
     },
     {
-      "id": "q01_software_engineering_initiative_basic_45",
+      "id": "q51_software_engineering_system_design_advanced_communication",
       "role": "Software Engineering",
-      "category": "Initiative",
-      "difficulty": "Basic",
-      "question": "Describe a linter, script, or small tool you built to speed up your own workflow that others later adopted."
+      "category": "Communication",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would explain a complex distributed system to new hires."
     },
     {
-      "id": "q02_software_engineering_initiative_basic_46",
-      "role": "Software Engineering",
-      "category": "Initiative",
-      "difficulty": "Basic",
-      "question": "Tell me about volunteering to update outdated onboarding docs or READMEs. What drove you to do it?"
-    },
-    {
-      "id": "q01_software_engineering_initiative_advanced_47",
+      "id": "q52_software_engineering_behavioral_advanced_initiative",
       "role": "Software Engineering",
       "category": "Initiative",
       "difficulty": "Advanced",
-      "question": "Describe introducing a new language or framework to production. How did you derisk the migration and measure success?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you built a tool that saved your team significant time."
     },
     {
-      "id": "q02_software_engineering_initiative_advanced_48",
+      "id": "q53_software_engineering_technical_advanced_initiative",
       "role": "Software Engineering",
       "category": "Initiative",
       "difficulty": "Advanced",
-      "question": "Tell me about creating an internal platform that reduced CI/CD time by 30%. How did you fund and scale it?"
+      "focus": "Technical",
+      "question": "Describe a time when you built a proof-of-concept that influenced product strategy."
     },
     {
-      "id": "q01_data_science_leadership_basic_49",
+      "id": "q54_software_engineering_system_design_advanced_initiative",
+      "role": "Software Engineering",
+      "category": "Initiative",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe a time when you designed a system with self-healing capabilities."
+    },
+    {
+      "id": "q55_data_science_behavioral_basic_leadership",
       "role": "Data Science",
       "category": "Leadership",
       "difficulty": "Basic",
-      "question": "Describe a Kaggle or class competition where you coordinated teammates. How did you split the work?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you led a data analysis project for a class assignment."
     },
     {
-      "id": "q02_data_science_leadership_basic_50",
+      "id": "q56_data_science_technical_basic_leadership",
       "role": "Data Science",
       "category": "Leadership",
       "difficulty": "Basic",
-      "question": "Tell me about guiding a junior analyst through their first data-cleaning pipeline. What checkpoints did you set?"
+      "focus": "Technical",
+      "question": "Describe how you would handle missing data in a student project dataset."
     },
     {
-      "id": "q01_data_science_leadership_advanced_51",
+      "id": "q57_data_science_system_design_basic_leadership",
+      "role": "Data Science",
+      "category": "Leadership",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a simple data warehouse for a class project."
+    },
+    {
+      "id": "q58_data_science_behavioral_basic_teamwork",
+      "role": "Data Science",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about a time when you had to explain statistical concepts to non-technical teammates."
+    },
+    {
+      "id": "q59_data_science_technical_basic_teamwork",
+      "role": "Data Science",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Tell me about using version control for Jupyter notebooks in a team project."
+    },
+    {
+      "id": "q60_data_science_system_design_basic_teamwork",
+      "role": "Data Science",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Tell me about designing a shared dataset that multiple analyses would use."
+    },
+    {
+      "id": "q61_data_science_behavioral_basic_problem_solving",
+      "role": "Data Science",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe a challenging dataset you worked with and how you cleaned it."
+    },
+    {
+      "id": "q62_data_science_technical_basic_problem_solving",
+      "role": "Data Science",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe how you selected features for a simple prediction model."
+    },
+    {
+      "id": "q63_data_science_system_design_basic_problem_solving",
+      "role": "Data Science",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a real-time dashboard for key metrics."
+    },
+    {
+      "id": "q64_data_science_behavioral_basic_failure",
+      "role": "Data Science",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about a time when your model performed poorly. What did you learn?"
+    },
+    {
+      "id": "q65_data_science_technical_basic_failure",
+      "role": "Data Science",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Tell me about overfitting a model and how you detected it."
+    },
+    {
+      "id": "q66_data_science_system_design_basic_failure",
+      "role": "Data Science",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Tell me about a time when your ETL pipeline failed and data wasn't fresh."
+    },
+    {
+      "id": "q67_data_science_behavioral_basic_communication",
+      "role": "Data Science",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe how you presented data findings in a class presentation."
+    },
+    {
+      "id": "q68_data_science_technical_basic_communication",
+      "role": "Data Science",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe creating visualizations to communicate patterns in data."
+    },
+    {
+      "id": "q69_data_science_system_design_basic_communication",
+      "role": "Data Science",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe documenting your data transformation logic."
+    },
+    {
+      "id": "q70_data_science_behavioral_basic_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about a Kaggle competition or personal data project you pursued."
+    },
+    {
+      "id": "q71_data_science_technical_basic_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Tell me about learning a new Python library to solve a data problem."
+    },
+    {
+      "id": "q72_data_science_system_design_basic_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Tell me about designing a data validation framework."
+    },
+    {
+      "id": "q73_data_science_behavioral_intermediate_leadership",
+      "role": "Data Science",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe mentoring junior analysts on proper data validation techniques."
+    },
+    {
+      "id": "q74_data_science_technical_intermediate_leadership",
+      "role": "Data Science",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe how you would design a feature store for a data science team."
+    },
+    {
+      "id": "q75_data_science_system_design_intermediate_leadership",
+      "role": "Data Science",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design a recommendation system for an e-commerce site."
+    },
+    {
+      "id": "q76_data_science_behavioral_intermediate_teamwork",
+      "role": "Data Science",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about collaborating with engineers to productionize a model."
+    },
+    {
+      "id": "q77_data_science_technical_intermediate_teamwork",
+      "role": "Data Science",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Tell me about collaborating on a data labeling project with domain experts."
+    },
+    {
+      "id": "q78_data_science_system_design_intermediate_teamwork",
+      "role": "Data Science",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Tell me about designing a feature that requires both batch and stream processing."
+    },
+    {
+      "id": "q79_data_science_behavioral_intermediate_problem_solving",
+      "role": "Data Science",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when your initial model assumptions were wrong. How did you adapt?"
+    },
+    {
+      "id": "q80_data_science_technical_intermediate_problem_solving",
+      "role": "Data Science",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe a time when you had to optimize a slow-running model training process."
+    },
+    {
+      "id": "q81_data_science_system_design_intermediate_problem_solving",
+      "role": "Data Science",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design an anomaly detection system."
+    },
+    {
+      "id": "q82_data_science_behavioral_intermediate_failure",
+      "role": "Data Science",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about a time when stakeholders misinterpreted your analysis. How did you clarify?"
+    },
+    {
+      "id": "q83_data_science_technical_intermediate_failure",
+      "role": "Data Science",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Tell me about a time when data leakage contaminated your results."
+    },
+    {
+      "id": "q84_data_science_system_design_intermediate_failure",
+      "role": "Data Science",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Tell me about a time when your data pipeline couldn't handle increased data volume."
+    },
+    {
+      "id": "q85_data_science_behavioral_intermediate_communication",
+      "role": "Data Science",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe explaining A/B test results to product managers."
+    },
+    {
+      "id": "q86_data_science_technical_intermediate_communication",
+      "role": "Data Science",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe creating interpretable models for regulated industries."
+    },
+    {
+      "id": "q87_data_science_system_design_intermediate_communication",
+      "role": "Data Science",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe creating a data dictionary for your organization's datasets."
+    },
+    {
+      "id": "q88_data_science_behavioral_intermediate_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about creating automated dashboards to track key metrics."
+    },
+    {
+      "id": "q89_data_science_technical_intermediate_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Tell me about implementing A/B testing infrastructure for product experiments."
+    },
+    {
+      "id": "q90_data_science_system_design_intermediate_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Tell me about designing a model retraining and deployment pipeline."
+    },
+    {
+      "id": "q91_data_science_behavioral_advanced_leadership",
       "role": "Data Science",
       "category": "Leadership",
       "difficulty": "Advanced",
-      "question": "Describe a time you led a data-driven transformation in a department that previously relied on gut instinct. How did you shift culture?"
+      "focus": "Behavioral",
+      "question": "Describe leading a data science team through a failed model deployment."
     },
     {
-      "id": "q02_data_science_leadership_advanced_52",
+      "id": "q92_data_science_technical_advanced_leadership",
       "role": "Data Science",
       "category": "Leadership",
       "difficulty": "Advanced",
-      "question": "Tell me about managing a team of data scientists with conflicting modeling approaches. How did you standardize evaluation?"
+      "focus": "Technical",
+      "question": "Describe how you would architect a real-time ML scoring system."
     },
     {
-      "id": "q01_data_science_teamwork_basic_53",
+      "id": "q93_data_science_system_design_advanced_leadership",
       "role": "Data Science",
-      "category": "Teamwork",
-      "difficulty": "Basic",
-      "question": "Give an example of working with engineers to get the data you needed. How did you specify requirements?"
+      "category": "Leadership",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design a search ranking system for a content platform."
     },
     {
-      "id": "q02_data_science_teamwork_basic_54",
-      "role": "Data Science",
-      "category": "Teamwork",
-      "difficulty": "Basic",
-      "question": "Share a time you peer-reviewed someone’s notebook and improved reproducibility. What did you look for?"
-    },
-    {
-      "id": "q01_data_science_teamwork_advanced_55",
+      "id": "q94_data_science_behavioral_advanced_teamwork",
       "role": "Data Science",
       "category": "Teamwork",
       "difficulty": "Advanced",
-      "question": "Describe collaborating with product managers who kept changing KPI definitions mid-project. How did you lock scope?"
+      "focus": "Behavioral",
+      "question": "Tell me about working with business stakeholders who had unrealistic ML expectations."
     },
     {
-      "id": "q02_data_science_teamwork_advanced_56",
+      "id": "q95_data_science_technical_advanced_teamwork",
       "role": "Data Science",
       "category": "Teamwork",
       "difficulty": "Advanced",
-      "question": "Tell me about a cross-functional sprint where your model outputs were delayed. How did you maintain stakeholder trust?"
+      "focus": "Technical",
+      "question": "Describe how you would design a data governance framework across teams."
     },
     {
-      "id": "q01_data_science_problem_solving_basic_57",
+      "id": "q96_data_science_system_design_advanced_teamwork",
       "role": "Data Science",
-      "category": "Problem Solving",
-      "difficulty": "Basic",
-      "question": "Describe a dataset with lots of missing values. How did you decide what to impute or discard?"
+      "category": "Teamwork",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Tell me about designing a fraud detection system that works across multiple products."
     },
     {
-      "id": "q02_data_science_problem_solving_basic_58",
-      "role": "Data Science",
-      "category": "Problem Solving",
-      "difficulty": "Basic",
-      "question": "Tell me about a time your initial model had poor accuracy. What quick improvements did you try first?"
-    },
-    {
-      "id": "q01_data_science_problem_solving_advanced_59",
+      "id": "q97_data_science_behavioral_advanced_problem_solving",
       "role": "Data Science",
       "category": "Problem Solving",
       "difficulty": "Advanced",
-      "question": "Describe a time you had to build a predictive model with severe class imbalance and limited labels. What creative techniques worked?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to debug a model in production with silent failures."
     },
     {
-      "id": "q02_data_science_problem_solving_advanced_60",
+      "id": "q98_data_science_technical_advanced_problem_solving",
       "role": "Data Science",
       "category": "Problem Solving",
       "difficulty": "Advanced",
-      "question": "Tell me about debugging a model that performed well offline but degraded in real time. How did you detect data drift?"
+      "focus": "Technical",
+      "question": "Describe a time when you had to debug a distributed training job failure."
     },
     {
-      "id": "q01_data_science_failure_basic_61",
+      "id": "q99_data_science_system_design_advanced_problem_solving",
       "role": "Data Science",
-      "category": "Failure",
-      "difficulty": "Basic",
-      "question": "Share a data visualization you published that misled viewers. How did you correct it?"
+      "category": "Problem Solving",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design a personalization engine for millions of users."
     },
     {
-      "id": "q02_data_science_failure_basic_62",
-      "role": "Data Science",
-      "category": "Failure",
-      "difficulty": "Basic",
-      "question": "Describe a hypothesis you tested that turned out to be completely wrong. What did you learn?"
-    },
-    {
-      "id": "q01_data_science_failure_advanced_63",
+      "id": "q100_data_science_behavioral_advanced_failure",
       "role": "Data Science",
       "category": "Failure",
       "difficulty": "Advanced",
-      "question": "Tell me about a model that violated ethical or privacy standards discovered after deployment. How did you remediate?"
+      "focus": "Behavioral",
+      "question": "Tell me about a time when your model's bias caused fairness concerns."
     },
     {
-      "id": "q02_data_science_failure_advanced_64",
+      "id": "q101_data_science_technical_advanced_failure",
       "role": "Data Science",
       "category": "Failure",
       "difficulty": "Advanced",
-      "question": "Describe a time your automated pipeline silently outputted garbage for weeks. How did you detect and communicate the scope?"
+      "focus": "Technical",
+      "question": "Tell me about a time when your model drifted in production undetected."
     },
     {
-      "id": "q01_data_science_communication_basic_65",
+      "id": "q102_data_science_system_design_advanced_failure",
       "role": "Data Science",
-      "category": "Communication",
-      "difficulty": "Basic",
-      "question": "Give an example of explaining a correlation vs causation concept to a non-technical audience. What analogy worked?"
+      "category": "Failure",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Tell me about a time when your data architecture caused privacy compliance issues."
     },
     {
-      "id": "q02_data_science_communication_basic_66",
-      "role": "Data Science",
-      "category": "Communication",
-      "difficulty": "Basic",
-      "question": "Tell me about presenting a simple dashboard to a campus club. How did you highlight key takeaways?"
-    },
-    {
-      "id": "q01_data_science_communication_advanced_67",
+      "id": "q103_data_science_behavioral_advanced_communication",
       "role": "Data Science",
       "category": "Communication",
       "difficulty": "Advanced",
-      "question": "Describe a time you had to tell executives their pet project showed no significant impact. How did you soften the message?"
+      "focus": "Behavioral",
+      "question": "Describe presenting complex model tradeoffs to executives."
     },
     {
-      "id": "q02_data_science_communication_advanced_68",
+      "id": "q104_data_science_technical_advanced_communication",
       "role": "Data Science",
       "category": "Communication",
       "difficulty": "Advanced",
-      "question": "Tell me about creating a data-dictionary that both analysts and engineers actually use. What structure made it stick?"
+      "focus": "Technical",
+      "question": "Describe explaining model uncertainty to business stakeholders."
     },
     {
-      "id": "q01_data_science_initiative_basic_69",
+      "id": "q105_data_science_system_design_advanced_communication",
       "role": "Data Science",
-      "category": "Initiative",
-      "difficulty": "Basic",
-      "question": "Describe a self-driven analysis you did on public COVID or sports data. What surprised you?"
+      "category": "Communication",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe documenting a complex machine learning system for auditors."
     },
     {
-      "id": "q02_data_science_initiative_basic_70",
-      "role": "Data Science",
-      "category": "Initiative",
-      "difficulty": "Basic",
-      "question": "Tell me about volunteering to create a Jupyter template that standardized plots for your class."
-    },
-    {
-      "id": "q01_data_science_initiative_advanced_71",
+      "id": "q106_data_science_behavioral_advanced_initiative",
       "role": "Data Science",
       "category": "Initiative",
       "difficulty": "Advanced",
-      "question": "Describe building an internal recommendation engine that increased cross-sell by 10% without being asked."
+      "focus": "Behavioral",
+      "question": "Tell me about establishing MLOps practices for your team."
     },
     {
-      "id": "q02_data_science_initiative_advanced_72",
+      "id": "q107_data_science_technical_advanced_initiative",
       "role": "Data Science",
       "category": "Initiative",
       "difficulty": "Advanced",
-      "question": "Tell me about instituting an experiment-review board that cut experiment cycle time in half. How did you gain adoption?"
+      "focus": "Technical",
+      "question": "Tell me about building a data quality monitoring system."
     },
     {
-      "id": "q01_product_management_leadership_basic_73",
+      "id": "q108_data_science_system_design_advanced_initiative",
+      "role": "Data Science",
+      "category": "Initiative",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Tell me about designing for model explainability in high-stakes decisions."
+    },
+    {
+      "id": "q109_product_management_behavioral_basic_leadership",
       "role": "Product Management",
       "category": "Leadership",
       "difficulty": "Basic",
-      "question": "Describe a campus event you led where you had to prioritize limited resources. How did you decide?"
+      "focus": "Behavioral",
+      "question": "Describe a time when you led a student organization initiative from idea to execution."
     },
     {
-      "id": "q02_product_management_leadership_basic_74",
+      "id": "q110_product_management_technical_basic_leadership",
       "role": "Product Management",
       "category": "Leadership",
       "difficulty": "Basic",
-      "question": "Tell me about coordinating a small student hackathon team. How did you keep everyone aligned?"
+      "focus": "Technical",
+      "question": "Describe how you would write a basic product requirement document."
     },
     {
-      "id": "q01_product_management_leadership_advanced_75",
+      "id": "q111_product_management_system_design_basic_leadership",
+      "role": "Product Management",
+      "category": "Leadership",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a simple mobile app for campus event discovery."
+    },
+    {
+      "id": "q112_product_management_behavioral_basic_teamwork",
+      "role": "Product Management",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about working with engineers and designers on a class project."
+    },
+    {
+      "id": "q113_product_management_technical_basic_teamwork",
+      "role": "Product Management",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Tell me about using analytics tools to track user behavior."
+    },
+    {
+      "id": "q114_product_management_system_design_basic_teamwork",
+      "role": "Product Management",
+      "category": "Teamwork",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Tell me about designing a user onboarding flow with engineering and design."
+    },
+    {
+      "id": "q115_product_management_behavioral_basic_problem_solving",
+      "role": "Product Management",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe how you prioritized features for a limited timeframe."
+    },
+    {
+      "id": "q116_product_management_technical_basic_problem_solving",
+      "role": "Product Management",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe how you would prioritize bug fixes vs new features."
+    },
+    {
+      "id": "q117_product_management_system_design_basic_problem_solving",
+      "role": "Product Management",
+      "category": "Problem Solving",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe how you would design a feedback collection system."
+    },
+    {
+      "id": "q118_product_management_behavioral_basic_failure",
+      "role": "Product Management",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about a time when you misjudged user needs for a product you built."
+    },
+    {
+      "id": "q119_product_management_technical_basic_failure",
+      "role": "Product Management",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Tell me about misreading analytics data and making a wrong decision."
+    },
+    {
+      "id": "q120_product_management_system_design_basic_failure",
+      "role": "Product Management",
+      "category": "Failure",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Tell me about designing a feature that users found confusing."
+    },
+    {
+      "id": "q121_product_management_behavioral_basic_communication",
+      "role": "Product Management",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Describe presenting a product concept to classmates or professors."
+    },
+    {
+      "id": "q122_product_management_technical_basic_communication",
+      "role": "Product Management",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Describe creating a product spec that engineering could understand."
+    },
+    {
+      "id": "q123_product_management_system_design_basic_communication",
+      "role": "Product Management",
+      "category": "Communication",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Describe documenting user personas for a product."
+    },
+    {
+      "id": "q124_product_management_behavioral_basic_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "Behavioral",
+      "question": "Tell me about conducting user interviews for a class project."
+    },
+    {
+      "id": "q125_product_management_technical_basic_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "Technical",
+      "question": "Tell me about learning SQL to better understand product data."
+    },
+    {
+      "id": "q126_product_management_system_design_basic_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Basic",
+      "focus": "System Design",
+      "question": "Tell me about designing a beta testing program."
+    },
+    {
+      "id": "q127_product_management_behavioral_intermediate_leadership",
+      "role": "Product Management",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe mentoring associate product managers on roadmap planning."
+    },
+    {
+      "id": "q128_product_management_technical_intermediate_leadership",
+      "role": "Product Management",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe how you would design an A/B testing framework for product decisions."
+    },
+    {
+      "id": "q129_product_management_system_design_intermediate_leadership",
+      "role": "Product Management",
+      "category": "Leadership",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design a multi-sided marketplace product."
+    },
+    {
+      "id": "q130_product_management_behavioral_intermediate_teamwork",
+      "role": "Product Management",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about mediating between engineering and design on technical constraints."
+    },
+    {
+      "id": "q131_product_management_technical_intermediate_teamwork",
+      "role": "Product Management",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Tell me about working with data scientists to define ML product requirements."
+    },
+    {
+      "id": "q132_product_management_system_design_intermediate_teamwork",
+      "role": "Product Management",
+      "category": "Teamwork",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Tell me about designing a feature that requires input from legal and compliance."
+    },
+    {
+      "id": "q133_product_management_behavioral_intermediate_problem_solving",
+      "role": "Product Management",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to pivot a product strategy based on data."
+    },
+    {
+      "id": "q134_product_management_technical_intermediate_problem_solving",
+      "role": "Product Management",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe a time when you had to make a product decision with conflicting data."
+    },
+    {
+      "id": "q135_product_management_system_design_intermediate_problem_solving",
+      "role": "Product Management",
+      "category": "Problem Solving",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe how you would design a referral program with viral growth mechanics."
+    },
+    {
+      "id": "q136_product_management_behavioral_intermediate_failure",
+      "role": "Product Management",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about a feature you launched that failed to meet adoption goals."
+    },
+    {
+      "id": "q137_product_management_technical_intermediate_failure",
+      "role": "Product Management",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Tell me about launching before proper technical scoping was complete."
+    },
+    {
+      "id": "q138_product_management_system_design_intermediate_failure",
+      "role": "Product Management",
+      "category": "Failure",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Tell me about a product design that failed accessibility standards."
+    },
+    {
+      "id": "q139_product_management_behavioral_intermediate_communication",
+      "role": "Product Management",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Describe explaining technical complexity to sales and marketing teams."
+    },
+    {
+      "id": "q140_product_management_technical_intermediate_communication",
+      "role": "Product Management",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Describe writing API requirements for third-party developers."
+    },
+    {
+      "id": "q141_product_management_system_design_intermediate_communication",
+      "role": "Product Management",
+      "category": "Communication",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Describe creating user journey maps for a complex product."
+    },
+    {
+      "id": "q142_product_management_behavioral_intermediate_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "Behavioral",
+      "question": "Tell me about establishing a user research practice on your team."
+    },
+    {
+      "id": "q143_product_management_technical_intermediate_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "Technical",
+      "question": "Tell me about implementing a product operations function."
+    },
+    {
+      "id": "q144_product_management_system_design_intermediate_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Intermediate",
+      "focus": "System Design",
+      "question": "Tell me about designing a product integration ecosystem."
+    },
+    {
+      "id": "q145_product_management_behavioral_advanced_leadership",
       "role": "Product Management",
       "category": "Leadership",
       "difficulty": "Advanced",
-      "question": "Describe a time you inherited a product with no clear owner or roadmap. How did you establish vision and credibility?"
+      "focus": "Behavioral",
+      "question": "Describe leading a cross-functional team through a major product pivot."
     },
     {
-      "id": "q02_product_management_leadership_advanced_76",
+      "id": "q146_product_management_technical_advanced_leadership",
       "role": "Product Management",
       "category": "Leadership",
       "difficulty": "Advanced",
-      "question": "Tell me about leading a product area through a company re-org. How did you maintain team morale and delivery?"
+      "focus": "Technical",
+      "question": "Describe how you would design a platform product for internal and external users."
     },
     {
-      "id": "q01_product_management_teamwork_basic_77",
+      "id": "q147_product_management_system_design_advanced_leadership",
       "role": "Product Management",
-      "category": "Teamwork",
-      "difficulty": "Basic",
-      "question": "Give an example of working with designers and engineers to build a simple app feature. How did you gather requirements?"
+      "category": "Leadership",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design an AI-powered product with ethical considerations."
     },
     {
-      "id": "q02_product_management_teamwork_basic_78",
-      "role": "Product Management",
-      "category": "Teamwork",
-      "difficulty": "Basic",
-      "question": "Share a time you had to convince a developer to slightly extend scope for better user value. How did you persuade?"
-    },
-    {
-      "id": "q01_product_management_teamwork_advanced_79",
+      "id": "q148_product_management_behavioral_advanced_teamwork",
       "role": "Product Management",
       "category": "Teamwork",
       "difficulty": "Advanced",
-      "question": "Describe aligning engineering, sales, and legal on a controversial feature launch. What negotiation tactics helped?"
+      "focus": "Behavioral",
+      "question": "Tell me about working with executives who had conflicting visions."
     },
     {
-      "id": "q02_product_management_teamwork_advanced_80",
+      "id": "q149_product_management_technical_advanced_teamwork",
       "role": "Product Management",
       "category": "Teamwork",
       "difficulty": "Advanced",
-      "question": "Tell me about a remote, cross-time-zone squad where communication faltered. How did you re-establish rhythm?"
+      "focus": "Technical",
+      "question": "Tell me about coordinating platform migrations across multiple product lines."
     },
     {
-      "id": "q01_product_management_problem_solving_basic_81",
+      "id": "q150_product_management_system_design_advanced_teamwork",
       "role": "Product Management",
-      "category": "Problem Solving",
-      "difficulty": "Basic",
-      "question": "Describe a drop in app-store ratings you investigated. How did you figure out the root cause?"
+      "category": "Teamwork",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Tell me about designing a product that spans multiple platforms and devices."
     },
     {
-      "id": "q02_product_management_problem_solving_basic_82",
-      "role": "Product Management",
-      "category": "Problem Solving",
-      "difficulty": "Basic",
-      "question": "Tell me about a time you had to cut features days before a student project demo. How did you decide what stayed?"
-    },
-    {
-      "id": "q01_product_management_problem_solving_advanced_83",
+      "id": "q151_product_management_behavioral_advanced_problem_solving",
       "role": "Product Management",
       "category": "Problem Solving",
       "difficulty": "Advanced",
-      "question": "Describe a sudden 30% drop in conversion that had no clear source. Walk me through your diagnostic framework."
+      "focus": "Behavioral",
+      "question": "Describe a time when you had to sunset a product with active users."
     },
     {
-      "id": "q02_product_management_problem_solving_advanced_84",
+      "id": "q152_product_management_technical_advanced_problem_solving",
       "role": "Product Management",
       "category": "Problem Solving",
       "difficulty": "Advanced",
-      "question": "Tell me about balancing technical debt, new features, and infra scaling under a fixed quarterly budget. How did you prioritize?"
+      "focus": "Technical",
+      "question": "Describe a time when you had to balance platform consistency vs product flexibility."
     },
     {
-      "id": "q01_product_management_failure_basic_85",
+      "id": "q153_product_management_system_design_advanced_problem_solving",
       "role": "Product Management",
-      "category": "Failure",
-      "difficulty": "Basic",
-      "question": "Share a feature you shipped that users ignored. How did you gather feedback and decide next steps?"
+      "category": "Problem Solving",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe how you would design a product for enterprise scalability."
     },
     {
-      "id": "q02_product_management_failure_basic_86",
-      "role": "Product Management",
-      "category": "Failure",
-      "difficulty": "Basic",
-      "question": "Describe a roadmap item you promised but couldn’t deliver. How did you communicate the change?"
-    },
-    {
-      "id": "q01_product_management_failure_advanced_87",
+      "id": "q154_product_management_behavioral_advanced_failure",
       "role": "Product Management",
       "category": "Failure",
       "difficulty": "Advanced",
-      "question": "Tell me about a product sunset you managed that upset power users. How did you handle churn and PR?"
+      "focus": "Behavioral",
+      "question": "Tell me about a product decision that damaged stakeholder trust."
     },
     {
-      "id": "q02_product_management_failure_advanced_88",
+      "id": "q155_product_management_technical_advanced_failure",
       "role": "Product Management",
       "category": "Failure",
       "difficulty": "Advanced",
-      "question": "Describe a strategic bet that missed revenue targets for two consecutive quarters. How did you decide to pivot or kill it?"
+      "focus": "Technical",
+      "question": "Tell me about a platform decision that created technical debt for products."
     },
     {
-      "id": "q01_product_management_communication_basic_89",
+      "id": "q156_product_management_system_design_advanced_failure",
       "role": "Product Management",
-      "category": "Communication",
-      "difficulty": "Basic",
-      "question": "Give an example of translating a technical constraint into simple language for a non-technical sponsor."
+      "category": "Failure",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Tell me about a product architecture that couldn't support business model changes."
     },
     {
-      "id": "q02_product_management_communication_basic_90",
-      "role": "Product Management",
-      "category": "Communication",
-      "difficulty": "Basic",
-      "question": "Tell me about crafting a one-pager product update for a campus club sponsor. What did you highlight?"
-    },
-    {
-      "id": "q01_product_management_communication_advanced_91",
+      "id": "q157_product_management_behavioral_advanced_communication",
       "role": "Product Management",
       "category": "Communication",
       "difficulty": "Advanced",
-      "question": "Describe presenting a major roadmap change to a sales team whose commissions were at risk. How did you secure support?"
+      "focus": "Behavioral",
+      "question": "Describe presenting a failed product initiative to the board."
     },
     {
-      "id": "q02_product_management_communication_advanced_92",
+      "id": "q158_product_management_technical_advanced_communication",
       "role": "Product Management",
       "category": "Communication",
       "difficulty": "Advanced",
-      "question": "Tell me about writing a quarterly OKR narrative that convinced the board to double your headcount. What storytelling worked?"
+      "focus": "Technical",
+      "question": "Describe creating a 12-month technical product roadmap."
     },
     {
-      "id": "q01_product_management_initiative_basic_93",
+      "id": "q159_product_management_system_design_advanced_communication",
       "role": "Product Management",
-      "category": "Initiative",
-      "difficulty": "Basic",
-      "question": "Describe a user interview campaign you started on your own to validate an idea. How many users did you speak to?"
+      "category": "Communication",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Describe documenting product decisions for regulatory compliance."
     },
     {
-      "id": "q02_product_management_initiative_basic_94",
-      "role": "Product Management",
-      "category": "Initiative",
-      "difficulty": "Basic",
-      "question": "Tell me about volunteering to maintain a product backlog when no one else was tracking it. What tools did you use?"
-    },
-    {
-      "id": "q01_product_management_initiative_advanced_95",
+      "id": "q160_product_management_behavioral_advanced_initiative",
       "role": "Product Management",
       "category": "Initiative",
       "difficulty": "Advanced",
-      "question": "Describe launching a customer advisory board that shaped the roadmap and reduced churn by 15%. How did you recruit members?"
+      "focus": "Behavioral",
+      "question": "Tell me about defining and tracking meaningful North Star metrics."
     },
     {
-      "id": "q02_product_management_initiative_advanced_96",
+      "id": "q161_product_management_technical_advanced_initiative",
       "role": "Product Management",
       "category": "Initiative",
       "difficulty": "Advanced",
-      "question": "Tell me about creating an internal pricing experiment framework that accelerated decision-making across product lines."
+      "focus": "Technical",
+      "question": "Tell me about building a product-led growth motion."
+    },
+    {
+      "id": "q162_product_management_system_design_advanced_initiative",
+      "role": "Product Management",
+      "category": "Initiative",
+      "difficulty": "Advanced",
+      "focus": "System Design",
+      "question": "Tell me about designing a product platform for global expansion."
     }
   ]
 }
