@@ -97,12 +97,6 @@ export default function Login() {
         window.location.href = "http://localhost:5000/api/auth/github";
     }
 
-    // Handle Continue as Guest
-    const handleGuestMode = () => {
-        localStorage.setItem('isGuest', 'true')
-        router.push('/dashboard')
-    }
-
     // Handle pressing Enter key in password field
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !isLoading) {
@@ -296,20 +290,6 @@ export default function Login() {
                         </>
                     )}
                 </button>
-
-                {/* Continue as Guest */}
-                <button 
-                    className={`w-full text-center text-xs sm:text-sm font-semibold hover:underline mb-4 sm:mb-6 disabled:opacity-50 disabled:cursor-not-allowed ${
-                        isDarkMode 
-                            ? 'text-gray-400 hover:text-gray-200' 
-                            : 'text-gray-600 hover:text-gray-900'
-                    }`}
-                    onClick={handleGuestMode}
-                    disabled={isLoading}
-                >
-                    Continue as Guest →
-                </button>
-
                 {/* Sign Up Link */}
                 <div className="text-center">
                     <span className={`text-xs sm:text-sm ${
