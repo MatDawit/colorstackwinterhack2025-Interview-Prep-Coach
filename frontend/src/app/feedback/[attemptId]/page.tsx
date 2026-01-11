@@ -26,11 +26,12 @@ interface AttemptData {
   isLastQuestion?: boolean;
   attemptCount?: number;
 
+  // UPDATED KEYS TO MATCH DATABASE/AI OUTPUT
   checklist: {
-    specific_examples: boolean;
-    no_negative_language: boolean;
-    no_filler_words: boolean;
-    technical_detail: boolean;
+    specific_examples_provided: boolean;
+    no_negative_language_detected: boolean;
+    no_filler_words_detected: boolean;
+    technical_detail_present: boolean;
     appropriate_length: boolean;
   };
   question: {
@@ -42,7 +43,7 @@ const PracticeFeedback = () => {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isDarkMode } = useTheme(); // Hook usage
+  const { isDarkMode } = useTheme();
 
   const isViewOnly = searchParams.get("viewOnly") === "true";
   const attemptId = params.attemptId as string;
@@ -165,7 +166,6 @@ const PracticeFeedback = () => {
   const formatTranscript = (text: string) => {
     if (!text) return "";
 
-    // Determine colors based on dark mode
     const greenClass = isDarkMode
       ? "bg-emerald-900/40 text-emerald-200 border border-emerald-800"
       : "bg-emerald-100 text-emerald-800";
@@ -187,28 +187,33 @@ const PracticeFeedback = () => {
       .replace(/<\/red>/g, "</span>");
   };
 
-  const checklistMapping = [
+  const checklistMapping: {
+    key: keyof AttemptData["checklist"];
+    label: string;
+    successMsg: string;
+    errorMsg: string;
+  }[] = [
     {
-      key: "specific_examples",
+      key: "specific_examples_provided",
       label: "Specific Examples Provided",
       successMsg: "You used a clear example to illustrate your point.",
       errorMsg: "Try to include a specific story next time (STAR method).",
     },
     {
-      key: "no_negative_language",
-      label: "Apologizing / Negative Language",
+      key: "no_negative_language_detected",
+      label: "Confident Tone",
       successMsg: "Maintained a professional, confident tone.",
       errorMsg: "Avoid starting sentences with apologies or self-deprecation.",
     },
     {
-      key: "no_filler_words",
-      label: "Filler Words Detected",
+      key: "no_filler_words_detected",
+      label: "Clean Speech",
       successMsg: "Clean speech with minimal filler words.",
       errorMsg: 'Try to reduce "um", "like", and "you know".',
     },
     {
-      key: "technical_detail",
-      label: "Technical Details Included",
+      key: "technical_detail_present",
+      label: "Technical Depth",
       successMsg: "Good integration of relevant technical terms.",
       errorMsg: "Mention specific tools, languages, or metrics.",
     },
@@ -329,7 +334,6 @@ const PracticeFeedback = () => {
 
               <div className="relative w-48 h-48 flex items-center justify-center mb-8">
                 <svg className="w-full h-full transform -rotate-90">
-                  {/* Background Circle */}
                   <circle
                     cx="96"
                     cy="96"
@@ -338,7 +342,6 @@ const PracticeFeedback = () => {
                     strokeWidth="16"
                     fill="transparent"
                   />
-                  {/* Progress Circle */}
                   <circle
                     cx="96"
                     cy="96"
@@ -395,8 +398,8 @@ const PracticeFeedback = () => {
 
               <div className="space-y-6">
                 {checklistMapping.map((item, index) => {
-                  // @ts-ignore
-                  const isSuccess = data.checklist?.[item.key] === true;
+                  // Direct property access - no more @ts-ignore needed
+                  const isSuccess = data.checklist[item.key] === true;
 
                   return (
                     <div key={index} className="flex items-start gap-4">
@@ -550,7 +553,7 @@ const PracticeFeedback = () => {
           <div className="flex flex-col items-center gap-8 mt-12">
             <div className="flex items-center justify-center gap-4 w-full">
               {isViewOnly ? (
-                // VIEW ONLY MODE: Simple Navigation
+                // VIEW ONLY MODE
                 <>
                   <button
                     onClick={() => router.back()}
@@ -590,14 +593,14 @@ const PracticeFeedback = () => {
                     Retry Question
                   </button>
 
-                  {/* NEXT / FINISH BUTTON */}
+                  {/* NEXT BUTTON */}
                   <button
                     onClick={() => handleNavigation("/analytics")}
                     disabled={isGenerating}
                     className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
                       data.isLastQuestion
                         ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-100"
-                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
                     } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
                   >
                     {isGenerating ? (
@@ -607,7 +610,6 @@ const PracticeFeedback = () => {
                       </>
                     ) : (
                       <>
-                        {/* CHANGED: Show Timer text if auto-advancing */}
                         {autoStartTimer !== null && !data.isLastQuestion ? (
                           `Next Question in ${autoStartTimer}s...`
                         ) : data.isLastQuestion ? (
