@@ -8,8 +8,8 @@ import questionsRouter from "./routes/questions.routes";
 import feedbackRouter from "./routes/feedback.routes";
 import analyticsRouter from "./routes/analytics.routes";
 import profileRouter from "./routes/profile.routes";
-import passport from "passport"
-import {configurePassport} from "./config/passport"
+import passport from "passport";
+import { configurePassport } from "./config/passport";
 import path from "path";
 import preferencesRouter from "./routes/preferences.routes";
 
