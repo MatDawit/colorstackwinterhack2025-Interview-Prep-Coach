@@ -135,6 +135,8 @@ export default function AccountPage() {
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("isGuest");
+    // Reset theme to light mode immediately
+    document.documentElement.classList.remove("dark");
     router.push("/login");
   }
 

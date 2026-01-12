@@ -208,10 +208,14 @@ export default function ProfilePage() {
       });
 
       localStorage.removeItem("token");
+      // Reset theme to light mode immediately
+      document.documentElement.classList.remove("dark");
       router.push("/login");
     } catch (error) {
       console.error("Sign out failed:", error);
       localStorage.removeItem("token");
+      // Reset theme to light mode immediately
+      document.documentElement.classList.remove("dark");
       router.push("/login");
     }
   }
