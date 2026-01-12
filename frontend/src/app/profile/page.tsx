@@ -331,39 +331,33 @@ export default function ProfilePage() {
                 }`}
               >
                 <div
-                  className={`px-3 pt-2 pb-3 text-xs font-semibold uppercase tracking-wide ${
-                    isDarkMode ? "text-gray-500" : "text-gray-500"
-                  }`}
+                  className={`px-3 pt-2 pb-3 text-xs font-semibold ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  } uppercase tracking-wide`}
                 >
                   Navigation
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarGroup
-                    label="Settings"
-                    icon={<Settings className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile/preferences"
+                    label="Preferences"
+                    icon={<SlidersHorizontal className="h-4 w-4" />}
                     isDarkMode={isDarkMode}
-                  >
-                    <SidebarSubLink
-                      href="/profile/preferences"
-                      label="Preferences"
-                      icon={<SlidersHorizontal className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile/account"
-                      label="Account"
-                      icon={<User className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile"
-                      label="Personal"
-                      active
-                      icon={<UserCircle2 className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                  </SidebarGroup>
+                  />
+                  <SidebarSubLink
+                    href="/profile/account"
+                    label="Account"
+                    icon={<User className="h-4 w-4" />}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SidebarSubLink
+                    href="/profile"
+                    label="Personal"
+                    active
+                    icon={<UserCircle2 className="h-4 w-4" />}
+                    isDarkMode={isDarkMode}
+                  />
                 </nav>
               </div>
             </aside>
@@ -977,7 +971,9 @@ function SidebarSubLink({
       className={[
         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
         active
-          ? "bg-blue-50 text-blue-700 font-semibold"
+          ? isDarkMode
+            ? "bg-blue-900 text-blue-200 font-semibold"
+            : "bg-blue-50 text-blue-700 font-semibold"
           : isDarkMode
           ? "text-gray-400 hover:bg-gray-700"
           : "text-gray-600 hover:bg-gray-50",
