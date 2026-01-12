@@ -190,6 +190,7 @@ export default function PreferencesPage() {
           focusBehavioral: prefs.questionFocus.behavioral,
           focusTechnical: prefs.questionFocus.technical,
           focusSystemDesign: prefs.questionFocus.systemDesign,
+          feedbackEmphasize: prefs.feedbackEmphasize,
           autoStartNext: prefs.autoStartNext,
           feedbackTone: prefs.feedbackTone,
           feedbackDetail: prefs.feedbackDetail,
@@ -482,7 +483,37 @@ export default function PreferencesPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
+                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SelectField
+                      label="Role"
+                      value={prefs.defaultRole}
+                      onChange={(v) =>
+                        setPrefs((p) => ({ ...p, defaultRole: v }))
+                      }
+                      options={[
+                        "Software Engineering",
+                        "Product Management",
+                        "Data Science",
+                      ]}
+                      isDarkMode={isDarkMode}
+                    />
+
+                    <SelectField
+                      label="Difficulty"
+                      value={prefs.defaultDifficulty}
+                      onChange={(v) =>
+                        setPrefs((p) => ({
+                          ...p,
+                          defaultDifficulty:
+                            v as Preferences["defaultDifficulty"],
+                        }))
+                      }
+                      options={["Basic", "Intermediate", "Advanced"]}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-1 gap-4">
                     <SelectField
                       label="What should we emphasize in your feedback?"
                       value={prefs.feedbackEmphasize}
