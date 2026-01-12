@@ -1,444 +1,342 @@
-# Interview Prep Coach
+# colorstackwinterhack2025-Interview-Prep-Coach
 
-An intelligent interview preparation platform powered by AI that helps candidates practice behavioral and technical interview questions with personalized feedback and performance analytics.
+An AI-powered behavioral interview preparation platform that helps candidates master the STAR method through real-time feedback, personalized coaching, and responsible AI guidance.
 
-## Table of Contents
+## 📋 Description
 
-- [Project Description](#project-description)
-- [Problem & Solution](#problem--solution)
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Setup & Installation](#setup--installation)
-- [Usage Instructions](#usage-instructions)
-- [Project Structure](#project-structure)
+Interview Prep Coach is a comprehensive web application designed to revolutionize how job seekers prepare for behavioral interviews. The platform uses AI to provide structured feedback on interview responses, helping users refine their communication skills, build confidence, and present their experiences effectively using the STAR (Situation, Task, Action, Result) framework.
 
-## Project Description
+## 🎯 Alignment with Responsible AI Theme
 
-Interview Prep Coach is a full-stack web application designed to help job candidates prepare for technical and behavioral interviews. The platform provides an interactive environment where users can:
+Our project directly addresses the **Responsible AI** theme through:
 
-- Practice answering interview questions
-- Record and transcribe their responses
-- Receive AI-powered feedback on their answers
-- Track their performance across multiple practice sessions
-- Identify communication patterns and biases
-- Build and manage their professional profile and resume
+### 1. **Transparent AI Feedback**
 
-The application combines modern web technologies with AI capabilities to create a personalized, adaptive learning experience for interview preparation.
+- All AI-generated feedback is clearly labeled and structured using the STAR framework
+- Users receive detailed breakdowns showing exactly what the AI evaluated (checklist items, scoring criteria)
+- The system highlights both strengths (green) and areas for improvement (red) in a balanced manner
 
-## Problem & Solution
+### 2. **Customizable AI Behavior**
 
-### The Problem
+- Users control AI feedback style through preferences:
+  - **Emphasis**: Balance, Clarity, Storytelling, Confidence, or Technical Depth
+  - **Tone**: Encouraging, Direct, or Strict
+  - **Detail Level**: Brief, Standard, or Deep
+- This puts the user in control of how AI evaluates their responses
 
-Preparing for interviews is challenging because:
+### 3. **Bias Mitigation**
 
-- Candidates lack access to real-time feedback on their responses
-- Identifying communication weaknesses (hedging, apologizing, unclear storytelling) is difficult without expert guidance
-- Consistent practice requires significant time investment and mock interview partners
-- Many candidates struggle with the STAR method (Situation, Task, Action, Result) framework
-- Performance tracking across multiple practice sessions is not standardized
+- The AI focuses on objective STAR structure adherence rather than subjective qualities
+- Scoring criteria are transparent: specific examples (20%), technical detail (20%), confidence (20%), speech clarity (20%), appropriate length (20%)
+- The system promotes ownership through "I" statements rather than "we" statements to accurately assess individual contributions
 
-### Our Solution
+### 4. **Educational AI**
 
-Interview Prep Coach addresses these challenges by:
+- Rather than just scoring, the AI provides:
+  - Actionable feedback with specific improvement steps
+  - Example improved versions showing "what good looks like"
+  - Resume-based question generation to practice real scenarios
+- This empowers users to learn and improve, not just get a score
 
-1. **AI-Powered Feedback**: Using Google Generative AI to analyze responses against the STAR framework and provide actionable insights
-2. **Pattern Recognition**: Detecting communication biases and suggesting improvements
-3. **Performance Analytics**: Tracking progress over time with detailed metrics and visualizations
-4. **Adaptive Learning**: Offering questions at various difficulty levels tailored to users' experience levels
-5. **Resume Integration**: Allowing candidates to upload and reference their resumes during practice
-6. **User Authentication**: Supporting multiple authentication methods (email, Google, GitHub)
+### 5. **Privacy & Data Control**
 
-## Features
+- Users can review all their past attempts and feedback
+- Session data is tied to user accounts with JWT authentication
+- Resume parsing happens server-side with clear consent flow
 
-### User Management
+### 6. **Responsible Prompt Engineering**
 
-- **Authentication**: Sign up with email or OAuth (Google/GitHub)
-- **Profile Building**: Create professional profiles with target role, experience level, bio, and avatar customization
-- **Resume Management**: Upload and manage resumes for context during practice
+- Our AI prompts ([backend/src/config/prompts.ts](backend/src/config/prompts.ts)) explicitly instruct the model to:
+  - Avoid harmful stereotypes
+  - Focus on technical competence and STAR adherence
+  - Provide constructive, specific feedback rather than vague criticism
+  - Detect and flag potential fabrication while remaining supportive
 
-### Practice Sessions
-
-- **Curated Question Bank**: Extensive library of behavioral and technical interview questions
-- **Difficulty Filtering**: Practice questions at beginner, intermediate, or advanced levels
-- **Multiple Session Types**: Support for different interview formats and question categories
-
-### Interview Practice
-
-- **Audio Recording**: Record spoken responses to interview questions
-- **Real-time Transcription**: Convert audio to text automatically
-- **STAR Evaluation**: Score responses on Situation, Task, Action, and Result components
-- **AI Feedback**: Receive detailed, constructive feedback from Claude AI
-
-### Analytics & Progress
-
-- **Performance Dashboard**: Visualize progress with charts and metrics
-- **Session Reviews**: Detailed breakdown of past practice sessions
-- **Bias Pattern Detection**: Identify communication patterns like hedging and unnecessary apologies
-- **Score Tracking**: Monitor improvement across multiple attempts
-
-### Profile Features
-
-- **Customizable Avatar**: Choose shapes and colors for profile personalization
-- **Interview History**: View all past practice sessions and attempts
-
-## Technologies Used
+## 🛠️ Technologies Used
 
 ### Frontend
 
-- **Framework**: Next.js 16 (React 19)
-- **Styling**: Tailwind CSS 4
-- **UI Components**: Lucide React icons
-- **Charts**: Recharts for data visualization
-- **Theme**: next-themes for dark/light mode support
-- **AI Integration**: Google Generative AI, OpenAI API
+- **Next.js 15** - React framework for production
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **Recharts** - Data visualization for analytics
+- **Lucide React** - Icon library
+- **Web Audio API** - Real-time audio recording and silence detection
 
 ### Backend
 
-- **Runtime**: Node.js with TypeScript
-- **Framework**: Express.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Passport.js (OAuth 2.0)
-  - Google OAuth 2.0
-  - GitHub OAuth 2.0
-- **Password Security**: bcryptjs for hashing
-- **File Upload**: Multer for resume uploads
-- **AI Integration**: Google Generative AI
-- **Development**: nodemon, tsx for development server
+- **Express.js** - Node.js web framework
+- **Prisma** - Type-safe database ORM
+- **PostgreSQL** - Relational database
+- **Supabase** - Backend-as-a-Service for storage
+- **Google Generative AI (Gemini)** - AI model for feedback generation and transcription
+- **Multer** - File upload handling
+- **JSON Repair** - Robust JSON parsing
+- **bcrypt** - Password hashing
+- **JWT** - Authentication tokens
+- **Passport.js** - OAuth authentication (Google, GitHub)
 
-### DevOps & Tools
+### AI & Analysis
 
-- **Package Manager**: npm
-- **Build Tool**: TypeScript compiler
-- **Version Control**: Git
-- **Database Migrations**: Prisma Migrations
+- **Gemini 2.5 Flash Lite** - Interview feedback generation
+- **Gemini 1.5 Flash** - Audio transcription
+- **Custom Prompt Engineering** - Structured STAR method evaluation
 
-## Setup & Installation
+## 📥 Setup & Installation Instructions
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL 12+
-- Git
-- Google OAuth credentials (for Google Sign-In)
-- GitHub OAuth credentials (for GitHub Sign-In)
-- Google Generative AI API key
-- OpenAI API key (optional, for additional AI features)
+- PostgreSQL database
+- Google Gemini API keys
+- (Optional) OAuth credentials for Google/GitHub login
 
-### Environment Setup
+### 1. Clone the Repository
 
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/yourusername/colorstackwinterhack2025-Interview-Prep-Coach.git
-   cd colorstackwinterhack2025-Interview-Prep-Coach
-   ```
-
-2. **Install root dependencies**
-   ```bash
-   npm install
-   ```
-
-### Backend Setup
-
-3. **Navigate to backend directory**
-
-   ```bash
-   cd backend
-   ```
-
-4. **Install backend dependencies**
-
-   ```bash
-   npm install
-   ```
-
-5. **Configure environment variables**
-
-   Create a `.env` file in the `backend` directory:
-
-   ```
-   # Database
-   DATABASE_URL="postgresql://user:password@localhost:5432/interview_prep_coach"
-
-   # Authentication
-   GOOGLE_CLIENT_ID="your_google_client_id"
-   GOOGLE_CLIENT_SECRET="your_google_client_secret"
-   GITHUB_CLIENT_ID="your_github_client_id"
-   GITHUB_CLIENT_SECRET="your_github_client_secret"
-
-   # AI APIs
-   GOOGLE_API_KEY="your_google_generative_ai_key"
-   OPENAI_API_KEY="your_openai_api_key"
-
-   # JWT Secret (for session tokens)
-   JWT_SECRET="your_secret_key_here"
-
-   # Server
-   PORT=5000
-   NODE_ENV=development
-   ```
-
-6. **Set up PostgreSQL database**
-
-   ```bash
-   # Create a new PostgreSQL database
-   createdb interview_prep_coach
-   ```
-
-7. **Run database migrations**
-
-   ```bash
-   npm run prisma migrate deploy
-   ```
-
-8. **Seed the database with sample questions (optional)**
-
-   ```bash
-   npm run seed
-   ```
-
-9. **Start the backend server**
-   ```bash
-   npm run dev
-   ```
-   The backend will run on `http://localhost:5000`
-
-### Frontend Setup
-
-10. **In a new terminal, navigate to frontend directory**
-
-    ```bash
-    cd frontend
-    ```
-
-11. **Install frontend dependencies**
-
-    ```bash
-    npm install
-    ```
-
-12. **Configure environment variables**
-
-    Create a `.env.local` file in the `frontend` directory:
-
-    ```
-    NEXT_PUBLIC_API_URL="http://localhost:5000"
-    NEXT_PUBLIC_GOOGLE_CLIENT_ID="your_google_client_id"
-    NEXT_PUBLIC_OPENAI_API_KEY="your_openai_api_key"
-    NEXT_PUBLIC_GOOGLE_API_KEY="your_google_generative_ai_key"
-    ```
-
-13. **Start the frontend development server**
-
-    ```bash
-    npm run dev
-    ```
-
-    The frontend will run on `http://localhost:3000`
-
-14. **Access the application**
-
-    Open your browser and navigate to `http://localhost:3000`
-
-## 📖 Usage Instructions
-
-### Getting Started
-
-1. **Create an Account**
-
-   - Visit the signup page
-   - Choose to sign up with email, Google, or GitHub
-   - Complete your profile with target role and experience level
-
-2. **Set Up Your Profile**
-
-   - Go to the Profile section
-   - Customize your avatar (shape and color)
-   - Add a bio and location
-   - Upload your resume
-
-3. **Start Practicing**
-   - Navigate to the Practice section
-   - Browse available interview questions
-   - Filter by difficulty level (Beginner, Intermediate, Advanced)
-   - Select a question to begin practicing
-
-### Answering Interview Questions
-
-1. **Select a Question**
-
-   - Choose from the available question bank
-   - Read the question carefully
-
-2. **Record Your Response**
-
-   - Click the "Record" button
-   - Speak your answer naturally
-   - Click "Stop" when finished
-   - Your response will be automatically transcribed
-
-3. **Submit Your Answer**
-
-   - Review the transcription for accuracy
-   - Submit your response to receive AI feedback
-
-4. **Review Feedback**
-   - Receive detailed feedback on your STAR score components:
-     - **Situation**: How well you set the context
-     - **Task**: Clarity of the challenge you faced
-     - **Action**: Quality of the steps you took
-     - **Result**: Strength of your outcome
-   - View identified communication patterns
-   - Get personalized improvement suggestions
-
-### Tracking Progress
-
-1. **View Your Dashboard**
-
-   - Check your analytics dashboard
-   - Monitor your performance trends over time
-   - View all past practice sessions
-
-2. **Session Reviews**
-
-   - Click on any past session to view details
-   - Review feedback and scores
-   - Compare attempts on the same question
-
-3. **Performance Analytics**
-   - Visualize your improvement with charts
-   - Identify your strongest and weakest areas
-   - Set goals based on your performance data
-
-### Managing Your Content
-
-1. **Resume Management**
-
-   - Upload and update your resume in the Profile section
-   - Use your resume as reference during practice
-
-2. **Interview History**
-   - Access all your past attempts
-   - Filter by question, difficulty, or date
-   - Review previous feedback anytime
-
-## 📁 Project Structure
-
-```
-colorstackwinterhack2025-Interview-Prep-Coach/
-├── backend/                          # Express.js backend
-│   ├── src/
-│   │   ├── index.ts                 # Main server file
-│   │   ├── db_connection.ts         # Database connection
-│   │   ├── config/
-│   │   │   ├── passport.ts          # OAuth configuration
-│   │   │   └── prompts.ts           # AI prompt templates
-│   │   ├── routes/                  # API route handlers
-│   │   │   ├── auth.routes.ts
-│   │   │   ├── session.routes.ts
-│   │   │   ├── practice.routes.ts
-│   │   │   ├── questions.routes.ts
-│   │   │   ├── feedback.routes.ts
-│   │   │   ├── analytics.routes.ts
-│   │   │   ├── attempts.routes.ts
-│   │   │   └── profile.routes.ts
-│   │   └── services/                # Business logic and middleware
-│   ├── prisma/
-│   │   ├── schema.prisma            # Database schema
-│   │   ├── questions.json           # Question bank data
-│   │   ├── seed.ts                  # Database seeding script
-│   │   └── migrations/              # Database migrations
-│   ├── generated/                   # Prisma client (auto-generated)
-│   ├── uploads/                     # User-uploaded files (resumes, etc.)
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── frontend/                         # Next.js frontend
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx             # Home page
-│   │   │   ├── layout.tsx           # Root layout
-│   │   │   ├── auth/                # Authentication pages
-│   │   │   ├── login/               # Login page
-│   │   │   ├── signup/              # Signup page
-│   │   │   ├── dashboard/           # Main dashboard
-│   │   │   ├── practice/            # Practice interface
-│   │   │   ├── analytics/           # Performance analytics
-│   │   │   ├── feedback/            # Feedback display
-│   │   │   ├── profile/             # User profile
-│   │   │   ├── Resume/              # Resume management
-│   │   │   └── session-review/      # Session review page
-│   │   ├── components/              # Reusable UI components
-│   │   ├── context/                 # React context providers
-│   │   └── globals.css              # Global styles
-│   ├── public/                      # Static assets
-│   ├── types/                       # TypeScript type definitions
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── next.config.ts
-│   └── tailwind.config.js
-│
-├── package.json
-└── README.md                        # This file
+```bash
+git clone https://github.com/yourusername/colorstackwinterhack2025-Interview-Prep-Coach.git
+cd colorstackwinterhack2025-Interview-Prep-Coach
 ```
 
-## 🔑 Key API Endpoints
+### 2. Backend Setup
 
-### Authentication
+```bash
+cd backend
+npm install
+```
 
-- `POST /api/auth/signup` - Create new user account
-- `POST /api/auth/login` - Login with email
-- `GET /api/auth/google` - Google OAuth
-- `GET /api/auth/github` - GitHub OAuth
+Create a [backend/.env](backend/.env) file:
 
-### Practice Sessions
+```dotenv
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+DIRECT_DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
+JWT_SECRET="your-secret-key"
+MATT_GEMINI_API_KEY="your-gemini-api-key-1"
+FAD_GEMINI_API_KEY="your-gemini-api-key-2"
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_CALLBACK_URL="http://localhost:5000/api/auth/google/callback"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+GITHUB_CALLBACK_URL="http://localhost:5000/api/auth/github/callback"
+FRONTEND_URL="http://localhost:3000/"
+SUPABASE_URL="your-supabase-url"
+SUPABASE_SERVICE_KEY="your-supabase-service-key"
+```
 
-- `GET /api/session` - Get all sessions
-- `POST /api/session` - Create new session
-- `GET /api/session/:id` - Get session details
-- `PUT /api/session/:id` - Update session
+Run database migrations:
 
-### Questions
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
 
-- `GET /api/questions` - Get all questions
-- `GET /api/questions?difficulty=intermediate` - Filter by difficulty
-- `GET /api/questions/:id` - Get specific question
+Start the backend server:
 
-### Feedback & Attempts
+```bash
+npm run dev
+```
 
-- `POST /api/feedback` - Submit answer for feedback
-- `GET /api/attempts/:userId` - Get user's attempts
-- `GET /api/attempts/:userId/:questionId` - Get attempts on specific question
+Backend runs on `http://localhost:5000`
 
-### Analytics
+### 3. Frontend Setup
 
-- `GET /api/analytics/performance` - Get performance metrics
-- `GET /api/analytics/trends` - Get progress trends
+```bash
+cd ../frontend
+npm install
+```
 
-### Profile
+Start the development server:
 
-- `GET /api/profile` - Get user profile
-- `PUT /api/profile` - Update user profile
-- `POST /api/profile/resume` - Upload resume
+```bash
+npm run dev
+```
 
-## 🤝 Contributing
+Frontend runs on `http://localhost:3000`
 
-Contributions are welcome! Please follow these steps:
+## 🚀 Usage Instructions and Features
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### 1. **Authentication**
 
-## 📝 License
+- Sign up with email/password or OAuth (Google/GitHub)
+- Secure JWT-based session management
+- See: [frontend/src/app/login/page.tsx](frontend/src/app/login/page.tsx), [frontend/src/app/signup/page.tsx](frontend/src/app/signup/page.tsx)
 
-This project is part of ColorStack Winter Hackathon 2025.
+### 2. **Onboarding & Preferences** ([frontend/src/app/setup/page.tsx](frontend/src/app/setup/page.tsx))
 
-## 🎓 Support
+- Select default role: Software Engineering, Product Management, Data Science
+- Choose difficulty: Basic, Intermediate, Advanced
+- Configure AI feedback preferences:
+  - Emphasis (Balance, Clarity, Storytelling, etc.)
+  - Tone (Encouraging, Direct, Strict)
+  - Detail level (Brief, Standard, Deep)
+- Set practice flow options (timer, auto-submit, countdown)
 
-For questions or support, please reach out to the development team or open an issue in the repository.
+### 3. **Practice Sessions** ([frontend/src/app/practice/page.tsx](frontend/src/app/practice/page.tsx))
+
+- **Two input modes**:
+  - **Voice Recording**: Record audio answers with real-time silence detection
+  - **Text Input**: Type responses directly
+- **Smart session management**: 4 questions per session, locked settings during active practice
+- **Real-time feedback**: Timer, recording status, audio level visualization
+- See: [backend/src/routes/feedback.routes.ts](backend/src/routes/feedback.routes.ts)
+
+### 4. **AI Feedback & Analysis** ([frontend/src/app/feedback/[attemptId]/page.tsx](frontend/src/app/feedback/[attemptId]/page.tsx))
+
+Each submission receives:
+
+- **STAR Structure Score** (0-100): Visual circular progress indicator
+- **Performance Checklist**:
+  - ✓ Specific examples provided
+  - ✓ No negative language detected
+  - ✓ Clean speech (no filler words)
+  - ✓ Technical detail present
+  - ✓ Appropriate length
+- **Transcript Analysis**: Highlighted strengths and weaknesses
+- **Actionable Feedback**: Concrete steps to improve
+- **Improved Version**: AI-rewritten answer showing best practices
+
+### 5. **Resume Upload & Parsing** ([frontend/src/app/Resume/page.tsx](frontend/src/app/Resume/page.tsx))
+
+- Upload PDF resume via [Account settings](frontend/src/app/profile/account/page.tsx)
+- AI parses resume into structured data:
+  - Headline, summary, skills
+  - Work experience with bullets
+  - Projects with tech stack
+  - Education details
+- **Generate Interview Questions**: AI creates tailored behavioral questions based on your resume
+- **Practice Answers**: Write and critique responses to resume-based questions
+- See: [backend/src/services/resume-parser.service.ts](backend/src/services/resume-parser.service.ts)
+
+### 6. **Analytics Dashboard** ([frontend/src/app/analytics/page.tsx](frontend/src/app/analytics/page.tsx))
+
+- **Performance over time**: Line chart showing score trends
+- **Areas for improvement**: Bar chart of common issues (filler words, lack of detail, etc.)
+- **Session history**: Filterable table by date range and category
+- **Progress tracking**: Average scores, total sessions, trends
+
+### 7. **Session Review** ([frontend/src/app/session-review/[sessionId]/page.tsx](frontend/src/app/session-review/[sessionId]/page.tsx))
+
+- View all 4 attempts from a completed practice session
+- Click any question to see detailed feedback
+- Track improvement across multiple practice rounds
+
+### 8. **Profile Management** ([frontend/src/app/profile/page.tsx](frontend/src/app/profile/page.tsx))
+
+- **Personal Info**: Name, display name, location, bio
+- **Avatar Customization**: Shape (circle/square), border color
+- **Dark Mode**: Toggle theme preference
+- **Account Settings**: Email, password, OAuth connections, resume upload
+- **Preferences**: Detailed AI feedback configuration
+
+### 9. **Question Bank** ([frontend/src/app/questions/page.tsx](frontend/src/app/questions/page.tsx))
+
+- Browse 100+ curated behavioral questions
+- Filter by category (Behavioral, Technical, System Design)
+- Filter by difficulty (Basic, Intermediate, Advanced)
+- Start practice directly from any question
+
+## 🧠 How Our Project Solves Interview Preparation Challenges
+
+### Problem 1: **Lack of Structured Feedback**
+
+**Solution**: Our AI provides detailed, structured feedback using the industry-standard STAR framework. Instead of vague "good job" or "needs work," candidates receive:
+
+- Specific percentages for each STAR component
+- Highlighted text showing exactly what was strong/weak
+- Concrete action items for improvement
+
+### Problem 2: **Expensive Interview Coaching**
+
+**Solution**: Professional interview coaching costs $100-300/session. Our platform provides unlimited practice with AI feedback for free, democratizing access to quality interview preparation.
+
+### Problem 3: **Generic Practice Questions**
+
+**Solution**: The resume parsing feature ([backend/src/services/resume-parser.service.ts](backend/src/services/resume-parser.service.ts)) generates personalized questions based on YOUR actual experiences, making practice more relevant and effective.
+
+### Problem 4: **No Progress Tracking**
+
+**Solution**: The [analytics dashboard](frontend/src/app/analytics/page.tsx) tracks performance over time, identifies patterns in weaknesses (e.g., consistent filler word usage), and shows measurable improvement.
+
+### Problem 5: **Nervousness & Lack of Confidence**
+
+**Solution**:
+
+- Customizable AI tone lets users start with "Encouraging" feedback and gradually move to "Strict" as confidence builds
+- Recording mode simulates real interview pressure with countdown timers
+- Repeated practice with immediate feedback builds muscle memory for confident delivery
+
+### Problem 6: **Difficulty Articulating Impact**
+
+**Solution**: The AI specifically evaluates and coaches on:
+
+- Using "I" statements vs. "we" statements to claim ownership
+- Including quantifiable metrics in the Result section
+- Avoiding vague language and providing technical specifics
+- See prompt configuration: [backend/src/config/prompts.ts](backend/src/config/prompts.ts)
+
+## 👥 Team Members & Contributions
+
+<!-- Add your team members here -->
+
+- **[Team Member 1]** - [Role/Contributions]
+- **[Team Member 2]** - [Role/Contributions]
+- **[Team Member 3]** - [Role/Contributions]
+- **[Team Member 4]** - [Role/Contributions]
+
+## 🎥 Demo Video & Screenshots
+
+### Demo Video
+
+<!-- Add your demo video link here -->
+
+🎬 [Watch Demo Video](your-video-link-here)
+
+### Screenshots
+
+<!-- Add your screenshots here -->
+
+#### Dashboard
+
+![Dashboard Screenshot](path/to/dashboard-screenshot.png)
+_Main dashboard showing session statistics and progress_
+
+#### Practice Session
+
+![Practice Screenshot](path/to/practice-screenshot.png)
+_Live interview practice with recording or typing mode_
+
+#### AI Feedback
+
+![Feedback Screenshot](path/to/feedback-screenshot.png)
+_Detailed STAR structure analysis with highlighted transcript_
+
+#### Analytics
+
+![Analytics Screenshot](path/to/analytics-screenshot.png)
+_Performance trends and improvement areas visualization_
+
+#### Resume Parser
+
+![Resume Screenshot](path/to/resume-screenshot.png)
+_AI-powered resume parsing and question generation_
 
 ---
 
-**Happy interview practicing! 🚀**
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yourusername/colorstackwinterhack2025-Interview-Prep-Coach/issues).
+
+## 🌟 Acknowledgments
+
+- ColorStack for organizing the Winter Hackathon 2025
+- Google Gemini AI for powerful language models
+- The interview preparation community for inspiration
+
+---
+
+**Built with ❤️ for ColorStack Winter Hackathon 2025**
