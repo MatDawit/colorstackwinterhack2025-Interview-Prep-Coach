@@ -233,8 +233,6 @@ router.get("/", async (req: Request, res: Response) => {
         id: true,
         email: true,            // show email (not editable)
         name: true,
-        targetRole: true,
-        experienceLevel: true,
         bio: true,
         location: true,
         avatarUrl: true,
@@ -242,6 +240,7 @@ router.get("/", async (req: Request, res: Response) => {
         avatarBorder: true,
         createdAt: true,
         updatedAt: true,
+        darkMode: true,
       },
     });
 
@@ -267,13 +266,12 @@ router.patch("/", async (req: Request, res: Response) => {
     // These are the only fields we allow updating from profile settings:
     const {
       name,
-      targetRole,
-      experienceLevel,
       bio,
       location,
       avatarUrl,
       avatarShape,
       avatarBorder,
+      darkMode,
     } = req.body;
 
     const updated = await prisma.user.update({
@@ -281,25 +279,23 @@ router.patch("/", async (req: Request, res: Response) => {
       data: {
         // Only set fields if provided; undefined fields won't overwrite
         name,
-        targetRole,
-        experienceLevel,
         bio,
         location,
         avatarUrl,
         avatarShape,
         avatarBorder,
+        darkMode,
       },
       select: {
         id: true,
         email: true,
         name: true,
-        targetRole: true,
-        experienceLevel: true,
         bio: true,
         location: true,
         avatarUrl: true,
         avatarShape: true,
         avatarBorder: true,
+        darkMode: true,
         updatedAt: true,
       },
     });
