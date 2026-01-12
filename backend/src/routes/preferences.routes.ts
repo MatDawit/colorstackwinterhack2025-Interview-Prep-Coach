@@ -1,3 +1,7 @@
+/**
+ * Preferences routes
+ * Reads and updates per-user practice and feedback preferences.
+ */
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db_connection";

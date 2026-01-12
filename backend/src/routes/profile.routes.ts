@@ -1,3 +1,7 @@
+/**
+ * Profile routes
+ * Manages profile data, onboarding, and resume uploads for the authenticated user.
+ */
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db_connection";
@@ -69,12 +73,9 @@ function ConfirmAndThrow(message: string): never {
   throw new Error(message);
 }
 
-// Sign out method (basically what we're doing here is we are going to remove the token from local storage so the browser "forgets" the user was logged in and re prompts)
-// delete wikll remove uyser from the database
 /**
  * POST /profile/signout
- * Signs out the user (frontend will remove token from localStorage)
- * This does NOT delete the user from the database - just logs them out
+ * Signs out the user (frontend removes token).
  */
 router.post("/signout", async (req: Request, res: Response) => {
   try {
@@ -91,13 +92,8 @@ router.post("/signout", async (req: Request, res: Response) => {
 });
 
 /**
- * DELETE /profile/account
- * Permanently deletes the user's account and all associated data
- * THIS is the one that removes them from the database
- */
-/**
  * DELETE /profile/delete
- * Permanently deletes the user's account and all associated data
+ * Permanently deletes the user's account and all associated data.
  */
 router.delete("/delete", async (req: Request, res: Response) => {
   try {

@@ -1,6 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Supabase client
+ * Initializes a service-role client using environment variables.
+ */
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || '';
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || "";
 
 export const supabase = createClient(supabaseUrl, supabaseKey);

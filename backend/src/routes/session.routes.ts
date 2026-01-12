@@ -1,3 +1,7 @@
+/**
+ * Session routes
+ * Manages session lifecycle: start, end, stats, and attempts listing.
+ */
 import { Router, Request, Response } from "express";
 import { prisma } from "../db_connection";
 import jwt from "jsonwebtoken";
@@ -5,8 +9,6 @@ import jwt from "jsonwebtoken";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-// POST /api/session/start
-// Usage: Called when user clicks "Start Interview"
 router.post("/start", async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
@@ -26,13 +28,13 @@ router.post("/start", async (req: Request, res: Response) => {
 
     const { interviewType, difficulty } = req.body;
 
-    // 1. Close old sessions
+    // Close any prior in-progress sessions
     await prisma.session.updateMany({
       where: { userId: userId, status: "IN_PROGRESS" },
       data: { status: "ABANDONED", endedAt: new Date() },
     });
 
-    // 2. Create new Session
+    // Create new session
     const session = await prisma.session.create({
       data: {
         userId,
@@ -42,8 +44,7 @@ router.post("/start", async (req: Request, res: Response) => {
       },
     });
 
-    // 3. Prepare First Question Logic
-    // Base Filter: Allow specific role OR "General"
+    // Prepare first question filter (role or General)
     const roleFilter = { in: [interviewType, "General"] };
 
     let whereCondition: any = {
@@ -51,7 +52,7 @@ router.post("/start", async (req: Request, res: Response) => {
       difficulty: difficulty || "Basic",
     };
 
-    // --- NEW LOGIC: Apply "Focus" Preferences to First Question ---
+    // Apply focus preferences when present
     const prefs = await prisma.preferences.findUnique({
       where: { userId: userId },
     });
@@ -79,10 +80,10 @@ router.post("/start", async (req: Request, res: Response) => {
       const count = await prisma.question.count({ where: strictCondition });
 
       if (count > 0) {
-        // We found matches! Use the strict filter
+        // Use strict filter when matches found
         whereCondition = strictCondition;
       } else {
-        // 0 matches. Fallback to default (Ignore focus)
+        // Fallback to default (ignore focus)
         console.warn(
           "First question preference fallback: No strict matches found."
         );
@@ -90,7 +91,7 @@ router.post("/start", async (req: Request, res: Response) => {
     }
     // -------------------------------------------------------------
 
-    // 4. Select the Question
+    // Select the question
     const count = await prisma.question.count({ where: whereCondition });
 
     if (count > 0) {
@@ -116,15 +117,13 @@ router.post("/start", async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/session/end
-// Usage: Called when user finishes the interview
 router.post("/end", async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.body;
 
     if (!sessionId) return res.status(400).json({ error: "Missing sessionId" });
 
-    // 1. Get ALL attempts for this session (score + questionId)
+    // Get all attempts for this session
     const attempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
       select: { questionId: true, score: true, duration: true },
@@ -134,8 +133,7 @@ router.post("/end", async (req: Request, res: Response) => {
       return res.json({ success: true, finalScore: 0 });
     }
 
-    // 2. LOGIC: Best Answer wins
-    // We use a Map to store the max score for each unique question
+    // Best answer wins per question
     const bestScores = new Map<string, number>();
 
     let totalSessionDuration = 0;
@@ -149,7 +147,7 @@ router.post("/end", async (req: Request, res: Response) => {
       }
     });
 
-    // 3. Calculate Average of the BEST scores
+    // Calculate average of best scores
     let totalScore = 0;
     bestScores.forEach((score) => {
       totalScore += score;
@@ -159,7 +157,7 @@ router.post("/end", async (req: Request, res: Response) => {
     const finalScore =
       bestScores.size > 0 ? Math.round(totalScore / bestScores.size) : 0;
 
-    // 4. Update Session Status
+    // Update session status
     await prisma.session.update({
       where: { id: sessionId },
       data: {
@@ -177,11 +175,9 @@ router.post("/end", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/session/stats
-// Usage: Get user's session statistics for dashboard
 router.get("/stats", async (req: Request, res: Response) => {
   try {
-    // 1. VERIFY TOKEN & GET USER ID
+    // Verify token and get user id
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ error: "Unauthorized: No token provided" });
@@ -197,7 +193,7 @@ router.get("/stats", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized: Invalid token" });
     }
 
-    // 2. GET ALL COMPLETED SESSIONS WITH SCORES
+    // Get completed sessions with scores
     const sessions = await prisma.session.findMany({
       where: {
         userId: userId,
@@ -211,7 +207,7 @@ router.get("/stats", async (req: Request, res: Response) => {
       },
     });
 
-    // 3. CALCULATE STATS
+    // Calculate stats
     const totalSessions = sessions.length;
 
     let averageScore = 0;
@@ -223,7 +219,7 @@ router.get("/stats", async (req: Request, res: Response) => {
       averageScore = Math.round(totalScore / totalSessions);
     }
 
-    // 4. RETURN RESULTS
+    // Return results
     res.json({
       averageScore,
       totalSessions,
@@ -234,13 +230,11 @@ router.get("/stats", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/session/:id/attempts
-// Usage: Get all attempts for a specific session (For the Session Review page)
 router.get("/:id/attempts", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // 1. Fetch ALL attempts (including retries)
+    // Fetch all attempts (including retries)
     const allAttempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: id },
       include: {
@@ -254,7 +248,7 @@ router.get("/:id/attempts", async (req: Request, res: Response) => {
       orderBy: { createdAt: "asc" },
     });
 
-    // 2. Filter: Keep only the BEST attempt per Question ID
+    // Keep only the best attempt per Question ID
     const bestAttemptsMap = new Map<string, (typeof allAttempts)[0]>();
 
     for (const attempt of allAttempts) {
@@ -280,8 +274,7 @@ router.get("/:id/attempts", async (req: Request, res: Response) => {
       }
     }
 
-    // 3. Convert Map back to Array
-    // We sort by createdAt so they appear in the order the user *finally* answered them
+    // Convert Map back to sorted array
     const uniqueAttempts = Array.from(bestAttemptsMap.values()).sort(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()

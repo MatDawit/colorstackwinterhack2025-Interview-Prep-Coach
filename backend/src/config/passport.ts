@@ -1,7 +1,14 @@
+/**
+ * Passport OAuth strategies
+ * Configures Google and GitHub strategies, linking accounts by email where possible.
+ */
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { prisma } from "../db_connection";
-import { Strategy as GitHubStrategy, Profile as GitHubProfile} from "passport-github2";
+import {
+  Strategy as GitHubStrategy,
+  Profile as GitHubProfile,
+} from "passport-github2";
 
 export function configurePassport() {
   passport.use(
@@ -9,7 +16,7 @@ export function configurePassport() {
       {
         clientID: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: process.env.GOOGLE_CALLBACK_URL!, // should match your Google Console redirect URI
+        callbackURL: process.env.GOOGLE_CALLBACK_URL!,
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
@@ -18,7 +25,6 @@ export function configurePassport() {
             return done(new Error("Google account has no email"), undefined);
           }
 
-          // Upsert user by googleId first, or by email if you want to link accounts
           const googleId = profile.id;
 
           const user = await prisma.user.upsert({
@@ -46,24 +52,28 @@ export function configurePassport() {
       {
         clientID: process.env.GITHUB_CLIENT_ID!,
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-        callbackURL: process.env.GITHUB_CALLBACK_URL!, // must match GitHub OAuth App callback
+        callbackURL: process.env.GITHUB_CALLBACK_URL!,
         scope: ["user:email"],
       },
-      async (_accessToken: string, _refreshToken: string, profile: GitHubProfile, done: any) => {
+      async (
+        _accessToken: string,
+        _refreshToken: string,
+        profile: GitHubProfile,
+        done: any
+      ) => {
         try {
-          // GitHub may not return email unless:
-          // - user has public email OR
-          // - you request user:email scope (we did)
           const email = profile.emails?.[0]?.value;
 
           if (!email) {
-            return done(new Error("GitHub account has no accessible email"), undefined);
+            return done(
+              new Error("GitHub account has no accessible email"),
+              undefined
+            );
           }
 
           const githubId = profile.id;
           const githubLogin = profile.username;
 
-          // Link by email (recommended) so a user can login via Google OR GitHub
           const user = await prisma.user.upsert({
             where: { email },
             update: {
@@ -86,5 +96,4 @@ export function configurePassport() {
       }
     )
   );
-  
 }

@@ -1,3 +1,7 @@
+/**
+ * Analytics routes
+ * Returns aggregated session data for dashboards.
+ */
 import { Router, Request, Response } from "express";
 import { prisma } from "../db_connection";
 import jwt from "jsonwebtoken";
@@ -5,7 +9,6 @@ import jwt from "jsonwebtoken";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-// Helper: Format seconds (e.g., 90 -> "01:30")
 function formatDuration(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;

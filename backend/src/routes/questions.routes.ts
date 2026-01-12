@@ -1,14 +1,16 @@
+/**
+ * Questions routes
+ * Serves interview questions from the database.
+ */
 import { Router, Request, Response } from "express";
 import { prisma } from "../db_connection";
 
 const router = Router();
 
-// GET /api/questions
-// Replaces the frontend file reading logic with a Database Query
 router.get("/", async (req: Request, res: Response) => {
   try {
     const questions = await prisma.question.findMany();
-    
+
     // Return in the format the frontend expects: { questions: [...] }
     res.json({ questions });
   } catch (error) {
