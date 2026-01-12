@@ -14,6 +14,9 @@ import path from "path";
 import preferencesRouter from "./routes/preferences.routes";
 import resumeRoutes from './routes/resume.routes';
 
+
+
+
 // read the env file
 dotenv.config();
 // create the express app
@@ -27,11 +30,11 @@ app.use(passport.initialize());
 
 // middleware are fxn that run before the routes
 app.use(cors()); // allows the frontend to make requests to the backend while they are on diff ports
-app.use(express.json({ limit: "15mb" })); // parses the json from requests body
-app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+app.use(express.json()); // parses the json from requests body
 
-// Serve uploaded files statically
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // register the auth routes give them all a starting name
 // sign up url will be /api/auth/signup
@@ -58,13 +61,12 @@ app.use("/api/profile", profileRouter);
 
 app.use("/api/profile/preferences", preferencesRouter);
 
-// register resume routes
-app.use('/api', resumeRoutes);
-
 // check if backend is running
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Backend is running!" });
 });
+
+app.use('/api', resumeRoutes);
 
 // start the server and make it listen on PORT 5000
 app.listen(PORT, () => {
