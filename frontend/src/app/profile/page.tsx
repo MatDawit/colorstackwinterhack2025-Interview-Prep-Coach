@@ -188,7 +188,7 @@ export default function ProfilePage() {
       setTimeout(() => {
         setSaveStatus("idle");
         router.push("/dashboard");
-      }, 1500);
+      }, 0);
     } catch (e) {
       console.error(e);
       setSaveStatus("error");
