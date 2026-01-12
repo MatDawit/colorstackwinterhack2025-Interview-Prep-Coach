@@ -68,6 +68,15 @@ const pageBg = !mounted
 
   // password UI state (placeholders)
   const [pwLoading, setPwLoading] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSaving, setPwSaving] = useState(false);
+
+  // optional: detect if password exists (if you return this from backend)
+  const [hasPassword, setHasPassword] = useState(true);
 
   
   useEffect(() => {
@@ -206,6 +215,51 @@ const pageBg = !mounted
       e.target.value = "";
     }
   }
+
+async function submitPasswordChange() {
+  setPwError(null);
+
+  if (!newPassword || newPassword.length < 8) {
+    setPwError("New password must be at least 8 characters.");
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    setPwError("New password and confirmation do not match.");
+    return;
+  }
+
+  setPwSaving(true);
+
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not signed in");
+
+    const res = await fetch("http://localhost:5000/api/auth/password", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        currentPassword: currentPassword || undefined,
+        newPassword,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to change password");
+
+    setPwOpen(false);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  } catch (e: any) {
+    setPwError(e.message || "Failed to change password");
+  } finally {
+    setPwSaving(false);
+  }
+}
+
 
 async function removeResume() {
   try {
@@ -608,7 +662,9 @@ async function removeResume() {
                       buttonLabel="Change"
                       onClick={() => {
                         // TODO: open modal or route to /profile/account/password
-                        alert("Hook up Change Password flow here.");
+                        // alert("Hook up Change Password flow here.");
+                        setPwOpen(true);
+
                       }}
                       loading={pwLoading}
                       icon={<Shield className={`h-4 w-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} />}
@@ -630,6 +686,91 @@ async function removeResume() {
                     If you signed up with Google/GitHub only, password features may be unavailable until you set a password.
                   </p>
                 </section>
+
+                {pwOpen && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className={`w-full max-w-md rounded-2xl border shadow-xl p-6 ${
+                    isDarkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"
+                    }`}>
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                        <h2 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                            Change Password
+                        </h2>
+                        <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
+                            Choose a strong password you’ll remember.
+                        </p>
+                        </div>
+                        <button
+                        onClick={() => setPwOpen(false)}
+                        className={`text-sm font-semibold ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}
+                        >
+                        Close
+                        </button>
+                    </div>
+
+                    <div className="mt-5 space-y-4">
+                        {/* If you want to always require current password, keep this always */}
+                        <div>
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                            Current Password
+                        </label>
+                        <input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className={`w-full rounded-xl border px-3 py-3 text-sm outline-none ${
+                            isDarkMode ? "border-gray-700 bg-gray-950 text-gray-200" : "border-gray-300 bg-white text-gray-900"
+                            }`}
+                            placeholder="••••••••"
+                        />
+                        </div>
+
+                        <div>
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                            New Password
+                        </label>
+                        <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className={`w-full rounded-xl border px-3 py-3 text-sm outline-none ${
+                            isDarkMode ? "border-gray-700 bg-gray-950 text-gray-200" : "border-gray-300 bg-white text-gray-900"
+                            }`}
+                            placeholder="At least 8 characters"
+                        />
+                        </div>
+
+                        <div>
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                            Confirm New Password
+                        </label>
+                        <input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className={`w-full rounded-xl border px-3 py-3 text-sm outline-none ${
+                            isDarkMode ? "border-gray-700 bg-gray-950 text-gray-200" : "border-gray-300 bg-white text-gray-900"
+                            }`}
+                            placeholder="Repeat new password"
+                        />
+                        </div>
+
+                        {pwError && <p className="text-sm text-red-600">{pwError}</p>}
+
+                        <button
+                        onClick={submitPasswordChange}
+                        disabled={pwSaving}
+                        className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                        >
+                        {pwSaving ? "Updating..." : "Update Password"}
+                        </button>
+                    </div>
+                    </div>
+                </div>
+                )}
+
+
 
                 {/* Danger Zone */}
                 <section className={`mt-6 rounded-2xl border p-6 shadow-sm ${

@@ -2,7 +2,7 @@
 
 An intelligent interview preparation platform powered by AI that helps candidates practice behavioral and technical interview questions with personalized feedback and performance analytics.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Project Description](#project-description)
 - [Problem & Solution](#problem--solution)
@@ -12,7 +12,7 @@ An intelligent interview preparation platform powered by AI that helps candidate
 - [Usage Instructions](#usage-instructions)
 - [Project Structure](#project-structure)
 
-## 🎯 Project Description
+## Project Description
 
 Interview Prep Coach is a full-stack web application designed to help job candidates prepare for technical and behavioral interviews. The platform provides an interactive environment where users can:
 
@@ -25,7 +25,7 @@ Interview Prep Coach is a full-stack web application designed to help job candid
 
 The application combines modern web technologies with AI capabilities to create a personalized, adaptive learning experience for interview preparation.
 
-## 💡 Problem & Solution
+## Problem & Solution
 
 ### The Problem
 
@@ -48,7 +48,7 @@ Interview Prep Coach addresses these challenges by:
 5. **Resume Integration**: Allowing candidates to upload and reference their resumes during practice
 6. **User Authentication**: Supporting multiple authentication methods (email, Google, GitHub)
 
-## ✨ Features
+## Features
 
 ### User Management
 
@@ -81,7 +81,7 @@ Interview Prep Coach addresses these challenges by:
 - **Customizable Avatar**: Choose shapes and colors for profile personalization
 - **Interview History**: View all past practice sessions and attempts
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 ### Frontend
 
@@ -112,7 +112,7 @@ Interview Prep Coach addresses these challenges by:
 - **Version Control**: Git
 - **Database Migrations**: Prisma Migrations
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 
