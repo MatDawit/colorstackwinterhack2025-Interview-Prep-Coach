@@ -67,7 +67,7 @@ export default function Signup() {
         }
 
         // Redirect to dashboard
-        router.push("/dashboard");
+        router.push("/setup");
       } else {
         // Display specific error from backend
         setErrorTitle("Sign Up Failed");
