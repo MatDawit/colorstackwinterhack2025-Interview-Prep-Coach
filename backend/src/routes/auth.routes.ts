@@ -1,9 +1,10 @@
 import { Router } from "express"
 import { Request } from "express"
 import { Response } from "express"
-import { login, signup } from '../services/auth.service'
+import { login, signup, updatePassword } from '../services/auth.service'
 import passport from "passport"
 import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../services/auth.middleware";
 
 // create the router
 // this is where i'll add new endpoints
@@ -115,6 +116,23 @@ router.get(
         res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
     }
 );
+
+// Password update endpoint
+router.patch('/password', authenticateJWT, async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).authenticatedUser.id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!newPassword) {
+            return res.status(400).json({ error: 'New password is required.' });
+        }
+
+        const result = await updatePassword(userId, currentPassword, newPassword);
+        res.status(200).json(result);
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
+});
 
 // export the router
 export default router
