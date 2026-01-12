@@ -293,7 +293,7 @@ async function removeResume() {
 
 
   function connectGoogle() {
-    // For your OAuth flow: redirect to backend
+    // For OAuth flow: redirect to backend
     window.location.href = "http://localhost:5000/api/auth/google";
   }
 
@@ -661,7 +661,6 @@ async function removeResume() {
                       description="Update your password for email + password login."
                       buttonLabel="Change"
                       onClick={() => {
-                        // TODO: open modal or route to /profile/account/password
                         // alert("Hook up Change Password flow here.");
                         setPwOpen(true);
 

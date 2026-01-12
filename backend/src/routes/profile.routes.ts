@@ -233,8 +233,6 @@ router.get("/", async (req: Request, res: Response) => {
         id: true,
         email: true,            // show email (not editable)
         name: true,
-        targetRole: true,
-        experienceLevel: true,
         bio: true,
         location: true,
         avatarUrl: true,
@@ -267,8 +265,6 @@ router.patch("/", async (req: Request, res: Response) => {
     // These are the only fields we allow updating from profile settings:
     const {
       name,
-      targetRole,
-      experienceLevel,
       bio,
       location,
       avatarUrl,
@@ -281,8 +277,6 @@ router.patch("/", async (req: Request, res: Response) => {
       data: {
         // Only set fields if provided; undefined fields won't overwrite
         name,
-        targetRole,
-        experienceLevel,
         bio,
         location,
         avatarUrl,
@@ -293,8 +287,6 @@ router.patch("/", async (req: Request, res: Response) => {
         id: true,
         email: true,
         name: true,
-        targetRole: true,
-        experienceLevel: true,
         bio: true,
         location: true,
         avatarUrl: true,

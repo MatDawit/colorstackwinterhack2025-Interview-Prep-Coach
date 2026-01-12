@@ -133,6 +133,9 @@ export async function login(email: string, password: string){
     if (!user) {
         throw new Error("Invalid email or password. Please try again.")
     }
+    if (!user.passwordHash) {
+    throw new Error("This account uses Google/GitHub sign-in. Please sign in with your provider or set a password in Account settings.");
+    }
 
     // verify the user password
     const validPW = await bcrypt.compare(password, user.passwordHash)

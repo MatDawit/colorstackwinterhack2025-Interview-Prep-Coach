@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -9,38 +7,26 @@ datasource db {
   provider = "postgresql"
 }
 
-// --- Enums for session status ---
-enum SessionStatus {
-  IN_PROGRESS // User is currently answering
-  COMPLETED // User finished all questions successfully
-  ABANDONED // User clicked away/reset mid-session
-}
-
-// User authentication and profile 
 model User {
-  id           String  @id @default(uuid())
-  email        String  @unique
-  name         String?
-  passwordHash String?
-
-  googleId    String? @unique
-  githubId    String? @unique
-  githubLogin String?
-
-  targetRole      String?
-  experienceLevel String?
-  bio             String?
-  location        String?
-  avatarUrl       String?
-  avatarShape     String?
-  avatarBorder    String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  resume      Resume?
-  sessions    Session[]
-  Preferences Preferences?
+  id                  String       @id @default(uuid())
+  email               String       @unique
+  name                String?
+  passwordHash        String?
+  googleId            String?      @unique
+  githubId            String?      @unique
+  githubLogin         String?
+  bio                 String?
+  location            String?
+  avatarUrl           String?
+  avatarShape         String?
+  avatarBorder        String?
+  darkMode            Boolean      @default(false)
+  onboardingCompleted Boolean      @default(false)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  Preferences         Preferences?
+  resume              Resume?
+  sessions            Session[]
 
   @@index([email])
 }
@@ -51,109 +37,86 @@ model Resume {
   resumeUrl       String
   resumeFileName  String
   resumeUpdatedAt DateTime @default(now())
-  storagePath     String?  // ✅ make optional
+  storagePath     String?
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId])
 }
 
-
-
 model Preferences {
-  id     String @id @default(uuid())
-  userId String @unique
-
-  // Interview defaults
-  defaultRole       String @default("Software Engineering")
-  defaultDifficulty String @default("Basic") // "Basic" | "Intermediate" | "Advanced"
-
-  focusBehavioral   Boolean @default(true)
-  focusTechnical    Boolean @default(false)
-  focusSystemDesign Boolean @default(false)
-
-  autoStartNext Boolean @default(false)
-
-  // Feedback prefs
-  feedbackEmphasize String  @default("Balance") // Balance | Clarity | Storytelling | Confidence | Technical Depth
-  feedbackTone      String  @default("Encouraging") // Encouraging | Direct | Strict
-  feedbackDetail    String  @default("Standard") // Brief | Standard | Deep
-  showSampleAnswer  Boolean @default(true)
-
-  // Practice flow
-  enableTimer         Boolean @default(true)
-  countdownSeconds    Int     @default(0)
-  autoSubmitOnSilence Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  defaultRole         String   @default("Software Engineering")
+  defaultDifficulty   String   @default("Basic")
+  focusBehavioral     Boolean  @default(true)
+  focusTechnical      Boolean  @default(false)
+  focusSystemDesign   Boolean  @default(false)
+  autoStartNext       Boolean  @default(false)
+  feedbackEmphasize   String   @default("Balance")
+  feedbackTone        String   @default("Encouraging")
+  feedbackDetail      String   @default("Standard")
+  showSampleAnswer    Boolean  @default(true)
+  enableTimer         Boolean  @default(true)
+  countdownSeconds    Int      @default(0)
+  autoSubmitOnSilence Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Question bank (seeded from JSON)
 model Question {
-  id         String @id @default(uuid())
-  category   String
-  question   String @db.Text
-  role       String @default("Software Engineering")
-  difficulty String @default("Basic")
-  focus      String @default("Behavioral")
-
-  createdAt DateTime @default(now())
-
-  attempts          SessionAttempt[]
+  id                String           @id @default(uuid())
+  category          String
+  question          String
+  role              String           @default("Software Engineering")
+  difficulty        String           @default("Basic")
+  focus             String           @default("Behavioral")
+  createdAt         DateTime         @default(now())
   currentInSessions Session[]
+  attempts          SessionAttempt[]
 
   @@index([category])
 }
 
 model Session {
-  id     String @id @default(uuid())
-  userId String
-
-  // Metadata
-  interviewType     String // "Software Engineering", "Product Mgmt"
-  status            SessionStatus @default(IN_PROGRESS)
+  id                String           @id @default(uuid())
+  userId            String
+  interviewType     String
+  status            SessionStatus    @default(IN_PROGRESS)
   currentQuestionId String?
-  difficulty        String        @default("Basic")
-
-  overallScore  Float? // Average score of attempts
-  totalDuration Int? // Total seconds
-
-  createdAt DateTime  @default(now())
-  endedAt   DateTime?
-
-  // Relations
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  attempts        SessionAttempt[]
-  currentQuestion Question?        @relation(fields: [currentQuestionId], references: [id])
+  difficulty        String           @default("Basic")
+  overallScore      Float?
+  totalDuration     Int?
+  createdAt         DateTime         @default(now())
+  endedAt           DateTime?
+  currentQuestion   Question?        @relation(fields: [currentQuestionId], references: [id])
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts          SessionAttempt[]
 
   @@index([userId])
 }
 
 model SessionAttempt {
-  id String @id @default(uuid())
-
-  sessionId  String
-  questionId String
-
-  // User Content
-  transcription String  @db.Text
-  audioUrl      String?
-  duration      Int? // Duration of this specific answer
-
-  // AI Scoring & Feedback
-  score              Int? // 0-100
-  checklist          Json? // { specific_examples: true... }
-  feedback           String? @db.Text
-  improvedVersion    String? @db.Text
-  actionableFeedback String? @db.Text
-
-  createdAt DateTime @default(now())
-
-  // Relations
-  session  Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id])
+  id                 String   @id @default(uuid())
+  sessionId          String
+  questionId         String
+  transcription      String
+  audioUrl           String?
+  duration           Int?
+  score              Int?
+  checklist          Json?
+  feedback           String?
+  improvedVersion    String?
+  actionableFeedback String?
+  createdAt          DateTime @default(now())
+  question           Question @relation(fields: [questionId], references: [id])
+  session            Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
 }
