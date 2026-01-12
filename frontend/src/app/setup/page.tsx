@@ -6,7 +6,7 @@ import { BrainCircuit, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
 type Preferences = {
-  defaultRole: string;
+  defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
   feedbackEmphasize:
     | "Balance"
@@ -249,7 +249,10 @@ export default function SetupPage() {
                 <select
                   value={prefs.defaultRole}
                   onChange={(e) =>
-                    setPrefs((p) => ({ ...p, defaultRole: e.target.value }))
+                    setPrefs((p) => ({
+                      ...p,
+                      defaultRole: e.target.value as any,
+                    }))
                   }
                   className={`w-full rounded-lg border-2 px-4 py-2.5 text-sm sm:text-base focus:outline-none ${
                     isDarkMode
@@ -258,7 +261,7 @@ export default function SetupPage() {
                   }`}
                 >
                   <option>Software Engineering</option>
-                  <option>Product Manager</option>
+                  <option>Product Management</option>
                   <option>Data Science</option>
                 </select>
               </div>
