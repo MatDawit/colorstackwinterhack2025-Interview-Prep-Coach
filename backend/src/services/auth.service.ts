@@ -136,6 +136,11 @@ export async function login(email: string, password: string) {
     throw new Error("Invalid email or password. Please try again.");
   }
 
+  // Check if user has a password (not OAuth-only account)
+  if (!user.passwordHash) {
+    throw new Error("Invalid email or password. Please try again.");
+  }
+
   // verify the user password
   const validPW = await bcrypt.compare(password, user.passwordHash);
 
