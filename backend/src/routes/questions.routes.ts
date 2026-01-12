@@ -13,9 +13,11 @@ router.get("/", async (req: Request, res: Response) => {
 
     // Return in the format the frontend expects: { questions: [...] }
     res.json({ questions });
+    return;
   } catch (error) {
     console.error("Error fetching questions:", error);
     res.status(500).json({ error: "Failed to fetch questions" });
+    return;
   }
 });
 

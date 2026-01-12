@@ -19,8 +19,10 @@ router.post("/signup", async (req: Request, res: Response) => {
     const { email, password, name } = req.body;
     const result = await signup(email, password, name);
     res.status(201).json(result);
+    return;
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+    return;
   }
 });
 
@@ -29,8 +31,10 @@ router.post("/login", async (req: Request, res: Response) => {
     const { email, password } = req.body;
     const result = await login(email, password);
     res.status(201).json(result);
+    return;
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+    return;
   }
 });
 
@@ -90,13 +94,16 @@ router.patch(
       const { currentPassword, newPassword } = req.body;
 
       if (!newPassword) {
-        return res.status(400).json({ error: "New password is required." });
+        res.status(400).json({ error: "New password is required." });
+        return;
       }
 
       const result = await updatePassword(userId, currentPassword, newPassword);
       res.status(200).json(result);
+      return;
     } catch (error: any) {
       res.status(400).json({ error: error.message });
+      return;
     }
   }
 );

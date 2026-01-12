@@ -20,7 +20,8 @@ router.get("/", async (req: Request, res: Response) => {
     // 1. Auth Check
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
     const token = authHeader.split(" ")[1];
     let userId: string;
@@ -28,7 +29,8 @@ router.get("/", async (req: Request, res: Response) => {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       userId = decoded.userId;
     } catch (err) {
-      return res.status(401).json({ error: "Invalid token" });
+      res.status(401).json({ error: "Invalid token" });
+      return;
     }
 
     // 2. Fetch ONLY Completed Sessions
@@ -87,9 +89,11 @@ router.get("/", async (req: Request, res: Response) => {
     res.json({
       sessions: formattedSessions,
     });
+    return;
   } catch (error: any) {
     console.error("Analytics Error:", error);
     res.status(500).json({ error: error.message });
+    return;
   }
 });
 
