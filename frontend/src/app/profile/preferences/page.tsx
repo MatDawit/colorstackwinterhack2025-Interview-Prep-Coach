@@ -959,7 +959,7 @@ function ToggleRow({
         type="button"
         onClick={onToggle}
         className={[
-          "h-6 w-11 rounded-full transition relative flex-shrink-0",
+          "h-6 w-11 rounded-full transition relative shrink-0",
           enabled ? "bg-blue-600" : isDarkMode ? "bg-gray-600" : "bg-gray-300",
         ].join(" ")}
         aria-label={title}

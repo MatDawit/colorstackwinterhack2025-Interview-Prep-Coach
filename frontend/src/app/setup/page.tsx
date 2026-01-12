@@ -166,8 +166,8 @@ export default function SetupPage() {
       <div
         className={`min-h-screen flex items-center justify-center ${
           isDarkMode
-            ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
-            : "bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100"
+            ? "bg-linear-to-br from-gray-900 via-gray-800 to-gray-900"
+            : "bg-linear-to-br from-purple-100 via-pink-50 to-blue-100"
         }`}
       >
         <div
@@ -191,8 +191,8 @@ export default function SetupPage() {
     <div
       className={`min-h-screen flex justify-center items-center px-4 py-8 sm:py-12 md:py-20 ${
         isDarkMode
-          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
-          : "bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100"
+          ? "bg-linear-to-br from-gray-900 via-gray-800 to-gray-900"
+          : "bg-linear-to-br from-purple-100 via-pink-50 to-blue-100"
       }`}
     >
       {/* Main Setup Card */}

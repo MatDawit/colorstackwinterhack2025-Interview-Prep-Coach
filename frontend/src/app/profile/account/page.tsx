@@ -776,7 +776,7 @@ export default function AccountPage() {
                         Resume Preview
                       </div>
 
-                      <div className="h-[750px] w-full">
+                      <div className="h-187.5 w-full">
                         <iframe
                           title="Resume Preview"
                           className="h-full w-full"

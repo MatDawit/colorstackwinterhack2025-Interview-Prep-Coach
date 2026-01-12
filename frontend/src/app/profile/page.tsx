@@ -534,7 +534,7 @@ export default function ProfilePage() {
                       value={form.bio}
                       onChange={(e) => updateField("bio", e.target.value)}
                       placeholder="Tell us a little about yourself..."
-                      className={`w-full min-h-[110px] rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full min-h-27.5 rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDarkMode
                           ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                           : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
@@ -756,7 +756,7 @@ export default function ProfilePage() {
             </div>
 
             <div
-              className={`relative h-[320px] ${
+              className={`relative h-80 ${
                 isDarkMode ? "bg-gray-900" : "bg-gray-100"
               }`}
             >
