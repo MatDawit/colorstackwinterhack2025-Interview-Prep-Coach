@@ -41,11 +41,11 @@ router.post('/login', async (req: Request, res: Response) => {
         //req and res contain request and response objects from the frontend 
         
         // extract the data from the requests body
-        const { email, password } = req.body
+        const { email, password, rememberMe } = req.body
         // call signuop fxn using the variables from the requests body
-        const result = await login(email, password) // result has a token
+        const result = await login(email, password, !!rememberMe) // result has a token
         // code 201 means success and json result makw result a json and sends it back
-        res.status(201).json(result)
+        res.status(200).json(result)
     } catch (error:any) // if there is any error thrown from the signuo function
     {
         // print out the rror message thrown and a 400 code which means error in HTTP

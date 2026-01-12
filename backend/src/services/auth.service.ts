@@ -113,7 +113,7 @@ text.toUpperCase()             // "HELLO WORLD"
 text.split(" ")               // ["Hello", "World"]
 */
 
-export async function login(email: string, password: string){
+export async function login(email: string, password: string, rememberMe?: boolean){
     // all boxes are filled
     if (!email || !password){
         throw new Error('Please enter both email and password.')
@@ -143,7 +143,7 @@ export async function login(email: string, password: string){
     if(!validPW){
         throw new Error('Invalid email or password. Please try again.')
     }
-    
+     const expiresIn = rememberMe ? '30d' : '7d';
     // generate the token
     const token = jwt.sign(
         {
@@ -151,7 +151,7 @@ export async function login(email: string, password: string){
             email: user.email
         },
         JWT_SECRET!,
-        {expiresIn: '7d'}
+        {expiresIn}
     )
     
     // return token and user info

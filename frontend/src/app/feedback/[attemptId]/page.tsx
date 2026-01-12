@@ -61,7 +61,7 @@ const PracticeFeedback = () => {
   // --- Load Preferences ---
   useEffect(() => {
     const fetchPrefs = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
       try {
         const res = await fetch(

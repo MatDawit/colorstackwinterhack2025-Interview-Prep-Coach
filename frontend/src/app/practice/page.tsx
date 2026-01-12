@@ -97,7 +97,7 @@ export default function Practice() {
   // --- 2. UPDATE PREFS FETCH ---
   useEffect(() => {
     const fetchPrefs = async () => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
       try {
         const res = await fetch(
@@ -178,7 +178,7 @@ export default function Practice() {
     setQId("");
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
@@ -227,7 +227,7 @@ export default function Practice() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
@@ -352,7 +352,7 @@ export default function Practice() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         showError("Authentication Error", "Please log in.");
         setSubmitting(false);

@@ -66,7 +66,7 @@ export default function Login() {
                 if (rememberMe) {
                     localStorage.setItem('rememberedEmail', email)
                 } else {
-                    localStorage.removeItem('rememberedEmail')
+                    sessionStorage.removeItem('rememberedEmail')
                 }
                 
                 // Redirect to dashboard

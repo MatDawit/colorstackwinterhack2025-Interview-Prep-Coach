@@ -25,7 +25,7 @@ export default function Dashboard() {
     const fetchSessionStats = async () => {
       try {
         // Get the JWT token from localStorage (or wherever you store it)
-        const token = localStorage.getItem("token"); // Adjust based on where you store your token
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token"); // Adjust based on where you store your token
 
         // PROTECTION: Redirect to login if no token
         if (!token) {

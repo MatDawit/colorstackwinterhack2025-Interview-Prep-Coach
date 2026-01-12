@@ -30,7 +30,7 @@ export default function Navbar() {
 
   useEffect(() => {
     async function loadMe() {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         setMe(null);
         setLoading(false); // Stop loading immediately if no token

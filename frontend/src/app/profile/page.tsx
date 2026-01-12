@@ -88,13 +88,13 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     setIsSignedIn(!!token);
   }, []);
 
   useEffect(() => {
     async function loadProfile() {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         setLoading(false);
         return;
@@ -149,7 +149,7 @@ export default function ProfilePage() {
   async function saveProfile() {
     setSaveStatus("saving");
 
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       setSaveStatus("error");
       return;
@@ -193,7 +193,7 @@ export default function ProfilePage() {
   }
 
   async function handleSignOut() {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
 
     try {
@@ -214,7 +214,7 @@ export default function ProfilePage() {
   }
 
   async function handleDeleteAccount() {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
 
     try {

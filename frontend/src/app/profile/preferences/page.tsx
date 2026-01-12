@@ -74,7 +74,7 @@ export default function PreferencesPage() {
 
   // 1. Check Authentication First (Matches AnalyticsPage)
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
@@ -84,7 +84,7 @@ export default function PreferencesPage() {
   // 2. Fetch Data (Matches AnalyticsPage logic)
   useEffect(() => {
     async function loadPrefs() {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
@@ -160,7 +160,7 @@ export default function PreferencesPage() {
   }, [router]);
 
   async function savePreferences() {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;

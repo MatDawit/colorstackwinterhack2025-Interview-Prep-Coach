@@ -80,7 +80,7 @@ const pageBg = !mounted
 
   
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     setIsSignedIn(!!token);
 
     // Load account info
@@ -176,7 +176,7 @@ const pageBg = !mounted
       // setAccount(prev => ({ ...prev, resumeFileName: data.fileName, resumeUpdatedAt: data.updatedAt }));
 
       // UI-only simulation
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) throw new Error("Not authenticated");
 
     const formData = new FormData();
@@ -231,7 +231,7 @@ async function submitPasswordChange() {
   setPwSaving(true);
 
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) throw new Error("Not signed in");
 
     const res = await fetch("http://localhost:5000/api/auth/password", {
@@ -263,7 +263,7 @@ async function submitPasswordChange() {
 
 async function removeResume() {
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) throw new Error("Not authenticated");
 
     const res = await fetch("http://localhost:5000/api/profile/resume", {
