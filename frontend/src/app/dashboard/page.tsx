@@ -264,26 +264,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <div className="mt-4">
-                  <h3
-                    className={`text-sm font-semibold mb-2 ${
-                      isDarkMode ? "text-white" : "text-black"
-                    }`}
-                  >
-                    Key Improvement Areas
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full">
-                      STAR Structure
-                    </span>
-                    <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">
-                      Conciseness
-                    </span>
-                    <span className="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full">
-                      Technical Depth
-                    </span>
-                  </div>
-                </div>
+                <div className="mt-4"></div>
               </div>
             </div>
 
