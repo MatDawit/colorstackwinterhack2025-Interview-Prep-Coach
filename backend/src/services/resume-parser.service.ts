@@ -1,4 +1,3 @@
-import PDFParser from 'pdf2json';
 import { GoogleGenAI } from '@google/genai';
 import crypto from 'crypto';
 
@@ -45,27 +44,15 @@ export async function parseResumeFromBuffer(buffer: Buffer): Promise<ParsedResum
       return resumeCache.get(hash)!;
     }
 
-    // 3. Extract text from PDF
-    const pdfParser = new PDFParser();
-    
-    const pdfText = await new Promise<string>((resolve, reject) => {
-      pdfParser.on('pdfParser_dataError', (errData: any) => reject(errData.parserError));
-      pdfParser.on('pdfParser_dataReady', () => {
-        const text = (pdfParser as any).getRawTextContent();
-        resolve(text);
-      });
-      pdfParser.parseBuffer(buffer);
-    });
+    console.log('📄 Processing PDF with Gemini Vision (handles image-based PDFs)...');
 
-    console.log('📄 Extracted text from PDF (first 500 chars):', pdfText.substring(0, 500));
+    // 3. Convert PDF to base64 for Gemini Vision
+    const base64Pdf = buffer.toString('base64');
+    console.log('📊 PDF size:', buffer.length, 'bytes');
 
-    // 4. Use Gemini AI to parse the text into structured format
-    const prompt = `You are a resume parser. Extract structured information from the following resume text and return it as JSON.
+    // 4. Use Gemini Vision to read the PDF and extract structured data
+    const prompt = `You are a resume parser. Read this resume PDF and extract structured information. Return ONLY valid JSON with this exact structure:
 
-Resume Text:
-${pdfText}
-
-Parse the resume and return a JSON object with this exact structure:
 {
   "headline": "A brief professional headline (e.g., 'Computer Engineering Student | ML Projects | Full-stack Developer')",
   "summary": "A 2-4 sentence professional summary",
@@ -106,13 +93,22 @@ Important:
 - If a field is not found, use empty string or empty array
 - Return ONLY valid JSON, no markdown formatting or explanations`;
 
-    // Use gemini-2.5-flash-lite (same as your working feedback routes)
+    console.log('🚀 Sending PDF to Gemini Vision API...');
+
     const result = await genAI.models.generateContent({
       model: 'gemini-2.5-flash-lite',
       contents: [
         {
           role: 'user',
-          parts: [{ text: prompt }]
+          parts: [
+            { text: prompt },
+            { 
+              inlineData: { 
+                mimeType: 'application/pdf', 
+                data: base64Pdf 
+              } 
+            }
+          ]
         }
       ]
     });
@@ -124,17 +120,36 @@ Important:
     }
 
     console.log('🤖 Gemini response received');
+    console.log('='.repeat(80));
+    console.log('📥 RAW GEMINI RESPONSE:');
+    console.log(responseText);
+    console.log('='.repeat(80));
 
     // 5. Clean up the response (remove markdown code blocks if present)
     let jsonText = responseText.trim();
     if (jsonText.startsWith('```json')) {
       jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      console.log('🧹 Removed ```json markdown');
     } else if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/```\n?/g, '');
+      console.log('🧹 Removed ``` markdown');
     }
+
+    console.log('='.repeat(80));
+    console.log('🧼 CLEANED JSON:');
+    console.log(jsonText);
+    console.log('='.repeat(80));
 
     // 6. Parse JSON
     const parsedData: ParsedResume = JSON.parse(jsonText);
+
+    console.log('✅ JSON parsed successfully');
+    console.log('📋 Summary:');
+    console.log('   Headline:', parsedData.headline);
+    console.log('   Skills:', parsedData.skills.length);
+    console.log('   Roles:', parsedData.roles.length);
+    console.log('   Projects:', parsedData.projects.length);
+    console.log('   Education:', parsedData.education.length);
 
     // 7. Cache the result for 1 hour (avoids re-parsing same resume)
     resumeCache.set(hash, parsedData);

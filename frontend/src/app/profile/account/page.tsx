@@ -188,7 +188,7 @@ const pageBg = !mounted
     setResumePreviewUrl(localUrl);
     }
 
-    const res = await fetch("http://localhost:5000/api/profile/resume", {
+    const res = await fetch("http://localhost:5000/api/profile/resume/upload", {
     method: "POST",
     headers: {
         Authorization: `Bearer ${token}`,
