@@ -33,9 +33,9 @@ export default function Signup() {
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       setErrorTitle("Invalid Password");
-      setErrorMessage("Password must be at least 6 characters long.");
+      setErrorMessage("Password must be at least 8 characters long.");
       setShowErrorModal(true);
       return;
     }
@@ -311,7 +311,7 @@ export default function Signup() {
               isDarkMode ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            Must be at least 6 characters
+            Must be at least 8 characters
           </p>
         </div>
 
