@@ -43,6 +43,13 @@ export default function Login() {
         const res = await fetch("http://localhost:5000/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        // If token is invalid, clear it
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          return;
+        }
+
         const data = await res.json();
         if (data?.user?.onboardingCompleted) {
           router.push("/dashboard");
@@ -50,7 +57,9 @@ export default function Login() {
           router.push("/setup");
         }
       } catch (_) {
-        router.push("/dashboard");
+        // Clear token on network error during dev/restart
+        localStorage.removeItem("token");
+        router.push("/login");
       }
     })();
   }, [router]);

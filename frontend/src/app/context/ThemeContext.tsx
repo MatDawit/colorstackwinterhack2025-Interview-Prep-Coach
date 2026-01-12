@@ -26,37 +26,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch theme preference from backend
   const fetchTheme = React.useCallback(async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsDarkMode(false);
-        return false;
-      }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsDarkMode(false);
+      return;
+    }
 
+    try {
       const response = await fetch("http://localhost:5000/api/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
+
+      // If 401 or 500, clear token - backend is likely restarted
+      if (response.status === 401 || response.status === 500) {
+        localStorage.removeItem("token");
+        setIsDarkMode(false);
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
-        const darkModeEnabled = data.ok && data.user?.darkMode ? true : false;
-        setIsDarkMode(darkModeEnabled);
-        // Cache theme preference for faster subsequent loads
-        localStorage.setItem(
-          "cachedDarkMode",
-          darkModeEnabled ? "true" : "false"
-        );
-        return darkModeEnabled;
-      } else {
-        setIsDarkMode(false);
-        return false;
+        setIsDarkMode(data.user?.darkMode ?? false);
       }
     } catch (error) {
       console.error("Failed to fetch theme:", error);
       setIsDarkMode(false);
-      return false;
     }
   }, []);
 

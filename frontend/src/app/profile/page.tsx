@@ -116,6 +116,14 @@ export default function ProfilePage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // Handle unauthorized - clear token and redirect
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          setLoading(false);
+          return;
+        }
+
         const raw = await res.text();
         let data: any;
         try {
@@ -126,6 +134,11 @@ export default function ProfilePage() {
         }
 
         if (!res.ok) throw new Error(data.error || "Failed to load profile.");
+
+        // Validate data exists
+        if (!data.user) {
+          throw new Error("No user data in response");
+        }
 
         setForm({
           name: data.user.name ?? "",
@@ -140,8 +153,10 @@ export default function ProfilePage() {
         );
         setBorderColor(data.user.avatarBorder || "#3B82F6");
         setAvatarUrl(data.user.avatarUrl ?? null);
+        setIsSignedIn(true);
       } catch (e) {
         console.error(e);
+        setIsSignedIn(false);
       } finally {
         setLoading(false);
       }

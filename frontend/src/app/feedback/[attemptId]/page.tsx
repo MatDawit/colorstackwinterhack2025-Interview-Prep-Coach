@@ -257,378 +257,404 @@ const PracticeFeedback = () => {
         }`}
       >
         <div className="max-w-[1000px] mx-auto px-6 pt-32 pb-12">
-          {isViewOnly && (
-            <button
-              onClick={() => router.back()}
-              className={`mb-6 flex items-center transition ${
-                isDarkMode
-                  ? "text-gray-400 hover:text-gray-200"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              <ArrowLeft size={20} className="mr-2" /> Back to List
-            </button>
+          {loading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 size={40} className="animate-spin text-blue-600" />
+            </div>
           )}
 
-          <div className="mb-8 text-center md:text-left">
-            <h1
-              className={`text-2xl font-bold ${
-                isDarkMode ? "text-white" : "text-[#1A1A1A]"
-              }`}
-            >
-              Feedback Result
-            </h1>
-            <p
-              className={`mt-2 text-lg ${
-                isDarkMode ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
-              Question {data?.attemptCount || 1} of 4:{" "}
-              <span
-                className={`font-medium ${
-                  isDarkMode ? "text-gray-200" : "text-gray-800"
-                }`}
-              >
-                {data?.question.question}
-              </span>
-            </p>
-          </div>
+          {error && (
+            <div className="text-center py-20 text-red-600">
+              <p>{error}</p>
+            </div>
+          )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            {/* 1. STAR Structure Score Card */}
-            <div
-              className={`rounded-2xl p-8 border shadow-sm flex flex-col items-center text-center transition-colors ${
-                isDarkMode
-                  ? "bg-gray-800 border-gray-700"
-                  : "bg-white border-gray-100"
-              }`}
-            >
-              <h2
-                className={`text-lg font-bold mb-2 ${
-                  isDarkMode ? "text-white" : "text-[#1A1A1A]"
-                }`}
-              >
-                STAR Structure Score
-              </h2>
-              <p
-                className={`text-sm mb-8 px-4 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                Evaluation of how well your answer followed the Situation, Task,
-                Action, Result framework.
+          {!loading && !error && !data && (
+            <div className="text-center py-20">
+              <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
+                No data found
               </p>
+            </div>
+          )}
 
-              <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke={isDarkMode ? "#374151" : "#F3F4F6"}
-                    strokeWidth="16"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="96"
-                    cy="96"
-                    r="80"
-                    stroke={data.score >= 70 ? "#10B981" : "#FACC15"}
-                    strokeWidth="16"
-                    fill="transparent"
-                    strokeDasharray={502.6}
-                    strokeDashoffset={502.6 * (1 - (data?.score || 0) / 100)}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <span
-                  className={`absolute text-5xl font-bold ${
+          {!loading && !error && data && (
+            <>
+              {isViewOnly && (
+                <button
+                  onClick={() => router.back()}
+                  className={`mb-6 flex items-center transition ${
+                    isDarkMode
+                      ? "text-gray-400 hover:text-gray-200"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  <ArrowLeft size={20} className="mr-2" /> Back to List
+                </button>
+              )}
+
+              <div className="mb-8 text-center md:text-left">
+                <h1
+                  className={`text-2xl font-bold ${
                     isDarkMode ? "text-white" : "text-[#1A1A1A]"
                   }`}
                 >
-                  {data?.score}%
-                </span>
-              </div>
-
-              <p
-                className={`text-[14px] leading-relaxed ${
-                  isDarkMode ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                Your answer effectively demonstrated {data?.score}% of the STAR
-                structure.
-              </p>
-            </div>
-
-            {/* 2. Performance Checklist Card */}
-            <div
-              className={`rounded-2xl p-8 border shadow-sm transition-colors ${
-                isDarkMode
-                  ? "bg-gray-800 border-gray-700"
-                  : "bg-white border-gray-100"
-              }`}
-            >
-              <h2
-                className={`text-lg font-bold mb-1 ${
-                  isDarkMode ? "text-white" : "text-[#1A1A1A]"
-                }`}
-              >
-                Performance Checklist
-              </h2>
-              <p
-                className={`text-sm mb-8 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                Key elements identified in your response.
-              </p>
-
-              <div className="space-y-6">
-                {checklistMapping.map((item, index) => {
-                  // Direct property access - no more @ts-ignore needed
-                  const isSuccess = data?.checklist[item.key] === true;
-
-                  return (
-                    <div key={index} className="flex items-start gap-4">
-                      <div
-                        className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
-                          isSuccess
-                            ? isDarkMode
-                              ? "text-emerald-400 bg-emerald-900/30"
-                              : "text-emerald-500 bg-emerald-50"
-                            : isDarkMode
-                            ? "text-red-400 bg-red-900/30"
-                            : "text-red-500 bg-red-50"
-                        }`}
-                      >
-                        {isSuccess ? <Check size={14} /> : <X size={14} />}
-                      </div>
-                      <div>
-                        <h4
-                          className={`text-[15px] font-bold ${
-                            isDarkMode ? "text-gray-200" : "text-[#1A1A1A]"
-                          }`}
-                        >
-                          {item.label}
-                        </h4>
-                        <p
-                          className={`text-[13px] ${
-                            isDarkMode ? "text-gray-400" : "text-gray-500"
-                          }`}
-                        >
-                          {isSuccess ? item.successMsg : item.errorMsg}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Transcript Analysis Card */}
-          <section
-            className={`rounded-2xl p-8 border shadow-sm mt-8 transition-colors ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-100"
-            }`}
-          >
-            <h2
-              className={`text-lg font-bold mb-1 ${
-                isDarkMode ? "text-white" : "text-[#1A1A1A]"
-              }`}
-            >
-              Transcript Analysis
-            </h2>
-            <p
-              className={`text-sm mb-8 ${
-                isDarkMode ? "text-gray-400" : "text-gray-500"
-              }`}
-            >
-              Review your response with AI-highlighted areas for improvement and
-              strengths.
-            </p>
-
-            <div
-              className={`p-6 rounded-xl border ${
-                isDarkMode
-                  ? "bg-gray-900/50 border-gray-700"
-                  : "bg-[#F8F9FA] border-gray-100"
-              }`}
-            >
-              <div
-                className={`text-[15px] leading-[1.8] ${
-                  isDarkMode ? "text-gray-300" : "text-black"
-                }`}
-                dangerouslySetInnerHTML={{
-                  __html: formatTranscript(data.feedback),
-                }}
-              />
-            </div>
-          </section>
-
-          {/* 4. Actionable Feedback Card */}
-          <section
-            className={`rounded-2xl p-8 border shadow-sm mt-8 transition-colors ${
-              isDarkMode
-                ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-100"
-            }`}
-          >
-            <h2
-              className={`text-lg font-bold mb-6 ${
-                isDarkMode ? "text-white" : "text-[#1A1A1A]"
-              }`}
-            >
-              Actionable Feedback
-            </h2>
-            <div
-              className={`text-[15px] leading-relaxed whitespace-pre-line ${
-                isDarkMode ? "text-gray-300" : "text-black"
-              }`}
-            >
-              {data?.actionableFeedback || "No actionable feedback generated."}
-            </div>
-          </section>
-
-          {/* 5. Better Version Card (CONDITIONAL) */}
-          {showSample && (
-            <section
-              className={`rounded-2xl p-8 border shadow-sm mt-8 transition-colors ${
-                isDarkMode
-                  ? "bg-gray-800 border-gray-700"
-                  : "bg-white border-gray-100"
-              }`}
-            >
-              <h2
-                className={`text-lg font-bold mb-1 ${
-                  isDarkMode ? "text-white" : "text-[#1A1A1A]"
-                }`}
-              >
-                Better Version
-              </h2>
-              <p
-                className={`text-sm mb-6 ${
-                  isDarkMode ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
-                Here's an AI-generated improved version of your answer.
-              </p>
-
-              <div
-                className={`p-8 rounded-xl border ${
-                  isDarkMode
-                    ? "bg-gray-900/50 border-gray-700"
-                    : "bg-[#F9FAFB] border-gray-200"
-                }`}
-              >
+                  Feedback Result
+                </h1>
                 <p
-                  className={`text-[15px] leading-[1.8] ${
+                  className={`mt-2 text-lg ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Question {data.attemptCount || 1} of 4:{" "}
+                  <span
+                    className={`font-medium ${
+                      isDarkMode ? "text-gray-200" : "text-gray-800"
+                    }`}
+                  >
+                    {data.question.question}
+                  </span>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                {/* 1. STAR Structure Score Card */}
+                <div
+                  className={`rounded-2xl p-8 border shadow-sm flex flex-col items-center text-center transition-colors ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-100"
+                  }`}
+                >
+                  <h2
+                    className={`text-lg font-bold mb-2 ${
+                      isDarkMode ? "text-white" : "text-[#1A1A1A]"
+                    }`}
+                  >
+                    STAR Structure Score
+                  </h2>
+                  <p
+                    className={`text-sm mb-8 px-4 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Evaluation of how well your answer followed the Situation,
+                    Task, Action, Result framework.
+                  </p>
+
+                  <div className="relative w-48 h-48 flex items-center justify-center mb-8">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="96"
+                        cy="96"
+                        r="80"
+                        stroke={isDarkMode ? "#374151" : "#F3F4F6"}
+                        strokeWidth="16"
+                        fill="transparent"
+                      />
+                      <circle
+                        cx="96"
+                        cy="96"
+                        r="80"
+                        stroke={data.score >= 70 ? "#10B981" : "#FACC15"}
+                        strokeWidth="16"
+                        fill="transparent"
+                        strokeDasharray={502.6}
+                        strokeDashoffset={502.6 * (1 - data.score / 100)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span
+                      className={`absolute text-5xl font-bold ${
+                        isDarkMode ? "text-white" : "text-[#1A1A1A]"
+                      }`}
+                    >
+                      {data.score}%
+                    </span>
+                  </div>
+
+                  <p
+                    className={`text-[14px] leading-relaxed ${
+                      isDarkMode ? "text-gray-300" : "text-gray-600"
+                    }`}
+                  >
+                    Your answer effectively demonstrated {data.score}% of the
+                    STAR structure.
+                  </p>
+                </div>
+
+                {/* 2. Performance Checklist Card */}
+                <div
+                  className={`rounded-2xl p-8 border shadow-sm transition-colors ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-100"
+                  }`}
+                >
+                  <h2
+                    className={`text-lg font-bold mb-1 ${
+                      isDarkMode ? "text-white" : "text-[#1A1A1A]"
+                    }`}
+                  >
+                    Performance Checklist
+                  </h2>
+                  <p
+                    className={`text-sm mb-8 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Key elements identified in your response.
+                  </p>
+
+                  <div className="space-y-6">
+                    {checklistMapping.map((item, index) => {
+                      // Direct property access - no more @ts-ignore needed
+                      const isSuccess = data?.checklist[item.key] === true;
+
+                      return (
+                        <div key={index} className="flex items-start gap-4">
+                          <div
+                            className={`mt-1 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center ${
+                              isSuccess
+                                ? isDarkMode
+                                  ? "text-emerald-400 bg-emerald-900/30"
+                                  : "text-emerald-500 bg-emerald-50"
+                                : isDarkMode
+                                ? "text-red-400 bg-red-900/30"
+                                : "text-red-500 bg-red-50"
+                            }`}
+                          >
+                            {isSuccess ? <Check size={14} /> : <X size={14} />}
+                          </div>
+                          <div>
+                            <h4
+                              className={`text-[15px] font-bold ${
+                                isDarkMode ? "text-gray-200" : "text-[#1A1A1A]"
+                              }`}
+                            >
+                              {item.label}
+                            </h4>
+                            <p
+                              className={`text-[13px] ${
+                                isDarkMode ? "text-gray-400" : "text-gray-500"
+                              }`}
+                            >
+                              {isSuccess ? item.successMsg : item.errorMsg}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Transcript Analysis Card */}
+              <section
+                className={`rounded-2xl p-8 border shadow-sm mt-8 transition-colors ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-100"
+                }`}
+              >
+                <h2
+                  className={`text-lg font-bold mb-1 ${
+                    isDarkMode ? "text-white" : "text-[#1A1A1A]"
+                  }`}
+                >
+                  Transcript Analysis
+                </h2>
+                <p
+                  className={`text-sm mb-8 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  Review your response with AI-highlighted areas for improvement
+                  and strengths.
+                </p>
+
+                <div
+                  className={`p-6 rounded-xl border ${
+                    isDarkMode
+                      ? "bg-gray-900/50 border-gray-700"
+                      : "bg-[#F8F9FA] border-gray-100"
+                  }`}
+                >
+                  <div
+                    className={`text-[15px] leading-[1.8] ${
+                      isDarkMode ? "text-gray-300" : "text-black"
+                    }`}
+                    dangerouslySetInnerHTML={{
+                      __html: formatTranscript(data.feedback),
+                    }}
+                  />
+                </div>
+              </section>
+
+              {/* 4. Actionable Feedback Card */}
+              <section
+                className={`rounded-2xl p-8 border shadow-sm mt-8 transition-colors ${
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-100"
+                }`}
+              >
+                <h2
+                  className={`text-lg font-bold mb-6 ${
+                    isDarkMode ? "text-white" : "text-[#1A1A1A]"
+                  }`}
+                >
+                  Actionable Feedback
+                </h2>
+                <div
+                  className={`text-[15px] leading-relaxed whitespace-pre-line ${
                     isDarkMode ? "text-gray-300" : "text-black"
                   }`}
                 >
-                  {data?.improvedVersion
-                    ? cleanText(data?.improvedVersion)
-                    : "No improved version generated."}
-                </p>
-              </div>
-            </section>
-          )}
+                  {data?.actionableFeedback ||
+                    "No actionable feedback generated."}
+                </div>
+              </section>
 
-          {/* Navigation Buttons */}
-          <div className="flex flex-col items-center gap-8 mt-12">
-            <div className="flex items-center justify-center gap-4 w-full">
-              {isViewOnly ? (
-                // VIEW ONLY MODE
-                <>
-                  <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all"
-                  >
-                    <ArrowLeft size={18} />
-                    Back to Session List
-                  </button>
-
-                  <button
-                    onClick={() => router.push("/dashboard")}
-                    className={`flex items-center gap-2 font-bold text-[14px] transition-all ml-4 ${
-                      isDarkMode
-                        ? "text-gray-400 hover:text-white"
-                        : "text-gray-500 hover:text-[#1A1A1A]"
+              {/* 5. Better Version Card (CONDITIONAL) */}
+              {showSample && (
+                <section
+                  className={`rounded-2xl p-8 border shadow-sm mt-8 transition-colors ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-white border-gray-100"
+                  }`}
+                >
+                  <h2
+                    className={`text-lg font-bold mb-1 ${
+                      isDarkMode ? "text-white" : "text-[#1A1A1A]"
                     }`}
                   >
-                    <Home size={18} />
-                    Return to Dashboard
-                  </button>
-                </>
-              ) : (
-                <>
-                  {/* RETRY BUTTON */}
-                  <button
-                    onClick={() =>
-                      router.push(`/practice?sessionId=${data?.sessionId}`)
-                    }
-                    disabled={isGenerating}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border font-bold text-[14px] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isDarkMode
-                        ? "border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
-                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    Better Version
+                  </h2>
+                  <p
+                    className={`text-sm mb-6 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
                     }`}
                   >
-                    <RotateCcw size={18} />
-                    Retry Question
-                  </button>
+                    Here's an AI-generated improved version of your answer.
+                  </p>
 
-                  {/* NEXT BUTTON */}
-                  <button
-                    onClick={() => handleNavigation("/analytics")}
-                    disabled={isGenerating}
-                    className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
-                      data?.isLastQuestion
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                        : "bg-blue-600 hover:bg-blue-700 text-white"
-                    } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
+                  <div
+                    className={`p-8 rounded-xl border ${
+                      isDarkMode
+                        ? "bg-gray-900/50 border-gray-700"
+                        : "bg-[#F9FAFB] border-gray-200"
+                    }`}
                   >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 size={18} className="animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        {autoStartTimer !== null && !data?.isLastQuestion ? (
-                          `Next Question in ${autoStartTimer}s...`
-                        ) : data?.isLastQuestion ? (
+                    <p
+                      className={`text-[15px] leading-[1.8] ${
+                        isDarkMode ? "text-gray-300" : "text-black"
+                      }`}
+                    >
+                      {data?.improvedVersion
+                        ? cleanText(data?.improvedVersion)
+                        : "No improved version generated."}
+                    </p>
+                  </div>
+                </section>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex flex-col items-center gap-8 mt-12">
+                <div className="flex items-center justify-center gap-4 w-full">
+                  {isViewOnly ? (
+                    // VIEW ONLY MODE
+                    <>
+                      <button
+                        onClick={() => router.back()}
+                        className="flex items-center gap-2 px-8 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all"
+                      >
+                        <ArrowLeft size={18} />
+                        Back to Session List
+                      </button>
+
+                      <button
+                        onClick={() => router.push("/dashboard")}
+                        className={`flex items-center gap-2 font-bold text-[14px] transition-all ml-4 ${
+                          isDarkMode
+                            ? "text-gray-400 hover:text-white"
+                            : "text-gray-500 hover:text-[#1A1A1A]"
+                        }`}
+                      >
+                        <Home size={18} />
+                        Return to Dashboard
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* RETRY BUTTON */}
+                      <button
+                        onClick={() =>
+                          router.push(`/practice?sessionId=${data?.sessionId}`)
+                        }
+                        disabled={isGenerating}
+                        className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border font-bold text-[14px] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                          isDarkMode
+                            ? "border-gray-600 bg-gray-800 text-gray-300 hover:bg-gray-700"
+                            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                        }`}
+                      >
+                        <RotateCcw size={18} />
+                        Retry Question
+                      </button>
+
+                      {/* NEXT BUTTON */}
+                      <button
+                        onClick={() => handleNavigation("/analytics")}
+                        disabled={isGenerating}
+                        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
+                          data?.isLastQuestion
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
+                      >
+                        {isGenerating ? (
                           <>
-                            Go to Analytics <BarChart3 size={18} />
+                            <Loader2 size={18} className="animate-spin" />
+                            Processing...
                           </>
                         ) : (
                           <>
-                            Next Question <ArrowRight size={18} />
+                            {autoStartTimer !== null &&
+                            !data?.isLastQuestion ? (
+                              `Next Question in ${autoStartTimer}s...`
+                            ) : data?.isLastQuestion ? (
+                              <>
+                                Go to Analytics <BarChart3 size={18} />
+                              </>
+                            ) : (
+                              <>
+                                Next Question <ArrowRight size={18} />
+                              </>
+                            )}
                           </>
                         )}
-                      </>
-                    )}
-                  </button>
+                      </button>
 
-                  {/* DASHBOARD BUTTON */}
-                  <button
-                    onClick={() => handleNavigation("/dashboard")}
-                    disabled={isGenerating}
-                    className={`flex items-center gap-2 font-bold text-[14px] transition-all ml-4 disabled:opacity-50 ${
-                      isDarkMode
-                        ? "text-gray-400 hover:text-white"
-                        : "text-gray-500 hover:text-[#1A1A1A]"
-                    }`}
-                  >
-                    <Home size={18} />
-                    Return to Dashboard
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
+                      {/* DASHBOARD BUTTON */}
+                      <button
+                        onClick={() => handleNavigation("/dashboard")}
+                        disabled={isGenerating}
+                        className={`flex items-center gap-2 font-bold text-[14px] transition-all ml-4 disabled:opacity-50 ${
+                          isDarkMode
+                            ? "text-gray-400 hover:text-white"
+                            : "text-gray-500 hover:text-[#1A1A1A]"
+                        }`}
+                      >
+                        <Home size={18} />
+                        Return to Dashboard
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
