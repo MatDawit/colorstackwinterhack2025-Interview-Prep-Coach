@@ -20,6 +20,14 @@ export default function Signup() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
   // Handle regular signup
   const handleSignUp = async () => {
     // Clear any previous errors

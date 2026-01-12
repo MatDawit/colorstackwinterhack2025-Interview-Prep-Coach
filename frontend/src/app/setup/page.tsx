@@ -50,6 +50,14 @@ export default function SetupPage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
   const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
   const [saveStatus, setSaveStatus] = useState<
