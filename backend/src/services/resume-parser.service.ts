@@ -1,7 +1,11 @@
-import pdfParse from 'pdf-parse';
+import PDFParser from 'pdf2json';
 import { GoogleGenAI } from '@google/genai';
+import crypto from 'crypto';
 
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const genAI = new GoogleGenAI({ apiKey: process.env.FAD_GEMINI_API_KEY || '' });
+
+// In-memory cache (in production, use Redis or database)
+const resumeCache = new Map<string, ParsedResume>();
 
 export interface ParsedResume {
   headline: string;
@@ -32,18 +36,34 @@ export interface ParsedResume {
 
 export async function parseResumeFromBuffer(buffer: Buffer): Promise<ParsedResume> {
   try {
-    // 1. Extract text from PDF
-    // @ts-ignore
-    const pdfData = await pdfParse(buffer);
-    const resumeText = pdfData.text;
+    // 1. Create hash of PDF content for caching
+    const hash = crypto.createHash('md5').update(buffer).digest('hex');
+    
+    // 2. Check cache first (avoid unnecessary API calls)
+    if (resumeCache.has(hash)) {
+      console.log('✅ Using cached resume data - no API call needed');
+      return resumeCache.get(hash)!;
+    }
 
-    console.log('Extracted text from PDF (first 500 chars):', resumeText.substring(0, 500));
+    // 3. Extract text from PDF
+    const pdfParser = new PDFParser();
+    
+    const pdfText = await new Promise<string>((resolve, reject) => {
+      pdfParser.on('pdfParser_dataError', (errData: any) => reject(errData.parserError));
+      pdfParser.on('pdfParser_dataReady', () => {
+        const text = (pdfParser as any).getRawTextContent();
+        resolve(text);
+      });
+      pdfParser.parseBuffer(buffer);
+    });
 
-    // 2. Use Gemini to parse the text into structured format
+    console.log('📄 Extracted text from PDF (first 500 chars):', pdfText.substring(0, 500));
+
+    // 4. Use Gemini AI to parse the text into structured format
     const prompt = `You are a resume parser. Extract structured information from the following resume text and return it as JSON.
 
 Resume Text:
-${resumeText}
+${pdfText}
 
 Parse the resume and return a JSON object with this exact structure:
 {
@@ -86,9 +106,15 @@ Important:
 - If a field is not found, use empty string or empty array
 - Return ONLY valid JSON, no markdown formatting or explanations`;
 
+    // Use gemini-2.5-flash-lite (same as your working feedback routes)
     const result = await genAI.models.generateContent({
-      model: 'gemini-1.5-flash',
-      contents: prompt
+      model: 'gemini-2.5-flash-lite',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }]
+        }
+      ]
     });
 
     const responseText = result.text;
@@ -97,9 +123,9 @@ Important:
       throw new Error('Gemini returned an empty response');
     }
 
-    console.log('Gemini response received');
+    console.log('🤖 Gemini response received');
 
-    // Clean up the response (remove markdown code blocks if present)
+    // 5. Clean up the response (remove markdown code blocks if present)
     let jsonText = responseText.trim();
     if (jsonText.startsWith('```json')) {
       jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
@@ -107,12 +133,21 @@ Important:
       jsonText = jsonText.replace(/```\n?/g, '');
     }
 
-    // Parse JSON
+    // 6. Parse JSON
     const parsedData: ParsedResume = JSON.parse(jsonText);
 
+    // 7. Cache the result for 1 hour (avoids re-parsing same resume)
+    resumeCache.set(hash, parsedData);
+    setTimeout(() => {
+      resumeCache.delete(hash);
+      console.log('🗑️  Cache expired for resume:', hash);
+    }, 3600000); // 1 hour
+
+    console.log('✅ Resume parsed and cached successfully');
     return parsedData;
+
   } catch (error) {
-    console.error('Error parsing resume:', error);
+    console.error('❌ Error parsing resume:', error);
     throw new Error('Failed to parse resume');
   }
 }
