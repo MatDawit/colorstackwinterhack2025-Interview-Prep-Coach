@@ -18,7 +18,7 @@ import {
 import { useTheme } from "../../context/ThemeContext";
 
 type Preferences = {
-  defaultRole: string;
+  defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
   feedbackEmphasize:
     | "Balance"
@@ -456,7 +456,10 @@ export default function PreferencesPage() {
                       label="Role"
                       value={prefs.defaultRole}
                       onChange={(v) =>
-                        setPrefs((p) => ({ ...p, defaultRole: v }))
+                        setPrefs((p) => ({
+                          ...p,
+                          defaultRole: v as Preferences["defaultRole"],
+                        }))
                       }
                       options={[
                         "Software Engineering",
