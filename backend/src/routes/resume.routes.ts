@@ -8,19 +8,22 @@ import { parseResumeFromBuffer } from '../services/resume-parser.service';
 
 const router = Router();
 
-/* -------------------- MULTER CONFIG -------------------- */
+// Configure multer to store in memory (not filesystem)
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['.pdf', '.doc', '.docx'];
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedTypes.includes(ext)) cb(null, true);
-    else cb(new Error('Only PDF and Word documents are allowed'));
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF and Word documents are allowed'));
+    }
   }
 });
 
-/* -------------------- GET METADATA -------------------- */
+// GET /api/profile/resume - Get user's resume metadata
 router.get('/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.authenticatedUser!.id;
@@ -29,7 +32,9 @@ router.get('/profile/resume', requireAuth, async (req: Request, res: Response) =
       where: { userId }
     });
 
-    if (!resume) return res.json({ resume: null });
+    if (!resume) {
+      return res.json({ resume: null });
+    }
 
     res.json({
       resume: {
@@ -38,138 +43,176 @@ router.get('/profile/resume', requireAuth, async (req: Request, res: Response) =
         resumeUpdatedAt: resume.resumeUpdatedAt.toISOString()
       }
     });
-  } catch (err) {
-    console.error('Error fetching resume:', err);
+  } catch (error) {
+    console.error('Error fetching resume:', error);
     res.status(500).json({ error: 'Failed to fetch resume' });
   }
 });
 
-/* -------------------- UPLOAD RESUME -------------------- */
-router.post(
-  '/profile/resume/upload',
-  requireAuth,
-  upload.single('resume'),
-  async (req: Request, res: Response) => {
-    try {
-      const userId = req.authenticatedUser!.id;
-      const file = req.file;
+// POST /api/profile/resume/upload - Upload or update resume
+router.post('/profile/resume/upload', requireAuth, upload.single('resume'), async (req: Request, res: Response) => {
+  try {
+    const userId = req.authenticatedUser!.id;
+    const file = req.file;
 
-      if (!file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      // 🔥 Storage path is ALWAYS: userId/filename
-      const fileExt = path.extname(file.originalname);
-      const filePath = `${userId}/${Date.now()}${fileExt}`;
-
-      console.log('Uploading resume to Supabase:', filePath);
-
-      // Delete old resume if exists
-      const existing = await prisma.resume.findUnique({ where: { userId } });
-
-      if (existing?.storagePath) {
-        await supabase.storage.from('resumes').remove([existing.storagePath]);
-      }
-
-      // Upload
-      const { error: uploadError } = await supabase.storage
-        .from('resumes')
-        .upload(filePath, file.buffer, {
-          contentType: file.mimetype,
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error(uploadError);
-        throw uploadError;
-      }
-
-      // Public URL
-      const { data } = supabase.storage
-        .from('resumes')
-        .getPublicUrl(filePath);
-
-      // Save metadata
-      const resume = await prisma.resume.upsert({
-        where: { userId },
-        update: {
-          resumeUrl: data.publicUrl,
-          resumeFileName: file.originalname,
-          resumeUpdatedAt: new Date(),
-          storagePath: filePath
-        },
-        create: {
-          userId,
-          resumeUrl: data.publicUrl,
-          resumeFileName: file.originalname,
-          storagePath: filePath
-        }
-      });
-
-      res.json({
-        resume: {
-          resumeUrl: resume.resumeUrl,
-          resumeFileName: resume.resumeFileName,
-          resumeUpdatedAt: resume.resumeUpdatedAt.toISOString()
-        }
-      });
-    } catch (err) {
-      console.error('Upload error:', err);
-      res.status(500).json({ error: 'Failed to upload resume' });
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
     }
-  }
-);
 
-/* -------------------- PARSE RESUME -------------------- */
-router.get('api/profile/resume', requireAuth, async (req: Request, res: Response) => {
+    console.log('Uploading resume for user:', userId);
+
+    // Delete old resume from Supabase if exists
+    const existingResume = await prisma.resume.findUnique({
+      where: { userId }
+    });
+
+    if (existingResume) {
+      // Extract old file path from URL and delete from storage
+      const urlParts = existingResume.resumeUrl.split('/resumes/');
+      const oldPath = urlParts.length > 1 ? urlParts[1] : null;
+      if (oldPath) {
+        console.log('Deleting old resume:', oldPath);
+        await supabase.storage.from('resumes').remove([oldPath]);
+      }
+    }
+
+    // Upload to Supabase Storage
+    const fileExt = path.extname(file.originalname);
+    const filePath = `${userId}/${Date.now()}${fileExt}`;
+    
+    console.log('Uploading to Supabase path:', filePath);
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('resumes')
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true
+      });
+
+    if (uploadError) {
+      console.error('Supabase upload error:', uploadError);
+      throw uploadError;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('resumes')
+      .getPublicUrl(filePath);
+
+    const resumeUrl = urlData.publicUrl;
+    
+    console.log('Resume uploaded successfully:', resumeUrl);
+
+    // Save to database
+    const resume = await prisma.resume.upsert({
+      where: { userId },
+      update: {
+        resumeUrl,
+        resumeFileName: file.originalname,
+        resumeUpdatedAt: new Date()
+      },
+      create: {
+        userId,
+        resumeUrl,
+        resumeFileName: file.originalname
+      }
+    });
+
+    res.json({
+      resume: {
+        resumeUrl: resume.resumeUrl,
+        resumeFileName: resume.resumeFileName,
+        resumeUpdatedAt: resume.resumeUpdatedAt.toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading resume:', error);
+    res.status(500).json({ error: 'Failed to upload resume' });
+  }
+});
+
+// GET /api/profile/resume/parse - Parse the user's resume
+router.get('/profile/resume/parse', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.authenticatedUser!.id;
 
-    const resume = await prisma.resume.findUnique({ where: { userId } });
+    console.log('Parsing resume for user:', userId);
 
-    if (!resume || !resume.storagePath) {
-      return res.status(404).json({ error: 'Resume not found' });
+    // Get resume metadata from database
+    const resume = await prisma.resume.findUnique({
+      where: { userId }
+    });
+
+    if (!resume) {
+      return res.status(404).json({ error: 'No resume found. Please upload a resume first.' });
     }
 
-    console.log('Downloading resume:', resume.storagePath);
+    console.log('Fetching resume from Supabase:', resume.resumeUrl);
 
-    const { data, error } = await supabase.storage
+    // Extract file path from URL
+    const urlParts = resume.resumeUrl.split('/resumes/');
+    const filePath = urlParts.length > 1 ? urlParts[1] : null;
+    
+    if (!filePath) {
+      return res.status(404).json({ error: 'Invalid resume URL' });
+    }
+
+    // Download file from Supabase
+    const { data: fileData, error: downloadError } = await supabase.storage
       .from('resumes')
-      .download(resume.storagePath);
+      .download(filePath);
 
-    if (error || !data) {
-      console.error(error);
-      return res.status(404).json({ error: 'Failed to download resume' });
+    if (downloadError || !fileData) {
+      console.error('Error downloading from Supabase:', downloadError);
+      return res.status(404).json({ error: 'Resume file not found' });
     }
 
-    const buffer = Buffer.from(await data.arrayBuffer());
+    // Convert Blob to Buffer
+    const arrayBuffer = await fileData.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
+    console.log('Downloaded resume, size:', buffer.length, 'bytes');
+
+    // Parse the PDF from buffer
     const parsed = await parseResumeFromBuffer(buffer);
 
+    console.log('Resume parsed successfully for user:', userId);
+
     res.json({ parsed });
-  } catch (err) {
-    console.error('Parse error:', err);
+  } catch (error) {
+    console.error('Error parsing resume:', error);
     res.status(500).json({ error: 'Failed to parse resume' });
   }
 });
 
-/* -------------------- DELETE RESUME -------------------- */
+// DELETE /api/profile/resume - Delete resume
 router.delete('/profile/resume', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.authenticatedUser!.id;
 
-    const resume = await prisma.resume.findUnique({ where: { userId } });
-    if (!resume) return res.status(404).json({ error: 'No resume found' });
+    const resume = await prisma.resume.findUnique({
+      where: { userId }
+    });
 
-    if (resume.storagePath) {
-      await supabase.storage.from('resumes').remove([resume.storagePath]);
+    if (!resume) {
+      return res.status(404).json({ error: 'No resume found' });
     }
 
-    await prisma.resume.delete({ where: { userId } });
+    // Delete from Supabase Storage
+    const urlParts = resume.resumeUrl.split('/resumes/');
+    const filePath = urlParts.length > 1 ? urlParts[1] : null;
+    if (filePath) {
+      await supabase.storage.from('resumes').remove([filePath]);
+    }
+
+    // Delete from database
+    await prisma.resume.delete({
+      where: { userId }
+    });
 
     res.json({ message: 'Resume deleted successfully' });
-  } catch (err) {
-    console.error('Delete error:', err);
+  } catch (error) {
+    console.error('Error deleting resume:', error);
     res.status(500).json({ error: 'Failed to delete resume' });
   }
 });
