@@ -296,7 +296,7 @@ export default function Login() {
           />
         </div>
 
-        {/* Remember Me & Forgot Password */}
+        {/* Remember Me */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
           <label className="flex items-center">
             <input
@@ -314,12 +314,6 @@ export default function Login() {
               Remember me
             </span>
           </label>
-          <button
-            className="text-sm text-blue-600 hover:underline font-medium text-left sm:text-right"
-            disabled={isLoading}
-          >
-            Forgot password?
-          </button>
         </div>
 
         {/* Sign In Button */}
