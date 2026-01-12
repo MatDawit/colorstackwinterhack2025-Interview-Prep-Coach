@@ -15,7 +15,21 @@ export default function AuthCallbackPage() {
     }
 
     localStorage.setItem("token", token);
-    router.replace("/dashboard");
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data?.user?.onboardingCompleted) {
+          router.replace("/dashboard");
+        } else {
+          router.replace("/setup");
+        }
+      } catch (_) {
+        router.replace("/dashboard");
+      }
+    })();
   }, [params, router]);
 
   return (

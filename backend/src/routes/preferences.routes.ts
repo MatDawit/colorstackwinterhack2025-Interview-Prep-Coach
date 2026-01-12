@@ -94,6 +94,11 @@ router.patch("/", async (req: Request, res: Response) => {
         autoSubmitOnSilence,
       },
     });
+    // Mark onboarding as completed when preferences are saved
+    await prisma.user.update({
+      where: { id: userId },
+      data: { onboardingCompleted: true },
+    });
     return res.json({ ok: true, preferences: updated });
   } catch (error) {
     return res.status(401).json({ error: "Unauthorized" });

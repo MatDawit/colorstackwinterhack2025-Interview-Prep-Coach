@@ -33,6 +33,7 @@ model User {
   avatarShape     String?
   avatarBorder    String?
   darkMode        Boolean @default(false)
+  onboardingCompleted Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

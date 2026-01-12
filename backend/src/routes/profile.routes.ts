@@ -5,7 +5,6 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET as string;
 
@@ -23,13 +22,13 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-    fileFilter: (_req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     const ok = file.mimetype === "application/pdf";
     if (!ok) {
-        return cb(new Error("Only PDF files are supported."));
+      return cb(new Error("Only PDF files are supported."));
     }
     return cb(null, true);
-    },
+  },
 });
 
 function requireAuth(req: Request, _res: Response, next: Function) {
@@ -81,7 +80,7 @@ router.post("/signout", async (req: Request, res: Response) => {
   try {
     // Verify the token is valid
     getUserIdFromRequest(req);
-    
+
     // For JWT-based auth, we don't need to do anything on the backend
     // The frontend will remove the token from localStorage
     // The user account remains in the database, they just need to log in again
@@ -106,10 +105,10 @@ router.delete("/delete", async (req: Request, res: Response) => {
 
     // Delete user's session attempts first
     await prisma.sessionAttempt.deleteMany({
-      where: { 
+      where: {
         session: {
-          userId: userId
-        }
+          userId: userId,
+        },
       },
     });
 
@@ -148,54 +147,64 @@ router.get("/resume", async (req: Request, res: Response) => {
   }
 });
 
-router.post("/resume", requireAuth, upload.single("resume"), async (req: Request, res: Response) => {
-  try {
-    const userId = getUserIdFromRequest(req);
+router.post(
+  "/resume",
+  requireAuth,
+  upload.single("resume"),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = getUserIdFromRequest(req);
 
-    if (!req.file) {
-      return res.status(400).json({ error: "Missing resume file" });
+      if (!req.file) {
+        return res.status(400).json({ error: "Missing resume file" });
+      }
+
+      const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+      const resumeFileName = req.file.originalname;
+
+      // If they already had a resume, delete the old file (best-effort)
+      const existing = await prisma.resume.findUnique({
+        where: { userId },
+        select: { resumeUrl: true },
+      });
+
+      if (existing?.resumeUrl) {
+        const absOld = path.join(
+          process.cwd(),
+          existing.resumeUrl.replace("/uploads/", "uploads/")
+        );
+        try {
+          fs.unlinkSync(absOld);
+        } catch {}
+      }
+
+      // Upsert record (one resume per user)
+      const saved = await prisma.resume.upsert({
+        where: { userId },
+        update: {
+          resumeUrl,
+          resumeFileName,
+          // resumeUpdatedAt auto-updates because of @updatedAt
+        },
+        create: {
+          userId,
+          resumeUrl,
+          resumeFileName,
+        },
+        select: {
+          resumeUrl: true,
+          resumeFileName: true,
+          resumeUpdatedAt: true,
+        },
+      });
+
+      return res.json({ ok: true, resume: saved });
+    } catch (error: any) {
+      console.error(error);
+      return res.status(400).json({ error: error.message });
     }
-
-    const resumeUrl = `/uploads/resumes/${req.file.filename}`;
-    const resumeFileName = req.file.originalname;
-
-    // If they already had a resume, delete the old file (best-effort)
-    const existing = await prisma.resume.findUnique({
-      where: { userId },
-      select: { resumeUrl: true },
-    });
-
-    if (existing?.resumeUrl) {
-      const absOld = path.join(process.cwd(), existing.resumeUrl.replace("/uploads/", "uploads/"));
-      try { fs.unlinkSync(absOld); } catch {}
-    }
-
-    // Upsert record (one resume per user)
-    const saved = await prisma.resume.upsert({
-      where: { userId },
-      update: {
-        resumeUrl,
-        resumeFileName,
-        // resumeUpdatedAt auto-updates because of @updatedAt
-      },
-      create: {
-        userId,
-        resumeUrl,
-        resumeFileName,
-      },
-      select: {
-        resumeUrl: true,
-        resumeFileName: true,
-        resumeUpdatedAt: true,
-      },
-    });
-
-    return res.json({ ok: true, resume: saved });
-  } catch (error: any) {
-    console.error(error);
-    return res.status(400).json({ error: error.message });
   }
-});
+);
 
 router.delete("/resume", async (req: Request, res: Response) => {
   try {
@@ -207,8 +216,13 @@ router.delete("/resume", async (req: Request, res: Response) => {
     });
 
     if (existing?.resumeUrl) {
-      const abs = path.join(process.cwd(), existing.resumeUrl.replace("/uploads/", "uploads/"));
-      try { fs.unlinkSync(abs); } catch {}
+      const abs = path.join(
+        process.cwd(),
+        existing.resumeUrl.replace("/uploads/", "uploads/")
+      );
+      try {
+        fs.unlinkSync(abs);
+      } catch {}
     }
 
     await prisma.resume.deleteMany({ where: { userId } });
@@ -219,8 +233,7 @@ router.delete("/resume", async (req: Request, res: Response) => {
   }
 });
 
-
- /* GET /profile
+/* GET /profile
  * Returns the current user's profile (safe fields only).
  */
 router.get("/", async (req: Request, res: Response) => {
@@ -231,7 +244,7 @@ router.get("/", async (req: Request, res: Response) => {
       where: { id: userId },
       select: {
         id: true,
-        email: true,            // show email (not editable)
+        email: true, // show email (not editable)
         name: true,
         bio: true,
         location: true,
@@ -241,6 +254,7 @@ router.get("/", async (req: Request, res: Response) => {
         createdAt: true,
         updatedAt: true,
         darkMode: true,
+        onboardingCompleted: true,
       },
     });
 
@@ -251,6 +265,24 @@ router.get("/", async (req: Request, res: Response) => {
     return res.json({ ok: true, user });
   } catch (error: any) {
     return res.status(401).json({ error: error.message });
+  }
+});
+
+/**
+ * PATCH /profile/onboarding
+ * Marks onboarding as completed for the current user.
+ */
+router.patch("/onboarding", async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromRequest(req);
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { onboardingCompleted: true },
+      select: { id: true, onboardingCompleted: true },
+    });
+    return res.json({ ok: true, user: updated });
+  } catch (error: any) {
+    return res.status(401).json({ error: error.message || "Unauthorized" });
   }
 });
 

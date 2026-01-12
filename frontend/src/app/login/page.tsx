@@ -29,12 +29,25 @@ export default function Login() {
     }
   }, []);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (respect onboarding status)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/dashboard");
-    }
+    if (!token) return;
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data?.user?.onboardingCompleted) {
+          router.push("/dashboard");
+        } else {
+          router.push("/setup");
+        }
+      } catch (_) {
+        router.push("/dashboard");
+      }
+    })();
   }, [router]);
 
   // Handle regular login
@@ -77,8 +90,19 @@ export default function Login() {
           localStorage.removeItem("rememberedEmail");
         }
 
-        // Redirect to dashboard
-        router.push("/dashboard");
+        // Route based on onboarding status
+        try {
+          const prof = await fetch("http://localhost:5000/api/profile", {
+            headers: { Authorization: `Bearer ${data.token}` },
+          }).then((r) => r.json());
+          if (prof?.user?.onboardingCompleted) {
+            router.push("/dashboard");
+          } else {
+            router.push("/setup");
+          }
+        } catch (_) {
+          router.push("/dashboard");
+        }
       } else {
         // Display specific error from backend
         setErrorTitle("Login Failed");

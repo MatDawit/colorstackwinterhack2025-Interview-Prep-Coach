@@ -50,14 +50,6 @@ export default function SetupPage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/dashboard");
-    }
-  }, [router]);
-
   const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
   const [saveStatus, setSaveStatus] = useState<
@@ -66,14 +58,34 @@ export default function SetupPage() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Check authentication and redirect if already logged in
+  // Check authentication and whether onboarding already completed
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
     }
-    setLoading(false);
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          return;
+        }
+        const data = await res.json();
+        if (data?.user?.onboardingCompleted) {
+          router.push("/dashboard");
+          return;
+        }
+      } catch (_) {
+        // Fail safe: keep user on setup if profile fetch fails but token exists
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [router]);
 
   const savePreferences = async () => {
@@ -137,6 +149,24 @@ export default function SetupPage() {
         error instanceof Error ? error.message : "Failed to save preferences"
       );
       setShowErrorModal(true);
+    }
+  };
+
+  const handleSkip = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    try {
+      await fetch("http://localhost:5000/api/profile/onboarding", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (_) {
+      // Non-blocking: still allow navigation
+    } finally {
+      router.push("/dashboard");
     }
   };
 
@@ -578,7 +608,7 @@ export default function SetupPage() {
         {/* Action Buttons */}
         <div className="flex gap-3 mt-8 sm:mt-10">
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={handleSkip}
             disabled={saveStatus === "saving"}
             className={`flex-1 rounded-lg border-2 py-2.5 sm:py-3 text-sm sm:text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
               isDarkMode
