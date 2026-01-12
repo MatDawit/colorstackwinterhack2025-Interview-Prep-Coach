@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { BrainCircuit, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * Setup/Onboarding page
+ * Allows users to configure interview preferences before starting practice
+ * Collects role, difficulty, feedback style, and practice flow settings
+ */
+
 type Preferences = {
   defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
@@ -58,7 +64,7 @@ export default function SetupPage() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Check authentication and whether onboarding already completed
+  // Check authentication and onboarding status
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -81,7 +87,7 @@ export default function SetupPage() {
           return;
         }
       } catch (_) {
-        // Fail safe: keep user on setup if profile fetch fails but token exists
+        // Keep user on setup if profile fetch fails but token exists
       } finally {
         setLoading(false);
       }
@@ -95,7 +101,7 @@ export default function SetupPage() {
       return;
     }
 
-    // UI Validation
+    // Validate at least one question focus is selected
     const activeFocusCount = Object.values(prefs.questionFocus).filter(
       Boolean
     ).length;
@@ -131,7 +137,6 @@ export default function SetupPage() {
         }),
       });
 
-      // Handle 401 on Save
       if (res.status === 401) {
         localStorage.removeItem("token");
         router.push("/login");
@@ -722,7 +727,7 @@ export default function SetupPage() {
   );
 }
 
-/* ---------- UI Helper Components ---------- */
+/* UI Helper Components */
 
 function PillToggle({
   label,

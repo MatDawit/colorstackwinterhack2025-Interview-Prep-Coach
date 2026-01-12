@@ -6,6 +6,12 @@ import { Search, Filter, BookOpen, Loader2, Database } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useRouter } from "next/navigation";
 
+/**
+ * Question Bank page
+ * Displays all available interview questions with filtering and search
+ * Allows users to browse questions by category and difficulty
+ */
+
 type Question = {
   id: string;
   category: string;
@@ -28,7 +34,7 @@ export default function QuestionBank() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
 
-  // 1. Check Authentication First
+  // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -37,7 +43,7 @@ export default function QuestionBank() {
     }
   }, [router]);
 
-  // 2. Fetch Questions (Protected)
+  // Fetch all available questions from API
   useEffect(() => {
     const fetchQuestions = async () => {
       const token = localStorage.getItem("token");
@@ -51,7 +57,7 @@ export default function QuestionBank() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        // Handle Token Expiry / Invalid Token
+        // Handle token expiry
         if (res.status === 401) {
           localStorage.removeItem("token");
           router.push("/login");
@@ -72,7 +78,7 @@ export default function QuestionBank() {
     fetchQuestions();
   }, [router]);
 
-  // 3. Filter Logic
+  // Apply search and filter logic to questions
   const filteredQuestions = useMemo(() => {
     return questions.filter((q) => {
       const matchesSearch = q.question
@@ -86,13 +92,13 @@ export default function QuestionBank() {
     });
   }, [questions, searchQuery, selectedCategory, selectedDifficulty]);
 
-  // Extract unique categories for dropdown
+  // Extract unique categories for dropdown filter
   const categories = useMemo(() => {
     const cats = new Set(questions.map((q) => q.category));
     return ["All", ...Array.from(cats)];
   }, [questions]);
 
-  // Helper for difficulty badge color
+  // Get color styling for difficulty badges
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
       case "Basic":
@@ -133,7 +139,7 @@ export default function QuestionBank() {
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-6 pt-32 pb-20">
-        {/* --- HEADER --- */}
+        {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1
@@ -160,7 +166,7 @@ export default function QuestionBank() {
           </div>
         </div>
 
-        {/* --- CONTROLS BAR --- */}
+        {/* CONTROLS BAR */}
         <div
           className={`p-4 rounded-xl border shadow-sm mb-8 flex flex-col md:flex-row gap-4 ${
             isDarkMode
@@ -234,7 +240,7 @@ export default function QuestionBank() {
           </div>
         </div>
 
-        {/* --- CONTENT --- */}
+        {/* CONTENT */}
         {error ? (
           <div
             className={`text-center py-10 rounded-xl border ${

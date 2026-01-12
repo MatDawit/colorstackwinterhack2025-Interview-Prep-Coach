@@ -1,3 +1,8 @@
+/**
+ * OAuth callback handler page
+ * Processes authentication tokens from OAuth providers (Google, GitHub)
+ * Redirects based on user's onboarding status
+ */
 "use client";
 
 import { useEffect } from "react";
@@ -14,6 +19,7 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    // Store authentication token for subsequent API requests
     localStorage.setItem("token", token);
     (async () => {
       try {

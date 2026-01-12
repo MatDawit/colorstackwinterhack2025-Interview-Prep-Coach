@@ -15,6 +15,12 @@ import Navbar from "../../components/Navbar";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTheme } from "../../context/ThemeContext";
 
+/**
+ * Feedback/Results page
+ * Displays detailed feedback and scoring for a practice attempt
+ * Includes STAR structure score, checklist, transcript analysis, and improvements
+ */
+
 interface AttemptData {
   id: string;
   sessionId: string;
@@ -53,12 +59,12 @@ const PracticeFeedback = () => {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // --- Preferences State ---
+  // User preferences for display
   const [showSample, setShowSample] = useState(true);
   const [autoStart, setAutoStart] = useState(false);
   const [autoStartTimer, setAutoStartTimer] = useState<number | null>(null);
 
-  // --- Load Preferences ---
+  // Load user preferences
   useEffect(() => {
     const fetchPrefs = async () => {
       const token = localStorage.getItem("token");
@@ -85,6 +91,7 @@ const PracticeFeedback = () => {
     fetchPrefs();
   }, []);
 
+  // Fetch feedback data for this attempt
   useEffect(() => {
     if (!attemptId) return;
 
@@ -108,7 +115,7 @@ const PracticeFeedback = () => {
     fetchData();
   }, [attemptId]);
 
-  // --- Auto-Start Logic ---
+  // Auto-start next question logic
   useEffect(() => {
     if (
       autoStart &&
@@ -134,35 +141,13 @@ const PracticeFeedback = () => {
     }
   }, [autoStart, data, isViewOnly, isGenerating]);
 
-  if (loading) {
-    return (
-      <div
-        className={`min-h-screen flex items-center justify-center ${
-          isDarkMode ? "bg-gray-900" : "bg-[#F8F9FA]"
-        }`}
-      >
-        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <div
-        className={`min-h-screen flex items-center justify-center font-medium ${
-          isDarkMode ? "bg-gray-900 text-red-400" : "bg-[#F8F9FA] text-red-600"
-        }`}
-      >
-        Error: {error || "No data found"}
-      </div>
-    );
-  }
-
+  // Remove HTML tags from text
   const cleanText = (text: string) => {
     if (!text) return "";
     return text.replace(/<[^>]*>/g, "");
   };
 
+  // Format transcript with color-coded highlights
   const formatTranscript = (text: string) => {
     if (!text) return "";
 
@@ -187,6 +172,7 @@ const PracticeFeedback = () => {
       .replace(/<\/red>/g, "</span>");
   };
 
+  // Define checklist items with success and error messages
   const checklistMapping: {
     key: keyof AttemptData["checklist"];
     label: string;
@@ -225,6 +211,7 @@ const PracticeFeedback = () => {
     },
   ];
 
+  // Handle navigation to next question or analytics
   const handleNavigation = async (targetDestination: string) => {
     if (!data) return;
 
@@ -296,13 +283,13 @@ const PracticeFeedback = () => {
                 isDarkMode ? "text-gray-400" : "text-gray-500"
               }`}
             >
-              Question {data.attemptCount || 1} of 4:{" "}
+              Question {data?.attemptCount || 1} of 4:{" "}
               <span
                 className={`font-medium ${
                   isDarkMode ? "text-gray-200" : "text-gray-800"
                 }`}
               >
-                {data.question.question}
+                {data?.question.question}
               </span>
             </p>
           </div>
@@ -350,7 +337,7 @@ const PracticeFeedback = () => {
                     strokeWidth="16"
                     fill="transparent"
                     strokeDasharray={502.6}
-                    strokeDashoffset={502.6 * (1 - (data.score || 0) / 100)}
+                    strokeDashoffset={502.6 * (1 - (data?.score || 0) / 100)}
                     strokeLinecap="round"
                   />
                 </svg>
@@ -359,7 +346,7 @@ const PracticeFeedback = () => {
                     isDarkMode ? "text-white" : "text-[#1A1A1A]"
                   }`}
                 >
-                  {data.score}%
+                  {data?.score}%
                 </span>
               </div>
 
@@ -368,7 +355,7 @@ const PracticeFeedback = () => {
                   isDarkMode ? "text-gray-300" : "text-gray-600"
                 }`}
               >
-                Your answer effectively demonstrated {data.score}% of the STAR
+                Your answer effectively demonstrated {data?.score}% of the STAR
                 structure.
               </p>
             </div>
@@ -399,7 +386,7 @@ const PracticeFeedback = () => {
               <div className="space-y-6">
                 {checklistMapping.map((item, index) => {
                   // Direct property access - no more @ts-ignore needed
-                  const isSuccess = data.checklist[item.key] === true;
+                  const isSuccess = data?.checklist[item.key] === true;
 
                   return (
                     <div key={index} className="flex items-start gap-4">
@@ -501,7 +488,7 @@ const PracticeFeedback = () => {
                 isDarkMode ? "text-gray-300" : "text-black"
               }`}
             >
-              {data.actionableFeedback || "No actionable feedback generated."}
+              {data?.actionableFeedback || "No actionable feedback generated."}
             </div>
           </section>
 
@@ -541,8 +528,8 @@ const PracticeFeedback = () => {
                     isDarkMode ? "text-gray-300" : "text-black"
                   }`}
                 >
-                  {data.improvedVersion
-                    ? cleanText(data.improvedVersion)
+                  {data?.improvedVersion
+                    ? cleanText(data?.improvedVersion)
                     : "No improved version generated."}
                 </p>
               </div>
@@ -580,7 +567,7 @@ const PracticeFeedback = () => {
                   {/* RETRY BUTTON */}
                   <button
                     onClick={() =>
-                      router.push(`/practice?sessionId=${data.sessionId}`)
+                      router.push(`/practice?sessionId=${data?.sessionId}`)
                     }
                     disabled={isGenerating}
                     className={`flex items-center gap-2 px-6 py-2.5 rounded-xl border font-bold text-[14px] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
@@ -598,7 +585,7 @@ const PracticeFeedback = () => {
                     onClick={() => handleNavigation("/analytics")}
                     disabled={isGenerating}
                     className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold text-[14px] transition-all shadow-md ${
-                      data.isLastQuestion
+                      data?.isLastQuestion
                         ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
                     } ${isGenerating ? "opacity-75 cursor-wait" : ""}`}
@@ -610,9 +597,9 @@ const PracticeFeedback = () => {
                       </>
                     ) : (
                       <>
-                        {autoStartTimer !== null && !data.isLastQuestion ? (
+                        {autoStartTimer !== null && !data?.isLastQuestion ? (
                           `Next Question in ${autoStartTimer}s...`
-                        ) : data.isLastQuestion ? (
+                        ) : data?.isLastQuestion ? (
                           <>
                             Go to Analytics <BarChart3 size={18} />
                           </>

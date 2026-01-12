@@ -5,9 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, ChevronRight, Loader2 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
+/**
+ * Session Review page
+ * Displays all practice attempts within a session with individual scores
+ * Allows users to click on attempts to view detailed feedback
+ */
+
 interface AttemptSummary {
   id: string;
-  // Made optional to prevent crashes if question data is missing
+  // Made optional to handle missing question data gracefully
   question?: { question: string; category: string };
   score: number;
   duration: number;
@@ -23,6 +29,7 @@ export default function SessionReview() {
   const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch all attempts for the session
   useEffect(() => {
     const fetchAttempts = async () => {
       try {
@@ -77,7 +84,7 @@ export default function SessionReview() {
         ) : (
           <div className="space-y-4">
             {attempts.map((attempt, index) => {
-              // 1. Safe Data Extraction (Prevents crashes)
+              // Extract and validate attempt data
               const category = attempt.question?.category || "General";
               const questionText =
                 attempt.question?.question || "Question Unavailable";
@@ -86,14 +93,14 @@ export default function SessionReview() {
                 ? new Date(attempt.createdAt).toLocaleDateString()
                 : "";
 
-              // 2. Custom Color Logic
-              let scoreColor = "text-red-600"; // Default: < 70 (Red)
+              // Determine score color based on performance
+              let scoreColor = "text-red-600"; // Default: < 70
               if (score >= 90) {
-                scoreColor = "text-emerald-600"; // 90-100 (Green)
+                scoreColor = "text-emerald-600"; // 90-100
               } else if (score >= 80) {
-                scoreColor = "text-orange-500"; // 80-89 (Orange)
+                scoreColor = "text-orange-500"; // 80-89
               } else if (score >= 70) {
-                scoreColor = "text-yellow-600"; // 70-79 (Yellow)
+                scoreColor = "text-yellow-600"; // 70-79
               }
 
               return (

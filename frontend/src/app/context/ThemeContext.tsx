@@ -2,6 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+/**
+ * Theme context type definition
+ * Provides dark mode toggle and theme state management
+ */
 type ThemeContextType = {
   isDarkMode: boolean;
   toggleTheme: () => void;
@@ -11,11 +15,16 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/**
+ * Theme provider component
+ * Manages dark/light mode state and persists user preference to backend
+ * Handles theme synchronization across browser tabs
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState<boolean | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Function to fetch theme from backend
+  // Fetch theme preference from backend
   const fetchTheme = React.useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -34,7 +43,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         const darkModeEnabled = data.ok && data.user?.darkMode ? true : false;
         setIsDarkMode(darkModeEnabled);
-        // Cache in localStorage for instant loading next time
+        // Cache theme preference for faster subsequent loads
         localStorage.setItem(
           "cachedDarkMode",
           darkModeEnabled ? "true" : "false"
@@ -56,13 +65,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const token = localStorage.getItem("token");
 
     if (token) {
-      // User is logged in - always fetch fresh from backend, don't use cache on login
-      // Start with null to show no flash
+      // User is logged in - fetch fresh from backend
       setIsDarkMode(null);
-      // Fetch immediately from backend
       fetchTheme();
     } else {
-      // User is not logged in
+      // User is not logged in - use light mode default
       setIsDarkMode(false);
       localStorage.removeItem("cachedDarkMode");
     }
@@ -70,33 +77,32 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, [fetchTheme]);
 
-  // Listen for storage changes and poll for token changes
+  // Listen for storage changes and token modifications
   useEffect(() => {
     let previousToken = localStorage.getItem("token");
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "token") {
         if (!e.newValue) {
-          // Token was removed (user logged out)
+          // Token was removed (logout)
           setIsDarkMode(false);
           localStorage.removeItem("cachedDarkMode");
         } else {
-          // Token was added or changed (user logged in) - clear cache to force fresh fetch
+          // Token was added/changed (login)
           localStorage.removeItem("cachedDarkMode");
-          // Start with null to avoid stale cache
           setIsDarkMode(null);
           fetchTheme();
         }
       }
     };
 
-    // Also check periodically for token changes (for same-tab logins)
+    // Check periodically for token changes (same-tab login detection)
     const interval = setInterval(() => {
       const currentToken = localStorage.getItem("token");
       if (currentToken !== previousToken) {
         previousToken = currentToken;
         if (currentToken) {
-          // Token was added - clear cache to force fresh fetch
+          // Token was added
           localStorage.removeItem("cachedDarkMode");
           setIsDarkMode(null);
           fetchTheme();
@@ -106,7 +112,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem("cachedDarkMode");
         }
       }
-    }, 100); // Check every 100ms for faster login detection
+    }, 100);
 
     window.addEventListener("storage", handleStorageChange);
     return () => {
@@ -115,10 +121,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchTheme]);
 
-  // Apply 'dark' class to <html> whenever theme changes (no mounted check - apply immediately)
+  // Apply theme class to DOM
   useEffect(() => {
     if (isDarkMode === null) {
-      return; // Still initializing, use cached value
+      return; // Still initializing
     }
 
     if (isDarkMode) {
@@ -128,6 +134,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isDarkMode]);
 
+  // Toggle theme and persist to backend
   const toggleTheme = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -152,6 +159,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Force refresh theme from backend
   const refreshTheme = () => {
     fetchTheme();
   };

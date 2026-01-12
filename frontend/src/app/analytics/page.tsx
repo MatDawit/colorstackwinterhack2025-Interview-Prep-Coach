@@ -16,7 +16,12 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../context/ThemeContext";
 
-// --- TYPES ---
+/**
+ * Analytics page
+ * Displays performance metrics with charts and session history table
+ * Supports filtering by time range and category
+ */
+
 interface SessionData {
   id: string;
   date: string;
@@ -32,7 +37,7 @@ interface SessionData {
   };
 }
 
-// --- CONSTANTS ---
+// Label shortening map for mobile charts
 const LABEL_MAP: Record<string, string> = {
   "Filler Words": "Fillers",
   Apologizing: "Negative",
@@ -45,16 +50,14 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
-  // --- STATE ---
+  // Filter state
   const [category, setCategory] = useState("All Categories");
   const [timeRange, setTimeRange] = useState("All Time");
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // --- EFFECTS ---
-
-  // 1. Check Authentication First
+  // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -63,15 +66,15 @@ export default function AnalyticsPage() {
     }
   }, [router]);
 
-  // 2. Handle Mobile Resize
+  // Detect mobile viewport
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize(); // Check immediately
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // 3. Fetch Data
+  // Fetch analytics data from backend
   useEffect(() => {
     const fetchAnalytics = async () => {
       const token = localStorage.getItem("token");
@@ -84,8 +87,8 @@ export default function AnalyticsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // Handle token expiry
         if (res.status === 401) {
-          // Token expired or invalid
           localStorage.removeItem("token");
           router.push("/login");
           return;
@@ -104,17 +107,13 @@ export default function AnalyticsPage() {
     fetchAnalytics();
   }, [router]);
 
-  // --- MEMOIZED DATA CALCULATIONS ---
-
-  // 4. Filter Sessions
+  // Filter sessions by category and time range
   const filteredSessions = useMemo(() => {
     return sessions.filter((session) => {
-      // Category Check
       if (category !== "All Categories" && session.category !== category) {
         return false;
       }
 
-      // Time Check
       const sessionDate = new Date(session.date);
       const now = new Date();
 
@@ -129,11 +128,11 @@ export default function AnalyticsPage() {
           sessionDate >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         );
       }
-      return true; // "All Time"
+      return true;
     });
   }, [sessions, category, timeRange]);
 
-  // 5. Line Chart Data (Formatted)
+  // Format data for line chart
   const lineChartData = useMemo(() => {
     return [...filteredSessions].reverse().map((s) => ({
       date: new Date(s.date).toLocaleDateString("en-US", {
@@ -144,7 +143,7 @@ export default function AnalyticsPage() {
     }));
   }, [filteredSessions]);
 
-  // 6. Bar Chart Data (Aggregated)
+  // Aggregate checklist issues for bar chart
   const dynamicBarData = useMemo(() => {
     const totals = {
       fillerWords: 0,
@@ -174,7 +173,7 @@ export default function AnalyticsPage() {
     ];
   }, [filteredSessions]);
 
-  // 7. Available Categories (Dynamic)
+  // Extract available categories from sessions
   const availableCategories = useMemo(() => {
     return Array.from(
       new Set([
@@ -186,18 +185,19 @@ export default function AnalyticsPage() {
     );
   }, [sessions]);
 
-  // --- HELPERS ---
+  // Get score color based on performance
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-emerald-500";
     if (score >= 70) return "text-orange-400";
     return "text-red-400";
   };
 
+  // Shorten label names for mobile
   const shortenLabel = (value: string) => {
     return isMobile ? LABEL_MAP[value] || value : value;
   };
 
-  // Dynamic Tooltip Style
+  // Tooltip styling for dark/light mode
   const TOOLTIP_STYLE = {
     backgroundColor: isDarkMode ? "#1F2937" : "#FFFFFF",
     borderColor: isDarkMode ? "#374151" : "#E5E7EB",

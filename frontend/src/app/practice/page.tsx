@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, X, Play, RotateCcw } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * Practice page component
+ * Main interview practice interface with recording and typing modes
+ * Supports real-time silence detection, session management, and analysis submission
+ */
+
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
 type MicPermission = "granted" | "denied" | "unknown";
@@ -15,6 +21,7 @@ type Question = {
   sampleAnswers?: any;
 };
 
+// Convert elapsed seconds to MM:SS format
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -30,9 +37,7 @@ export default function Practice() {
   const existingSessionId = searchParams.get("sessionId");
   const isMounted = useRef(true);
 
-  // --- STATE ---
-
-  // 1. NEW: Add Loading State for Settings
+  // Loading state for user preferences
   const [isSettingsLoading, setIsSettingsLoading] = useState(true);
 
   const [prefs, setPrefs] = useState({
@@ -78,7 +83,7 @@ export default function Practice() {
 
   const isCreatingSession = useRef(false);
 
-  // --- SILENCE REFS ---
+  // Audio analysis for silence detection
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const silenceStartRef = useRef<number | null>(null);
@@ -94,7 +99,7 @@ export default function Practice() {
     };
   }, []);
 
-  // --- 2. UPDATE PREFS FETCH ---
+  // Load user preferences from backend
   useEffect(() => {
     const fetchPrefs = async () => {
       const token = localStorage.getItem("token");
@@ -116,11 +121,10 @@ export default function Practice() {
               autoSubmitOnSilence: p.autoSubmitOnSilence ?? false,
             });
 
-            // If we are STARTING FRESH, apply defaults and stop loading here
             if (!existingSessionId) {
               if (p.defaultRole) setInterviewType(p.defaultRole);
               if (p.defaultDifficulty) setDifficulty(p.defaultDifficulty);
-              setIsSettingsLoading(false); // <--- Stop loading
+              setIsSettingsLoading(false);
             }
           }
         }
@@ -132,10 +136,9 @@ export default function Practice() {
     fetchPrefs();
   }, [existingSessionId]);
 
-  // --- HELPER FUNCTIONS ---
+  // Fetch session details and current question
   const fetchSessionDetails = async (id: string) => {
     setLoadingQuestion(true);
-    // Don't set isSettingsLoading(true) here, or it flickers when changing questions
     try {
       const res = await fetch(
         `http://localhost:5000/api/practice/session/${id}`
@@ -164,10 +167,11 @@ export default function Practice() {
       console.error("Error fetching session:", error);
     } finally {
       setLoadingQuestion(false);
-      setIsSettingsLoading(false); // <--- Stop loading (for existing session)
+      setIsSettingsLoading(false);
     }
   };
 
+  // Create new practice session
   const startNewSession = async () => {
     if (isCreatingSession.current) return;
     isCreatingSession.current = true;
@@ -209,13 +213,13 @@ export default function Practice() {
     }
   };
 
+  // Reset to start a new session
   const handleStartOver = () => {
     router.replace("/practice");
     setSessionId(null);
     setCurrentQuestion(null);
     setQuestion("");
     setLoadingQuestion(false);
-    // Note: We don't set isSettingsLoading(true) here because we want to keep current selections
   };
 
   const handleTypeChange = (newType: string) => {
@@ -239,7 +243,6 @@ export default function Practice() {
     } else {
       setSessionId(null);
       setLoadingQuestion(false);
-      // If no session ID, fetchPrefs (above) will handle the loading state turn-off
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingSessionId]);
@@ -270,12 +273,8 @@ export default function Practice() {
     setSubmitError(null);
   }, [qId]);
 
-  // --- SILENCE LOGIC START ---
-
-  // 3. Setup Logic: Check Preference Here
+  // Setup silence detection on microphone stream
   const setupSilenceDetection = (stream: MediaStream) => {
-    // If user's preference is FALSE, we simply exit.
-    // The Web Audio API never initializes, saving resources.
     if (!prefs.autoSubmitOnSilence) return;
 
     const AudioContext =
@@ -294,6 +293,7 @@ export default function Practice() {
     detectSilenceLoop();
   };
 
+  // Detect sustained silence in audio stream
   const detectSilenceLoop = () => {
     if (!analyserRef.current || recordingState === "stopped") return;
 
@@ -314,7 +314,7 @@ export default function Practice() {
         if (diff > SILENCE_DURATION_MS) {
           console.log("Silence detected. Auto-submitting...");
           isAutoSubmittingRef.current = true;
-          stopRecording(); // Stops media recorder -> triggers useEffect -> submits
+          stopRecording();
           return;
         }
       }
@@ -325,6 +325,7 @@ export default function Practice() {
     animationFrameRef.current = requestAnimationFrame(detectSilenceLoop);
   };
 
+  // Cleanup audio analysis resources
   const cleanupAudioAnalysis = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
@@ -337,7 +338,7 @@ export default function Practice() {
     analyserRef.current = null;
   };
 
-  // Watch for Blob to Trigger Submit
+  // Submit audio blob for analysis when auto-submit triggers
   useEffect(() => {
     if (audioBlob && isAutoSubmittingRef.current && !submitting) {
       submitForAnalysis();
@@ -345,8 +346,8 @@ export default function Practice() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioBlob]);
-  // --- SILENCE LOGIC END ---
 
+  // Submit answer for AI analysis
   async function submitForAnalysis() {
     setSubmitError(null);
     setSubmitting(true);
@@ -371,7 +372,7 @@ export default function Practice() {
       form.append("question", question);
       form.append("mode", mode);
 
-      // --- LOGIC CHANGE START ---
+      // Calculate answer duration (for recording mode, use elapsed time; for typing, estimate based on word count)
       let finalDuration = elapsedTime;
 
       if (mode === "type") {
@@ -382,19 +383,13 @@ export default function Practice() {
         }
         form.append("answerText", typedAnswer);
 
-        // 1. Count Words
+        // Estimate speaking duration from typed words at 130 WPM
         const wordCount = typedAnswer.trim().split(/\s+/).length;
-
-        // 2. Average Speaking Rate = 130 Words Per Minute (WPM)
-        // Formula: (Words / 130) * 60 seconds
         const estimatedSeconds = Math.ceil((wordCount / 130) * 60);
-
-        // 3. Use the estimated time instead of the timer
         finalDuration = estimatedSeconds;
       } else {
-        // ... (Recording logic remains the same)
+        // For recording mode, ensure recording is stopped and audio exists
         if (recordingState === "recording") {
-          // Optional: Stop recording automatically if they forgot
           if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
         }
 
@@ -408,9 +403,8 @@ export default function Practice() {
         }
       }
 
-      // 4. Append the calculated duration
+      // Append calculated duration for backend analysis
       form.append("duration", String(finalDuration));
-      // --- LOGIC CHANGE END ---
 
       const res = await fetch("http://localhost:5000/api/feedback/submit", {
         method: "POST",
@@ -439,6 +433,7 @@ export default function Practice() {
     }
   }
 
+  // Start recording with optional countdown timer
   async function startRecording() {
     setSubmitError(null);
     if (recordingState === "recording") return;
@@ -451,13 +446,14 @@ export default function Practice() {
     await triggerRecording();
   }
 
+  // Initiate microphone stream and media recorder
   async function triggerRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicPermission("granted");
       streamRef.current = stream;
 
-      // 4. Hook up the detection logic to the stream
+      // Initialize silence detection on the audio stream
       setupSilenceDetection(stream);
 
       const mediaRecorder = new MediaRecorder(stream);
@@ -492,6 +488,7 @@ export default function Practice() {
     }
   }
 
+  // Countdown timer effect - triggers recording when countdown reaches zero
   useEffect(() => {
     if (countdown === null) return;
 
@@ -504,6 +501,7 @@ export default function Practice() {
     }
   }, [countdown]);
 
+  // Stop all active microphone tracks
   function stopMicStream() {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -511,6 +509,7 @@ export default function Practice() {
     }
   }
 
+  // Stop active recording and cleanup timers
   function stopRecording() {
     setSubmitError(null);
     if (
@@ -524,9 +523,10 @@ export default function Practice() {
     cleanupAudioAnalysis(); // Ensure analysis stops
   }
 
+  // Reset recording state and cleanup all audio resources
   function handleRerecord() {
     setSubmitError(null);
-    isAutoSubmittingRef.current = false; // Reset auto flag on manual reset
+    isAutoSubmittingRef.current = false; // Reset auto-submit flag on manual reset
     if (recordingState === "recording") stopRecording();
     clearTimer();
     stopMicStream();
@@ -539,6 +539,7 @@ export default function Practice() {
     setAudioUrl(null);
   }
 
+  // Switch between recording and typing modes
   function switchMode(nextMode: Mode) {
     if (nextMode === mode) return;
     if (recordingState === "recording") stopRecording();
@@ -570,7 +571,7 @@ export default function Practice() {
       )}
 
       <div className="max-w-4xl mt-12 mx-auto px-4 pt-8">
-        {/* --- SETTINGS CARD --- */}
+        {/* SETTINGS CARD */}
         <div
           className={`border rounded-xl shadow-sm p-6 mb-8 transition-all ${
             isDarkMode

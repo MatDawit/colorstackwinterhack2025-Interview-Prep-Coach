@@ -25,6 +25,11 @@ import {
   Moon,
 } from "lucide-react";
 
+/**
+ * Account settings page
+ * Manages email, OAuth provider connections, password changes, and resume uploads
+ */
+
 type AccountData = {
   email: string;
   providerGoogleConnected: boolean;
@@ -49,7 +54,7 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // pretend these come from backend
+  // Account data from backend
   const [account, setAccount] = useState<AccountData>({
     email: "",
     providerGoogleConnected: false,
@@ -58,14 +63,13 @@ export default function AccountPage() {
     resumeUpdatedAt: null,
   });
 
-  // resume upload UI state
+  // Resume upload state management
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
   const [resumeUploading, setResumeUploading] = useState(false);
   const [resumeError, setResumeError] = useState<string | null>(null);
-
   const [resumePreviewUrl, setResumePreviewUrl] = useState<string | null>(null);
 
-  // password UI state (placeholders)
+  // Password change state management
   const [pwLoading, setPwLoading] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -73,15 +77,13 @@ export default function AccountPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwSaving, setPwSaving] = useState(false);
-
-  // optional: detect if password exists (if you return this from backend)
   const [hasPassword, setHasPassword] = useState(true);
 
+  // Load account data on component mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsSignedIn(!!token);
 
-    // Load account info
     async function loadAccount() {
       if (!token) {
         setLoading(false);
@@ -89,7 +91,7 @@ export default function AccountPage() {
       }
 
       try {
-        // 1) Profile for email + providers
+        // Fetch user profile for email and OAuth provider info
         const profileRes = await fetch("http://localhost:5000/api/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -98,7 +100,7 @@ export default function AccountPage() {
         if (!profileRes.ok)
           throw new Error(profileData.error || "Failed to load profile");
 
-        // 2) Resume metadata (Resume table)
+        // Fetch resume metadata
         const resumeRes = await fetch(
           "http://localhost:5000/api/profile/resume",
           {
@@ -114,13 +116,12 @@ export default function AccountPage() {
           email: profileData.user.email ?? "",
           providerGoogleConnected: !!profileData.user.googleId,
           providerGithubConnected: !!profileData.user.githubId,
-
           resumeUrl: resumeData.resume?.resumeUrl ?? null,
           resumeFileName: resumeData.resume?.resumeFileName ?? null,
           resumeUpdatedAt: resumeData.resume?.resumeUpdatedAt ?? null,
         });
 
-        // clear local preview if backend has no resume
+        // Clear local preview if backend has no resume
         if (!resumeData.resume?.resumeUrl) setResumePreviewUrl(null);
       } catch (e) {
         console.error(e);
@@ -132,6 +133,7 @@ export default function AccountPage() {
     loadAccount();
   }, []);
 
+  // Sign out and clear authentication
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("isGuest");
@@ -140,17 +142,19 @@ export default function AccountPage() {
     router.push("/login");
   }
 
+  // Trigger resume file picker
   function openResumePicker() {
     resumeInputRef.current?.click();
   }
 
+  // Handle resume file selection and upload
   async function onResumeSelected(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setResumeError(null);
 
-    // simple client validation
+    // Validate file type and size
     const allowed = [
       "application/pdf",
       "application/msword",
@@ -188,7 +192,7 @@ export default function AccountPage() {
       const formData = new FormData();
       formData.append("resume", file);
 
-      // local instant preview (PDF)
+      // Create local preview for PDF files
       if (file.type === "application/pdf") {
         const localUrl = URL.createObjectURL(file);
         setResumePreviewUrl(localUrl);
@@ -200,7 +204,6 @@ export default function AccountPage() {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
-            // DO NOT set Content-Type manually for FormData
           },
           body: formData,
         }
@@ -224,6 +227,7 @@ export default function AccountPage() {
     }
   }
 
+  // Update password with validation
   async function submitPasswordChange() {
     setPwError(null);
 
@@ -268,6 +272,7 @@ export default function AccountPage() {
     }
   }
 
+  // Delete uploaded resume file
   async function removeResume() {
     try {
       const token = localStorage.getItem("token");
@@ -300,18 +305,18 @@ export default function AccountPage() {
     }
   }
 
+  // Initiate Google OAuth connection
   function connectGoogle() {
-    // For your OAuth flow: redirect to backend
     window.location.href = "http://localhost:5000/api/auth/google";
   }
 
+  // Initiate GitHub OAuth connection
   function connectGithub() {
     window.location.href = "http://localhost:5000/api/auth/github";
   }
 
+  // Disconnect OAuth provider
   function disconnectProvider(provider: "google" | "github") {
-    // TODO: call backend (PATCH) to unlink provider
-    // or a dedicated endpoint like POST /api/profile/unlink-provider
     if (provider === "google") {
       setAccount((prev) => ({ ...prev, providerGoogleConnected: false }));
     } else {
@@ -319,6 +324,7 @@ export default function AccountPage() {
     }
   }
 
+  // Format ISO date string to readable format
   function formatDate(iso?: string | null) {
     if (!iso) return "";
     const d = new Date(iso);
@@ -1051,7 +1057,7 @@ export default function AccountPage() {
   );
 }
 
-/* ---------- Small UI helpers ---------- */
+/* Small UI helpers */
 
 function SidebarLink({
   href,

@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
+/**
+ * Interview preferences configuration page
+ * Allows users to set default interview type, difficulty, question focus,
+ * feedback style, and practice session settings
+ */
+
 type Preferences = {
   defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
@@ -40,6 +46,7 @@ type Preferences = {
   autoSubmitOnSilence: boolean;
 };
 
+// Default preference values for new users
 const DEFAULT_PREFS: Preferences = {
   defaultRole: "Software Engineering",
   defaultDifficulty: "Basic",
@@ -62,17 +69,13 @@ export default function PreferencesPage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
-  // --- STATE ---
-  // Removed isSignedIn state to match AnalyticsPage pattern
   const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  // --- EFFECTS ---
-
-  // 1. Check Authentication First (Matches AnalyticsPage)
+  // Check authentication status and redirect if needed
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -81,7 +84,7 @@ export default function PreferencesPage() {
     }
   }, [router]);
 
-  // 2. Fetch Data (Matches AnalyticsPage logic)
+  // Load user preferences from backend
   useEffect(() => {
     async function loadPrefs() {
       const token = localStorage.getItem("token");
@@ -119,8 +122,7 @@ export default function PreferencesPage() {
 
         const p = data.preferences ?? data.preference ?? data.prefs;
         if (!p) {
-          // If 200 OK but no prefs, we just keep defaults (or handle as error)
-          // For now, keeping logic to assume defaults if missing
+          // If 200 OK but no prefs, keep defaults
         } else {
           setPrefs({
             defaultRole: p.defaultRole ?? DEFAULT_PREFS.defaultRole,
@@ -159,6 +161,7 @@ export default function PreferencesPage() {
     loadPrefs();
   }, [router]);
 
+  // Save user preferences to backend with validation
   async function savePreferences() {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -166,7 +169,7 @@ export default function PreferencesPage() {
       return;
     }
 
-    // UI Validation
+    // Ensure at least one question focus area is selected
     const activeFocusCount = Object.values(prefs.questionFocus).filter(
       Boolean
     ).length;
@@ -201,7 +204,7 @@ export default function PreferencesPage() {
         }),
       });
 
-      // Handle 401 on Save
+      // Handle authentication expiry
       if (res.status === 401) {
         localStorage.removeItem("token");
         router.push("/login");
@@ -220,11 +223,13 @@ export default function PreferencesPage() {
     }
   }
 
+  // Reset preferences to default values
   function resetDefaults() {
     setPrefs(DEFAULT_PREFS);
     setSaveStatus("idle");
   }
 
+  // Toggle question focus categories (prevent deselecting all)
   const handleFocusToggle = (key: keyof Preferences["questionFocus"]) => {
     setPrefs((current) => {
       const isCurrentlyActive = current.questionFocus[key];
@@ -232,6 +237,7 @@ export default function PreferencesPage() {
         Boolean
       ).length;
 
+      // Prevent deselecting if only one category is active
       if (isCurrentlyActive && totalActive <= 1) {
         return current;
       }
@@ -735,7 +741,7 @@ export default function PreferencesPage() {
   );
 }
 
-/* ---------- Small UI helpers (matches your style) ---------- */
+/* Small UI helpers */
 
 function SidebarLink({
   href,

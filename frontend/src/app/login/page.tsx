@@ -5,22 +5,27 @@ import { useRouter } from "next/navigation";
 import { BrainCircuit, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * Login page component
+ * Handles user authentication via email/password and OAuth providers
+ * Includes onboarding status check and "Remember Me" functionality
+ */
 export default function Login() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
-  // State for form inputs
+  // Form input state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  // State for error modal
+  // Error modal state
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorTitle, setErrorTitle] = useState("Error");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load remembered email on component mount
+  // Load saved email if user previously used "Remember Me"
   useEffect(() => {
     const rememberedEmail = localStorage.getItem("rememberedEmail");
     if (rememberedEmail) {
@@ -29,7 +34,7 @@ export default function Login() {
     }
   }, []);
 
-  // Redirect if already logged in (respect onboarding status)
+  // Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -50,12 +55,10 @@ export default function Login() {
     })();
   }, [router]);
 
-  // Handle regular login
+  // Handle email/password login
   const handleLogin = async () => {
-    // Clear any previous errors
     setShowErrorModal(false);
 
-    // Client-side validation
     if (!email || !password) {
       setErrorTitle("Missing Information");
       setErrorMessage("Please enter both email and password.");
@@ -65,32 +68,28 @@ export default function Login() {
 
     setIsLoading(true);
 
-    const userData = {
-      email: email.trim(),
-      password: password,
-    };
-
     try {
       const response = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store token
         localStorage.setItem("token", data.token);
 
-        // Handle "Remember Me" - save email for next time
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", email);
         } else {
           localStorage.removeItem("rememberedEmail");
         }
 
-        // Route based on onboarding status
+        // Check onboarding status and redirect accordingly
         try {
           const prof = await fetch("http://localhost:5000/api/profile", {
             headers: { Authorization: `Bearer ${data.token}` },
@@ -104,7 +103,6 @@ export default function Login() {
           router.push("/dashboard");
         }
       } else {
-        // Display specific error from backend
         setErrorTitle("Login Failed");
         setErrorMessage(
           data.error || "Invalid email or password. Please try again."
@@ -112,7 +110,6 @@ export default function Login() {
         setShowErrorModal(true);
       }
     } catch (err) {
-      // Network or connection error
       setErrorTitle("Connection Error");
       setErrorMessage(
         "Unable to connect to the server. Please check your internet connection and try again."
@@ -123,17 +120,17 @@ export default function Login() {
     }
   };
 
-  // Handle Google OAuth
+  // Redirect to Google OAuth endpoint
   const handleGoogleAuth = () => {
     window.location.href = "http://localhost:5000/api/auth/google";
   };
 
-  // Handle GitHub OAuth
+  // Redirect to GitHub OAuth endpoint
   const handleGitHubAuth = () => {
     window.location.href = "http://localhost:5000/api/auth/github";
   };
 
-  // Handle pressing Enter key in password field
+  // Submit on Enter key press
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) {
       handleLogin();

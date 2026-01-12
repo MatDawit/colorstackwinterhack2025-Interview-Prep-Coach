@@ -25,6 +25,12 @@ import {
 import { useRouter } from "next/navigation";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * User profile page component
+ * Enables editing of user information, avatar customization with image cropping,
+ * and profile image management
+ */
+
 type ProfileForm = {
   name: string;
   email: string;
@@ -48,6 +54,8 @@ export default function ProfilePage() {
 
   const [avatarShape, setAvatarShape] = useState<"circle" | "square">("circle");
   const [borderColor, setBorderColor] = useState<string>("#3B82F6");
+
+  // Available avatar border color options
   const BORDER_COLORS = [
     { name: "Red", hex: "#EF4444" },
     { name: "Orange", hex: "#F97316" },
@@ -59,6 +67,7 @@ export default function ProfilePage() {
     { name: "White", hex: "#FFFFFF" },
     { name: "Black", hex: "#000000" },
   ];
+
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<
@@ -66,9 +75,9 @@ export default function ProfilePage() {
   >("idle");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
+  // Image cropping state management
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -82,16 +91,18 @@ export default function ProfilePage() {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch by setting mounted state on client
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Check authentication status
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsSignedIn(!!token);
   }, []);
 
+  // Load user profile data from backend
   useEffect(() => {
     async function loadProfile() {
       const token = localStorage.getItem("token");
@@ -139,6 +150,7 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
+  // Update individual profile form fields
   function updateField<K extends keyof ProfileForm>(
     key: K,
     value: ProfileForm[K]
@@ -146,6 +158,7 @@ export default function ProfilePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  // Save profile changes to backend
   async function saveProfile() {
     setSaveStatus("saving");
 
@@ -195,6 +208,7 @@ export default function ProfilePage() {
     }
   }
 
+  // Sign out user and clear authentication token
   async function handleSignOut() {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -220,6 +234,7 @@ export default function ProfilePage() {
     }
   }
 
+  // Delete user account and associated data
   async function handleDeleteAccount() {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -244,10 +259,12 @@ export default function ProfilePage() {
     }
   }
 
+  // Trigger file picker for avatar upload
   function openFilePicker() {
     fileInputRef.current?.click();
   }
 
+  // Handle image file selection and crop flow
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -264,10 +281,12 @@ export default function ProfilePage() {
     e.target.value = "";
   }
 
+  // Track crop area selection
   function onCropComplete(_: any, croppedPixels: any) {
     setCroppedAreaPixels(croppedPixels);
   }
 
+  // Apply cropped image and update avatar
   async function applyCrop() {
     if (!selectedImageUrl || !croppedAreaPixels) {
       setIsCropOpen(false);
@@ -898,7 +917,7 @@ async function getCroppedImageDataUrl(
   return canvas.toDataURL("image/jpeg", 0.8);
 }
 
-/*  Small UI helpers  */
+/* Small UI helpers */
 
 function SidebarLink({
   href,
