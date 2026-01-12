@@ -1,3 +1,7 @@
+/**
+ * Analytics routes
+ * Returns aggregated session data for dashboards.
+ */
 import { Router, Request, Response } from "express";
 import { prisma } from "../db_connection";
 import jwt from "jsonwebtoken";
@@ -5,19 +9,26 @@ import jwt from "jsonwebtoken";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-// Helper: Format seconds (e.g., 90 -> "01:30")
 function formatDuration(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
+/**
+ * GET /
+ * @summary Fetch analytics-ready session summaries for the current user
+ * @description
+ * Returns aggregated data for completed interview sessions, including
+ * checklist failure counts used for dashboard visualizations.
+ */
 router.get("/", async (req: Request, res: Response) => {
   try {
     // 1. Auth Check
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "Unauthorized" });
+      return;
     }
     const token = authHeader.split(" ")[1];
     let userId: string;
@@ -25,7 +36,8 @@ router.get("/", async (req: Request, res: Response) => {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       userId = decoded.userId;
     } catch (err) {
-      return res.status(401).json({ error: "Invalid token" });
+      res.status(401).json({ error: "Invalid token" });
+      return;
     }
 
     // 2. Fetch ONLY Completed Sessions
@@ -84,9 +96,11 @@ router.get("/", async (req: Request, res: Response) => {
     res.json({
       sessions: formattedSessions,
     });
+    return;
   } catch (error: any) {
     console.error("Analytics Error:", error);
     res.status(500).json({ error: error.message });
+    return;
   }
 });
 

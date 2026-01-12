@@ -1,3 +1,8 @@
+/**
+ * OAuth callback handler page
+ * Processes authentication tokens from OAuth providers (Google, GitHub)
+ * Redirects based on user's onboarding status
+ */
 "use client";
 
 import { useEffect } from "react";
@@ -14,8 +19,23 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    // Store authentication token for subsequent API requests
     localStorage.setItem("token", token);
-    router.replace("/dashboard");
+    (async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data?.user?.onboardingCompleted) {
+          router.replace("/dashboard");
+        } else {
+          router.replace("/setup");
+        }
+      } catch (_) {
+        router.replace("/dashboard");
+      }
+    })();
   }, [params, router]);
 
   return (

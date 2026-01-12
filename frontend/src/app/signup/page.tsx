@@ -4,28 +4,40 @@ import { useRouter } from "next/navigation";
 import { BrainCircuit, X } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * Signup page component
+ * Handles user registration via email/password and OAuth providers
+ * Includes form validation and "Remember Me" functionality
+ */
 export default function Signup() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
-  // State for form inputs
+  // Form input state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
-  // State for error modal
+  // Error modal state
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorTitle, setErrorTitle] = useState("Error");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Handle regular signup
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
+  // Handle email/password signup
   const handleSignUp = async () => {
-    // Clear any previous errors
     setShowErrorModal(false);
 
-    // Client-side validation
+    // Validate all fields
     if (!email || !password || !name) {
       setErrorTitle("Missing Information");
       setErrorMessage("Please fill out all fields.");
@@ -33,43 +45,38 @@ export default function Signup() {
       return;
     }
 
-    if (password.length < 6) {
+    // Validate password strength
+    if (password.length < 8) {
       setErrorTitle("Invalid Password");
-      setErrorMessage("Password must be at least 6 characters long.");
+      setErrorMessage("Password must be at least 8 characters long.");
       setShowErrorModal(true);
       return;
     }
 
     setIsLoading(true);
 
-    const userData = {
-      email: email.trim(),
-      password: password,
-      name: name.trim(),
-    };
-
     try {
       const response = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password,
+          name: name.trim(),
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Store token
         localStorage.setItem("token", data.token);
 
-        // Handle "Remember Me" - save email for next time
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", email);
         }
 
-        // Redirect to dashboard
-        router.push("/dashboard");
+        router.push("/setup");
       } else {
-        // Display specific error from backend
         setErrorTitle("Sign Up Failed");
         setErrorMessage(
           data.error || "Unable to create account. Please try again."
@@ -77,7 +84,6 @@ export default function Signup() {
         setShowErrorModal(true);
       }
     } catch (err) {
-      // Network or connection error
       setErrorTitle("Connection Error");
       setErrorMessage(
         "Unable to connect to the server. Please check your internet connection and try again."
@@ -88,17 +94,17 @@ export default function Signup() {
     }
   };
 
-  // Handle Google OAuth
+  // Redirect to Google OAuth endpoint
   const handleGoogleAuth = () => {
     window.location.href = "http://localhost:5000/api/auth/google";
   };
 
-  // Handle GitHub OAuth
+  // Redirect to GitHub OAuth endpoint
   const handleGitHubAuth = () => {
     window.location.href = "http://localhost:5000/api/auth/github";
   };
 
-  // Handle pressing Enter key
+  // Submit on Enter key press
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) {
       handleSignUp();
@@ -109,8 +115,8 @@ export default function Signup() {
     <div
       className={`min-h-screen flex justify-center items-center px-4 py-8 sm:py-12 md:py-20 ${
         isDarkMode
-          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
-          : "bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100"
+          ? "bg-linear-to-br from-gray-900 via-gray-800 to-gray-900"
+          : "bg-linear-to-br from-purple-100 via-pink-50 to-blue-100"
       }`}
     >
       {/* Main Signup Card */}
@@ -311,7 +317,7 @@ export default function Signup() {
               isDarkMode ? "text-gray-400" : "text-gray-500"
             }`}
           >
-            Must be at least 6 characters
+            Must be at least 8 characters
           </p>
         </div>
 

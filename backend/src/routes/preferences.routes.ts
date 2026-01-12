@@ -1,3 +1,7 @@
+/**
+ * Preferences routes
+ * Reads and updates per-user practice and feedback preferences.
+ */
 import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db_connection";
@@ -24,7 +28,13 @@ function getUserIdFromRequest(req: Request): string {
   return payload.userId;
 }
 
-// GET /api/profile/preferences
+/**
+ * GET /
+ * @summary Fetch user preferences
+ * @description
+ * Retrieves the authenticated user’s practice and feedback preferences,
+ * creating default preferences if none exist.
+ */
 router.get("/", async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromRequest(req);
@@ -39,7 +49,13 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /api/profile/preferences
+/**
+ * PATCH /
+ * @summary Update user preferences
+ * @description
+ * Updates the authenticated user’s practice and feedback preferences
+ * and marks onboarding as completed.
+ */
 router.patch("/", async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromRequest(req);
@@ -93,6 +109,11 @@ router.patch("/", async (req: Request, res: Response) => {
         countdownSeconds,
         autoSubmitOnSilence,
       },
+    });
+    // Mark onboarding as completed when preferences are saved
+    await prisma.user.update({
+      where: { id: userId },
+      data: { onboardingCompleted: true },
     });
     return res.json({ ok: true, preferences: updated });
   } catch (error) {

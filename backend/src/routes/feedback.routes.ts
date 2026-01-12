@@ -1,3 +1,7 @@
+/**
+ * Feedback routes
+ * Handles transcription and AI analysis of interview answers and persists attempts.
+ */
 import { Router, Request, Response } from "express";
 import multer from "multer";
 import { GoogleGenAI } from "@google/genai";
@@ -16,8 +20,13 @@ const transcription_ai = new GoogleGenAI({
   apiKey: process.env.FAD_GEMINI_API_KEY,
 });
 
-// POST /api/feedback/submit
-// Handles Transcription + AI Analysis + Saving
+/**
+ * POST /submit
+ * @summary Submit an interview answer for AI feedback
+ * @description
+ * Transcribes recorded audio or processes text input, generates AI feedback,
+ * and persists the session attempt.
+ */
 router.post(
   "/submit",
   upload.single("audio"),
@@ -25,13 +34,13 @@ router.post(
     try {
       const { sessionId, questionId, mode, answerText, duration } = req.body;
 
-      // Validation
+      // Basic validation
       if (!sessionId || !questionId) {
         res.status(400).json({ error: "Missing sessionId or questionId" });
         return;
       }
 
-      // Fetch Trusted Question
+      // Fetch question from DB
       const questionRecord = await prisma.question.findUnique({
         where: { id: questionId },
       });
@@ -53,7 +62,7 @@ router.post(
         });
       }
 
-      // Defaults
+      // User preference defaults
       const emphasize = (userPrefs?.feedbackEmphasize || "Balance") as
         | "Balance"
         | "Clarity"
@@ -69,7 +78,7 @@ router.post(
         | "Standard"
         | "Deep";
 
-      // 3. Handle Audio (Transcription)
+      // Transcription
       let finalAnswerText = answerText || "";
       let audioUrlPath = null;
 
@@ -90,15 +99,13 @@ router.post(
           ],
         });
 
-        // SIMPLIFIED: Just call .text()
-        // The ? handles cases where the model refuses to answer (safety)
         finalAnswerText = transResult.text || "";
         finalAnswerText = finalAnswerText.trim();
 
         audioUrlPath = `/uploads/${req.file.filename}.webm`;
       }
 
-      // 4. Generate AI Feedback
+      // Generate AI feedback
       const analysis = await generation_ai.models.generateContent({
         model: "gemini-2.5-flash-lite",
         config: {
@@ -117,8 +124,7 @@ router.post(
         ],
       });
 
-      // 5. Parse AI Response
-      // SIMPLIFIED: Just call .text()
+      // Parse AI response
       const rawText = analysis.text || "{}";
 
       let aiData;
@@ -133,7 +139,7 @@ router.post(
         };
       }
 
-      // 6. Save to DB
+      // Persist attempt
       const attempt = await prisma.sessionAttempt.create({
         data: {
           sessionId,
@@ -157,15 +163,19 @@ router.post(
   }
 );
 
-// GET /api/feedback/attempt/:id
-// Retrieves the results for a specific attempt AND checks if it's the last one
+/**
+ * GET /attempt/:id
+ * @summary Fetch a specific session attempt
+ * @description
+ * Returns the persisted attempt along with question metadata and attempt order.
+ */
 router.get(
   "/attempt/:id",
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
 
-      // 1. Fetch the specific attempt
+      // Fetch the specific attempt
       const attempt = await prisma.sessionAttempt.findUnique({
         where: { id: id },
         include: {
@@ -178,22 +188,19 @@ router.get(
         return;
       }
 
-      // 2. Count total attempts in this session so far
-      // This tells us if this is question #1, #2, #3, or #4
+      // Count total attempts in this session so far
       const allAttempts = await prisma.sessionAttempt.findMany({
         where: { sessionId: attempt.sessionId },
         orderBy: { createdAt: "asc" },
         select: { questionId: true },
       });
 
-      // 3. Extract UNIQUE question IDs in order of appearance
-      //    Example: [Q1, Q1, Q2, Q2, Q2] -> becomes -> [Q1, Q2]
+      // Extract UNIQUE question IDs in order of appearance
       const uniqueQuestionIds = Array.from(
         new Set(allAttempts.map((a) => a.questionId))
       );
 
-      // 4. Find which number the current question is
-      //    If current question is Q1, index is 0. We add 1 to display "Question 1".
+      // Resolve the ordinal number of the current question
       const questionNumber = uniqueQuestionIds.indexOf(attempt.questionId) + 1;
 
       res.json({

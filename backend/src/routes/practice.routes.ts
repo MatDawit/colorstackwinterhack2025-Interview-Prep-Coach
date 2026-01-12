@@ -1,10 +1,19 @@
+/**
+ * Practice routes
+ * Manages session question progression and current session state.
+ */
 import { Router, Request, Response } from "express";
 import { prisma } from "../db_connection";
 
 const router = Router();
 
-// POST /api/practice/next
-// Transitions the session to the next random question
+/**
+ * POST /next
+ * @summary Advance to the next interview question
+ * @description
+ * Determines the next unattempted question for the session or completes
+ * the session when the maximum number of questions is reached.
+ */
 router.post("/next", async (req: Request, res: Response): Promise<void> => {
   try {
     const { sessionId } = req.body;
@@ -14,7 +23,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 1. Get Session Info AND User ID
+    // Load session info
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
       select: { interviewType: true, difficulty: true, userId: true },
@@ -25,7 +34,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 2. Check for Max Attempts (Standard Logic)
+    // Check for max attempts
     const existingAttempts = await prisma.sessionAttempt.findMany({
       where: { sessionId: sessionId },
       select: { questionId: true, score: true, duration: true },
@@ -36,7 +45,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
     );
 
     if (uniqueQuestionIds.size >= 4) {
-      // Calculate Stats (Unchanged logic)
+      // Calculate final stats
       let totalSessionDuration = 0;
       existingAttempts.forEach(
         (a) => (totalSessionDuration += a.duration || 0)
@@ -68,12 +77,9 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 4. Construct Query Filter
+    // Construct query filter
     const attemptedIds = Array.from(uniqueQuestionIds);
 
-    // FIX 1: Role Fallback.
-    // Allow questions that match the specific role OR are "General".
-    // This prevents empty results if a specific role has no questions yet.
     const roleFilter = { in: [session.interviewType, "General"] };
 
     let whereCondition: any = {
@@ -82,7 +88,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       difficulty: session.difficulty,
     };
 
-    // 4. Apply "Focus" Preferences (Fail-Safe)
+    // Apply focus preferences when available
     const prefs = await prisma.preferences.findUnique({
       where: { userId: session.userId },
     });
@@ -91,8 +97,6 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
     const allowedFocuses: string[] = [];
 
     if (prefs) {
-      // FIX 2: Map preferences to valid Schema strings
-      // Ensure these strings ("Behavioral", etc.) match exactly what is in your DB 'focus' column
       if (prefs.focusBehavioral) allowedFocuses.push("Behavioral");
       if (prefs.focusTechnical) allowedFocuses.push("Technical");
       if (prefs.focusSystemDesign) allowedFocuses.push("System Design");
@@ -103,7 +107,6 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
     }
 
     if (applyFocusFilter) {
-      // FIX 3: Target the 'focus' column (not 'category')
       const strictCondition = {
         ...whereCondition,
         focus: { in: allowedFocuses },
@@ -112,19 +115,15 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
       const count = await prisma.question.count({ where: strictCondition });
 
       if (count > 0) {
-        // We have matching questions! Apply the filter.
         whereCondition = strictCondition;
       } else {
-        // FIX 4: Fallback
-        // User wanted "Technical" questions but none exist for this Role/Difficulty.
-        // We revert to the base query (ignoring focus) so we don't return 404.
         console.warn(
           "Preference filter returned 0 results. Falling back to default pool."
         );
       }
     }
 
-    // 5. Final Fetch
+    // Final fetch
     const unattemptedCount = await prisma.question.count({
       where: whereCondition,
     });
@@ -145,7 +144,7 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
 
     const nextQuestion = nextQuestions[0];
 
-    // Update Session
+    // Update session current question
     await prisma.session.update({
       where: { id: sessionId },
       data: { currentQuestionId: nextQuestion.id },
@@ -158,8 +157,12 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// GET /api/practice/session/:sessionId
-// Returns the current state of the session (specifically the current question ID)
+/**
+ * GET /session/:sessionId
+ * @summary Fetch current practice session state
+ * @description
+ * Returns the session status and current question metadata.
+ */
 router.get(
   "/session/:sessionId",
   async (req: Request, res: Response): Promise<void> => {

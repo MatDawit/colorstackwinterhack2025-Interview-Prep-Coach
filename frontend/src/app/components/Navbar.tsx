@@ -10,30 +10,35 @@ import {
   ChartNoAxesColumn,
   CircleUserRound,
   FileUser,
-  Menu, // hamburger icon
-  X, // close icon
+  Menu,
+  X,
 } from "lucide-react";
 
+/**
+ * Navigation bar component
+ * Displays main navigation links and user profile avatar
+ * Includes mobile menu toggle and responsive layout
+ */
 export default function Navbar() {
   const { isDarkMode } = useTheme();
 
   type Me = {
     name: string | null;
     avatarUrl: string | null;
-    avatarShape: string | null; // "circle" | "square"
+    avatarShape: string | null;
     avatarBorder: string | null;
   };
 
   const [me, setMe] = useState<Me | null>(null);
-  // 1. ADD LOADING STATE
   const [loading, setLoading] = useState(true);
 
+  // Fetch user profile data
   useEffect(() => {
     async function loadMe() {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         setMe(null);
-        setLoading(false); // Stop loading immediately if no token
+        setLoading(false);
         return;
       }
 
@@ -57,7 +62,6 @@ export default function Navbar() {
       } catch {
         setMe(null);
       } finally {
-        // 2. STOP LOADING WHEN DONE (Success or Fail)
         setLoading(false);
       }
     }
@@ -68,6 +72,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Navigation links configuration
   const links = [
     { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { label: "Practice", href: "/practice", icon: BrainCircuit },
@@ -75,11 +80,15 @@ export default function Navbar() {
     { label: "Resume", href: "/resume", icon: FileUser },
   ];
 
+  // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  // 3. UPDATE COMPONENT TO HANDLE LOADING
+  /**
+   * Render user profile avatar component
+   * Shows loading skeleton while fetching profile data
+   */
   function ProfileAvatar({
     me,
     isLoading,
@@ -87,7 +96,7 @@ export default function Navbar() {
     me: Me | null;
     isLoading: boolean;
   }) {
-    // A. Show Skeleton if loading
+    // Show skeleton while loading
     if (isLoading) {
       return (
         <div
@@ -98,7 +107,7 @@ export default function Navbar() {
       );
     }
 
-    // B. Normal Render Logic
+    // Extract initials from user name
     const initials =
       (me?.name ?? "U")
         .split(" ")
@@ -115,6 +124,7 @@ export default function Navbar() {
       ? "#22c55e"
       : "#3D7AF5";
 
+    // Use avatar image if available
     if (me?.avatarUrl) {
       return (
         <img
@@ -129,6 +139,7 @@ export default function Navbar() {
       );
     }
 
+    // Fallback to initials badge
     return (
       <div
         className={[

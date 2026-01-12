@@ -17,8 +17,14 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 
+/**
+ * Interview preferences configuration page
+ * Allows users to set default interview type, difficulty, question focus,
+ * feedback style, and practice session settings
+ */
+
 type Preferences = {
-  defaultRole: string;
+  defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
   feedbackEmphasize:
     | "Balance"
@@ -40,6 +46,7 @@ type Preferences = {
   autoSubmitOnSilence: boolean;
 };
 
+// Default preference values for new users
 const DEFAULT_PREFS: Preferences = {
   defaultRole: "Software Engineering",
   defaultDifficulty: "Basic",
@@ -62,17 +69,13 @@ export default function PreferencesPage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
 
-  // --- STATE ---
-  // Removed isSignedIn state to match AnalyticsPage pattern
   const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  // --- EFFECTS ---
-
-  // 1. Check Authentication First (Matches AnalyticsPage)
+  // Check authentication status and redirect if needed
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
@@ -81,7 +84,7 @@ export default function PreferencesPage() {
     }
   }, [router]);
 
-  // 2. Fetch Data (Matches AnalyticsPage logic)
+  // Load user preferences from backend
   useEffect(() => {
     async function loadPrefs() {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -119,8 +122,7 @@ export default function PreferencesPage() {
 
         const p = data.preferences ?? data.preference ?? data.prefs;
         if (!p) {
-          // If 200 OK but no prefs, we just keep defaults (or handle as error)
-          // For now, keeping logic to assume defaults if missing
+          // If 200 OK but no prefs, keep defaults
         } else {
           setPrefs({
             defaultRole: p.defaultRole ?? DEFAULT_PREFS.defaultRole,
@@ -159,6 +161,7 @@ export default function PreferencesPage() {
     loadPrefs();
   }, [router]);
 
+  // Save user preferences to backend with validation
   async function savePreferences() {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
@@ -166,7 +169,7 @@ export default function PreferencesPage() {
       return;
     }
 
-    // UI Validation
+    // Ensure at least one question focus area is selected
     const activeFocusCount = Object.values(prefs.questionFocus).filter(
       Boolean
     ).length;
@@ -190,6 +193,7 @@ export default function PreferencesPage() {
           focusBehavioral: prefs.questionFocus.behavioral,
           focusTechnical: prefs.questionFocus.technical,
           focusSystemDesign: prefs.questionFocus.systemDesign,
+          feedbackEmphasize: prefs.feedbackEmphasize,
           autoStartNext: prefs.autoStartNext,
           feedbackTone: prefs.feedbackTone,
           feedbackDetail: prefs.feedbackDetail,
@@ -200,7 +204,7 @@ export default function PreferencesPage() {
         }),
       });
 
-      // Handle 401 on Save
+      // Handle authentication expiry
       if (res.status === 401) {
         localStorage.removeItem("token");
         router.push("/login");
@@ -219,11 +223,13 @@ export default function PreferencesPage() {
     }
   }
 
+  // Reset preferences to default values
   function resetDefaults() {
     setPrefs(DEFAULT_PREFS);
     setSaveStatus("idle");
   }
 
+  // Toggle question focus categories (prevent deselecting all)
   const handleFocusToggle = (key: keyof Preferences["questionFocus"]) => {
     setPrefs((current) => {
       const isCurrentlyActive = current.questionFocus[key];
@@ -231,6 +237,7 @@ export default function PreferencesPage() {
         Boolean
       ).length;
 
+      // Prevent deselecting if only one category is active
       if (isCurrentlyActive && totalActive <= 1) {
         return current;
       }
@@ -299,55 +306,23 @@ export default function PreferencesPage() {
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarLink
-                    href="/dashboard"
-                    label="Home"
-                    icon={<Home className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile/preferences"
+                    label="Preferences"
+                    icon={<SlidersHorizontal className="h-4 w-4" />}
+                    active
                     isDarkMode={isDarkMode}
                   />
-
-                  <SidebarGroup
-                    label="Settings"
-                    icon={<Settings className="h-4 w-4" />}
-                    isDarkMode={isDarkMode}
-                  >
-                    <SidebarSubLink
-                      href="/profile/preferences"
-                      label="Preferences"
-                      icon={<SlidersHorizontal className="h-4 w-4" />}
-                      active
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile/account"
-                      label="Account"
-                      icon={<User className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile"
-                      label="Personal"
-                      icon={<UserCircle2 className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                  </SidebarGroup>
-
-                  <div
-                    className={`my-3 h-px ${
-                      isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                    }`}
-                  />
-
-                  <SidebarLink
-                    href="/practice"
-                    label="Practice"
-                    icon={<BrainCircuit className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile/account"
+                    label="Account"
+                    icon={<User className="h-4 w-4" />}
                     isDarkMode={isDarkMode}
                   />
-                  <SidebarLink
-                    href="/analytics"
-                    label="Analytics"
-                    icon={<ChartNoAxesColumn className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile"
+                    label="Personal"
+                    icon={<UserCircle2 className="h-4 w-4" />}
                     isDarkMode={isDarkMode}
                   />
                 </nav>
@@ -405,7 +380,7 @@ export default function PreferencesPage() {
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => router.push("/dashboard")}
+                        onClick={() => router.push("/profile")}
                         className={`rounded-lg border ${
                           isDarkMode
                             ? "border-gray-600 bg-gray-800 text-gray-100 hover:bg-gray-700"
@@ -482,7 +457,40 @@ export default function PreferencesPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
+                  <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <SelectField
+                      label="Role"
+                      value={prefs.defaultRole}
+                      onChange={(v) =>
+                        setPrefs((p) => ({
+                          ...p,
+                          defaultRole: v as Preferences["defaultRole"],
+                        }))
+                      }
+                      options={[
+                        "Software Engineering",
+                        "Product Management",
+                        "Data Science",
+                      ]}
+                      isDarkMode={isDarkMode}
+                    />
+
+                    <SelectField
+                      label="Difficulty"
+                      value={prefs.defaultDifficulty}
+                      onChange={(v) =>
+                        setPrefs((p) => ({
+                          ...p,
+                          defaultDifficulty:
+                            v as Preferences["defaultDifficulty"],
+                        }))
+                      }
+                      options={["Basic", "Intermediate", "Advanced"]}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-1 gap-4">
                     <SelectField
                       label="What should we emphasize in your feedback?"
                       value={prefs.feedbackEmphasize}
@@ -733,7 +741,7 @@ export default function PreferencesPage() {
   );
 }
 
-/* ---------- Small UI helpers (matches your style) ---------- */
+/* Small UI helpers */
 
 function SidebarLink({
   href,
@@ -957,7 +965,7 @@ function ToggleRow({
         type="button"
         onClick={onToggle}
         className={[
-          "h-6 w-11 rounded-full transition relative flex-shrink-0",
+          "h-6 w-11 rounded-full transition relative shrink-0",
           enabled ? "bg-blue-600" : isDarkMode ? "bg-gray-600" : "bg-gray-300",
         ].join(" ")}
         aria-label={title}

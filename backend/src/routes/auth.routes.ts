@@ -1,60 +1,59 @@
-import { Router } from "express"
-import { Request } from "express"
-import { Response } from "express"
-import { login, signup } from '../services/auth.service'
-import passport from "passport"
+/**
+ * Auth routes
+ * Handles signup, login, OAuth callbacks, and password updates.
+ */
+import { Router } from "express";
+import { Request } from "express";
+import { Response } from "express";
+import { login, signup, updatePassword } from "../services/auth.service";
+import passport from "passport";
 import jwt from "jsonwebtoken";
+import { authenticateJWT } from "../services/auth.middleware";
 
-// create the router
-// this is where i'll add new endpoints
-const router  = Router()
+const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
-// routers accept requests from the front end and then extract data from those requests, calls fxns and then sends response back to the frontend
-// create abn endpoint that accepts post requests and (r.post)
-router.post('/signup', async (req: Request, res: Response) => {
-    // Erroe handling practice
-    try 
-    {
-        //req and res contain request and response objects from the frontend 
-        
-        // extract the data from the requests body
-        const { email, password, name } = req.body
-        // call signuop fxn using the variables from the requests body
-        const result = await signup(email, password, name) // result has a token
-        // code 201 means success and json result makw result a json and sends it back
-        res.status(201).json(result)
-    } catch (error:any) // if there is any error thrown from the signuo function
-    {
-        // print out the rror message thrown and a 400 code which means error in HTTP
-        res.status(400).json({error: error.message})
-    }
-    
-
-})
-
-router.post('/login', async (req: Request, res: Response) => {
-    // Erroe handling practice
-    try 
-    {
-        //req and res contain request and response objects from the frontend 
-        
-        // extract the data from the requests body
+/**
+ * POST /signup
+ * @summary Register a new user
+ * @description
+ * Creates a new user account using email, password, and name credentials.
+ */
+router.post("/signup", async (req: Request, res: Response) => {
+  try {
+    const { email, password, name } = req.body;
+    const result = await signup(email, password, name);
+    res.status(201).json(result);
+    return;
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+});
+/**
+ * POST /login
+ * @summary Authenticate an existing user
+ * @description
+ * Validates user credentials and returns a signed JWT on success.
+ */
+router.post("/login", async (req: Request, res: Response) => {
+  try {
         const { email, password, rememberMe } = req.body
-        // call signuop fxn using the variables from the requests body
         const result = await login(email, password, !!rememberMe) // result has a token
-        // code 201 means success and json result makw result a json and sends it back
         res.status(200).json(result)
-    } catch (error:any) // if there is any error thrown from the signuo function
-    {
-        // print out the rror message thrown and a 400 code which means error in HTTP
-        res.status(400).json({error: error.message})
-    }
-    
-
-})
-
+    return;
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+    return;
+  }
+});
+/**
+ * GET /google
+ * @summary Initiate Google OAuth authentication
+ * @description
+ * Redirects the user to Google’s OAuth consent screen.
+ */
 router.get(
   "/google",
   passport.authenticate("google", {
@@ -63,6 +62,12 @@ router.get(
   })
 );
 
+/**
+ * GET /google/callback
+ * @summary Handle Google OAuth callback
+ * @description
+ * Exchanges Google OAuth credentials for a JWT and redirects to the frontend.
+ */
 router.get(
   "/google/callback",
   passport.authenticate("google", {
@@ -70,51 +75,76 @@ router.get(
     failureRedirect: `${FRONTEND_URL}/login?error=google_auth_failed`,
   }),
   (req, res) => {
-    // passport puts your Prisma user on req.user
     const user = req.user as any;
-
-    // Issue YOUR JWT (same style you already do on normal login)
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    // Redirect to frontend callback page with token
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
     res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
   }
 );
 
-//github auth
+/**
+ * GET /github
+ * @summary Initiate GitHub OAuth authentication
+ * @description
+ * Redirects the user to GitHub’s OAuth consent screen.
+ */
 router.get(
-    "/github",
-    passport.authenticate("github", {
-      scope: ["user:email"],
-      session: false,
-    })
-  );
+  "/github",
+  passport.authenticate("github", {
+    scope: ["user:email"],
+    session: false,
+  })
+);
 
-//github callback
+/**
+ * GET /github/callback
+ * @summary Handle GitHub OAuth callback
+ * @description
+ * Exchanges GitHub OAuth credentials for a JWT and redirects to the frontend.
+ */
 router.get(
-    "/github/callback",
-    passport.authenticate("github", {
-        session: false,
-    }),
-    (req, res) => {
-        // passport puts your Prisma user on req.user
-        const user = req.user as any;
+  "/github/callback",
+  passport.authenticate("github", {
+    session: false,
+  }),
+  (req, res) => {
+    const user = req.user as any;
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+    res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+  }
+);
 
-        // Issue YOUR JWT (same style you already do on normal login)
-        const token = jwt.sign(
-            { userId: user.id, email: user.email },
-            JWT_SECRET,
-            { expiresIn: "7d" }
-        );
+/**
+ * PATCH /password
+ * @summary Update authenticated user password
+ * @description
+ * Updates the user’s password after validating the current password.
+ */
+router.patch(
+  "/password",
+  authenticateJWT,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).authenticatedUser.id;
+      const { currentPassword, newPassword } = req.body;
 
-        // Redirect to frontend callback page with token
-        res.redirect(`${FRONTEND_URL}/auth/callback?token=${token}`);
+      if (!newPassword) {
+        res.status(400).json({ error: "New password is required." });
+        return;
+      }
+
+      const result = await updatePassword(userId, currentPassword, newPassword);
+      res.status(200).json(result);
+      return;
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+      return;
     }
+  }
 );
 
 // export the router
-export default router
+export default router;

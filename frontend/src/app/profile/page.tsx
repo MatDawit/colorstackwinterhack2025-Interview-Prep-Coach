@@ -25,6 +25,12 @@ import {
 import { useRouter } from "next/navigation";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * User profile page component
+ * Enables editing of user information, avatar customization with image cropping,
+ * and profile image management
+ */
+
 type ProfileForm = {
   name: string;
   email: string;
@@ -48,6 +54,8 @@ export default function ProfilePage() {
 
   const [avatarShape, setAvatarShape] = useState<"circle" | "square">("circle");
   const [borderColor, setBorderColor] = useState<string>("#3B82F6");
+
+  // Available avatar border color options
   const BORDER_COLORS = [
     { name: "Red", hex: "#EF4444" },
     { name: "Orange", hex: "#F97316" },
@@ -59,6 +67,7 @@ export default function ProfilePage() {
     { name: "White", hex: "#FFFFFF" },
     { name: "Black", hex: "#000000" },
   ];
+
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<
@@ -66,9 +75,9 @@ export default function ProfilePage() {
   >("idle");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
+  // Image cropping state management
   const [isCropOpen, setIsCropOpen] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -82,16 +91,18 @@ export default function ProfilePage() {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Prevent hydration mismatch
+  // Prevent hydration mismatch by setting mounted state on client
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Check authentication status
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     setIsSignedIn(!!token);
   }, []);
 
+  // Load user profile data from backend
   useEffect(() => {
     async function loadProfile() {
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -105,6 +116,14 @@ export default function ProfilePage() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        // Handle unauthorized - clear token and redirect
+        if (res.status === 401) {
+          localStorage.removeItem("token");
+          router.push("/login");
+          setLoading(false);
+          return;
+        }
+
         const raw = await res.text();
         let data: any;
         try {
@@ -115,6 +134,11 @@ export default function ProfilePage() {
         }
 
         if (!res.ok) throw new Error(data.error || "Failed to load profile.");
+
+        // Validate data exists
+        if (!data.user) {
+          throw new Error("No user data in response");
+        }
 
         setForm({
           name: data.user.name ?? "",
@@ -129,8 +153,10 @@ export default function ProfilePage() {
         );
         setBorderColor(data.user.avatarBorder || "#3B82F6");
         setAvatarUrl(data.user.avatarUrl ?? null);
+        setIsSignedIn(true);
       } catch (e) {
         console.error(e);
+        setIsSignedIn(false);
       } finally {
         setLoading(false);
       }
@@ -139,6 +165,7 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
+  // Update individual profile form fields
   function updateField<K extends keyof ProfileForm>(
     key: K,
     value: ProfileForm[K]
@@ -146,6 +173,7 @@ export default function ProfilePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  // Save profile changes to backend
   async function saveProfile() {
     setSaveStatus("saving");
 
@@ -185,13 +213,17 @@ export default function ProfilePage() {
       }
 
       setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 1500);
+      setTimeout(() => {
+        setSaveStatus("idle");
+        router.push("/dashboard");
+      }, 0);
     } catch (e) {
       console.error(e);
       setSaveStatus("error");
     }
   }
 
+  // Sign out user and clear authentication token
   async function handleSignOut() {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
@@ -205,14 +237,19 @@ export default function ProfilePage() {
       });
 
       localStorage.removeItem("token");
+      // Reset theme to light mode immediately
+      document.documentElement.classList.remove("dark");
       router.push("/login");
     } catch (error) {
       console.error("Sign out failed:", error);
       localStorage.removeItem("token");
+      // Reset theme to light mode immediately
+      document.documentElement.classList.remove("dark");
       router.push("/login");
     }
   }
 
+  // Delete user account and associated data
   async function handleDeleteAccount() {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
@@ -237,10 +274,12 @@ export default function ProfilePage() {
     }
   }
 
+  // Trigger file picker for avatar upload
   function openFilePicker() {
     fileInputRef.current?.click();
   }
 
+  // Handle image file selection and crop flow
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -257,10 +296,12 @@ export default function ProfilePage() {
     e.target.value = "";
   }
 
+  // Track crop area selection
   function onCropComplete(_: any, croppedPixels: any) {
     setCroppedAreaPixels(croppedPixels);
   }
 
+  // Apply cropped image and update avatar
   async function applyCrop() {
     if (!selectedImageUrl || !croppedAreaPixels) {
       setIsCropOpen(false);
@@ -328,39 +369,33 @@ export default function ProfilePage() {
                 }`}
               >
                 <div
-                  className={`px-3 pt-2 pb-3 text-xs font-semibold uppercase tracking-wide ${
-                    isDarkMode ? "text-gray-500" : "text-gray-500"
-                  }`}
+                  className={`px-3 pt-2 pb-3 text-xs font-semibold ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  } uppercase tracking-wide`}
                 >
                   Navigation
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarGroup
-                    label="Settings"
-                    icon={<Settings className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile/preferences"
+                    label="Preferences"
+                    icon={<SlidersHorizontal className="h-4 w-4" />}
                     isDarkMode={isDarkMode}
-                  >
-                    <SidebarSubLink
-                      href="/profile/preferences"
-                      label="Preferences"
-                      icon={<SlidersHorizontal className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile/account"
-                      label="Account"
-                      icon={<User className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile"
-                      label="Personal"
-                      active
-                      icon={<UserCircle2 className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                  </SidebarGroup>
+                  />
+                  <SidebarSubLink
+                    href="/profile/account"
+                    label="Account"
+                    icon={<User className="h-4 w-4" />}
+                    isDarkMode={isDarkMode}
+                  />
+                  <SidebarSubLink
+                    href="/profile"
+                    label="Personal"
+                    active
+                    icon={<UserCircle2 className="h-4 w-4" />}
+                    isDarkMode={isDarkMode}
+                  />
                 </nav>
               </div>
             </aside>
@@ -533,7 +568,7 @@ export default function ProfilePage() {
                       value={form.bio}
                       onChange={(e) => updateField("bio", e.target.value)}
                       placeholder="Tell us a little about yourself..."
-                      className={`w-full min-h-[110px] rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full min-h-27.5 rounded-xl border px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDarkMode
                           ? "bg-gray-700 border-gray-600 text-white placeholder:text-gray-400"
                           : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
@@ -755,7 +790,7 @@ export default function ProfilePage() {
             </div>
 
             <div
-              className={`relative h-[320px] ${
+              className={`relative h-80 ${
                 isDarkMode ? "bg-gray-900" : "bg-gray-100"
               }`}
             >
@@ -897,7 +932,7 @@ async function getCroppedImageDataUrl(
   return canvas.toDataURL("image/jpeg", 0.8);
 }
 
-/*  Small UI helpers  */
+/* Small UI helpers */
 
 function SidebarLink({
   href,
@@ -974,7 +1009,9 @@ function SidebarSubLink({
       className={[
         "flex items-center gap-2 rounded-lg px-3 py-2 text-sm",
         active
-          ? "bg-blue-50 text-blue-700 font-semibold"
+          ? isDarkMode
+            ? "bg-blue-900 text-blue-200 font-semibold"
+            : "bg-blue-50 text-blue-700 font-semibold"
           : isDarkMode
           ? "text-gray-400 hover:bg-gray-700"
           : "text-gray-600 hover:bg-gray-50",

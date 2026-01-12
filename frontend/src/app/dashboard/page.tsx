@@ -1,4 +1,8 @@
-// prince dashboard page
+/**
+ * Dashboard page
+ * Main landing page after login showing session statistics and progress
+ * Displays average scores, total sessions, and milestone progress
+ */
 "use client";
 
 import Navbar from "../components/Navbar";
@@ -21,13 +25,14 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Fetch session statistics from backend
   useEffect(() => {
     const fetchSessionStats = async () => {
       try {
         // Get the JWT token from localStorage (or wherever you store it)
         const token = localStorage.getItem("token") || sessionStorage.getItem("token"); // Adjust based on where you store your token
 
-        // PROTECTION: Redirect to login if no token
+        // Redirect to login if not authenticated
         if (!token) {
           console.error("No auth token found - redirecting to login");
           router.push("/login");
@@ -43,10 +48,10 @@ export default function Dashboard() {
           }
         );
 
+        // Handle token expiry
         if (!response.ok) {
-          // If token is invalid/expired, redirect to login
           if (response.status === 401) {
-            localStorage.removeItem("token"); // Clear invalid token
+            localStorage.removeItem("token");
             router.push("/login");
             return;
           }
@@ -264,26 +269,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                <div className="mt-4">
-                  <h3
-                    className={`text-sm font-semibold mb-2 ${
-                      isDarkMode ? "text-white" : "text-black"
-                    }`}
-                  >
-                    Key Improvement Areas
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full">
-                      STAR Structure
-                    </span>
-                    <span className="bg-yellow-100 text-yellow-700 text-xs px-3 py-1 rounded-full">
-                      Conciseness
-                    </span>
-                    <span className="bg-orange-100 text-orange-700 text-xs px-3 py-1 rounded-full">
-                      Technical Depth
-                    </span>
-                  </div>
-                </div>
+                <div className="mt-4"></div>
               </div>
             </div>
 

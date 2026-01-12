@@ -2,48 +2,171 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+/**
+ * Theme context type definition
+ * Provides dark mode toggle and theme state management
+ */
 type ThemeContextType = {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  mounted: boolean; // helps pages avoid hydration mismatch
+  mounted: boolean;
+  refreshTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+/**
+ * Theme provider component
+ * Manages dark/light mode state and persists user preference to backend
+ * Handles theme synchronization across browser tabs
+ */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Always render the same on the server + first client render
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  // After mount, read localStorage and set theme
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    const dark = saved === "dark";
-    setIsDarkMode(dark);
-    setMounted(true);
+  // Fetch theme preference from backend
+  const fetchTheme = React.useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsDarkMode(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/api/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // If 401 or 500, clear token - backend is likely restarted
+      if (response.status === 401 || response.status === 500) {
+        localStorage.removeItem("token");
+        setIsDarkMode(false);
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsDarkMode(data.user?.darkMode ?? false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch theme:", error);
+      setIsDarkMode(false);
+    }
   }, []);
 
-  // Apply 'dark' class to <html> whenever theme changes (but only after mounted)
+  // Initialize theme on mount and when token changes
   useEffect(() => {
-    if (!mounted) return;
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      // User is logged in - fetch fresh from backend
+      setIsDarkMode(null);
+      fetchTheme();
+    } else {
+      // User is not logged in - use light mode default
+      setIsDarkMode(false);
+      localStorage.removeItem("cachedDarkMode");
+    }
+
+    setMounted(true);
+  }, [fetchTheme]);
+
+  // Listen for storage changes and token modifications
+  useEffect(() => {
+    let previousToken = localStorage.getItem("token");
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token") {
+        if (!e.newValue) {
+          // Token was removed (logout)
+          setIsDarkMode(false);
+          localStorage.removeItem("cachedDarkMode");
+        } else {
+          // Token was added/changed (login)
+          localStorage.removeItem("cachedDarkMode");
+          setIsDarkMode(null);
+          fetchTheme();
+        }
+      }
+    };
+
+    // Check periodically for token changes (same-tab login detection)
+    const interval = setInterval(() => {
+      const currentToken = localStorage.getItem("token");
+      if (currentToken !== previousToken) {
+        previousToken = currentToken;
+        if (currentToken) {
+          // Token was added
+          localStorage.removeItem("cachedDarkMode");
+          setIsDarkMode(null);
+          fetchTheme();
+        } else {
+          // Token was removed
+          setIsDarkMode(false);
+          localStorage.removeItem("cachedDarkMode");
+        }
+      }
+    }, 100);
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [fetchTheme]);
+
+  // Apply theme class to DOM
+  useEffect(() => {
+    if (isDarkMode === null) {
+      return; // Still initializing
+    }
 
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [isDarkMode, mounted]);
+  }, [isDarkMode]);
 
-  const toggleTheme = () => {
-    setIsDarkMode((prev) => {
-      const next = !prev;
-      localStorage.setItem("theme", next ? "dark" : "light");
-      return next;
-    });
+  // Toggle theme and persist to backend
+  const toggleTheme = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const newDarkMode = !isDarkMode;
+
+    try {
+      const response = await fetch("http://localhost:5000/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ darkMode: newDarkMode }),
+      });
+
+      if (response.ok) {
+        setIsDarkMode(newDarkMode);
+      }
+    } catch (error) {
+      console.error("Failed to update theme:", error);
+    }
+  };
+
+  // Force refresh theme from backend
+  const refreshTheme = () => {
+    fetchTheme();
   };
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme, mounted }}>
+    <ThemeContext.Provider
+      value={{
+        isDarkMode: isDarkMode ?? false,
+        toggleTheme,
+        mounted,
+        refreshTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

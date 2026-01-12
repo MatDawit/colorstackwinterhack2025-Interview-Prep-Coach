@@ -8,25 +8,29 @@ datasource db {
 }
 
 model User {
-  id                  String       @id @default(uuid())
-  email               String       @unique
-  name                String?
-  passwordHash        String?
-  googleId            String?      @unique
-  githubId            String?      @unique
-  githubLogin         String?
-  bio                 String?
-  location            String?
-  avatarUrl           String?
-  avatarShape         String?
-  avatarBorder        String?
-  darkMode            Boolean      @default(false)
-  onboardingCompleted Boolean      @default(false)
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-  Preferences         Preferences?
-  resume              Resume?
-  sessions            Session[]
+  id           String  @id @default(uuid())
+  email        String  @unique
+  name         String?
+  passwordHash String?
+
+  googleId    String? @unique
+  githubId    String? @unique
+  githubLogin String?
+
+  bio             String?
+  location        String?
+  avatarUrl       String?
+  avatarShape     String?
+  avatarBorder    String?
+  darkMode        Boolean @default(false)
+  onboardingCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  resume      Resume?
+  sessions    Session[]
+  Preferences Preferences?
 
   @@index([email])
 }

@@ -1,55 +1,77 @@
-type FeedbackEmphasize = "Balance" | "Clarity" | "Storytelling" | "Confidence" | "Technical Depth";
+/**
+ * Prompt configuration utilities
+ * Builds a structured system instruction for AI feedback generation
+ * based on emphasis, tone, and detail level preferences.
+ */
+type FeedbackEmphasize =
+  | "Balance"
+  | "Clarity"
+  | "Storytelling"
+  | "Confidence"
+  | "Technical Depth";
 type FeedbackTone = "Encouraging" | "Direct" | "Strict";
 type FeedbackDetail = "Brief" | "Standard" | "Deep";
 
-export const getFeedbackPrompt = (emphasize: FeedbackEmphasize, tone: FeedbackTone, detail: FeedbackDetail) => {
+export const getFeedbackPrompt = (
+  emphasize: FeedbackEmphasize,
+  tone: FeedbackTone,
+  detail: FeedbackDetail
+) => {
   let emphasizeInstruction = "";
   let toneInstruction = "";
   let detailInstruction = "";
-
-  // 1. Configure Tone
+  // Configure tone
   switch (tone) {
     case "Encouraging":
-      toneInstruction = "Be highly supportive and empathetic. Highlight strengths first. Use constructive, gentle language when pointing out flaws.";
+      toneInstruction =
+        "Be highly supportive and empathetic. Highlight strengths first. Use constructive, gentle language when pointing out flaws.";
       break;
     case "Strict":
-      toneInstruction = "Be extremely critical and demanding. Act like a 'Bar Raiser' at Amazon or Google. Nitpick every detail. Do not sugarcoat weaknesses.";
+      toneInstruction =
+        "Be extremely critical and demanding. Act like a 'Bar Raiser' at Amazon or Google. Nitpick every detail. Do not sugarcoat weaknesses.";
       break;
     default: // Direct
-      toneInstruction = "Be professional, objective, and direct. Focus purely on the facts and the STAR method adherence.";
+      toneInstruction =
+        "Be professional, objective, and direct. Focus purely on the facts and the STAR method adherence.";
   }
-
-  // 2. Configure Detail
+  // Configure detail level
   switch (detail) {
     case "Brief":
-      detailInstruction = "Keep the `analysis_highlighting` and `actionable_feedback` very concise (max 2 sentences each). Focus only on the single biggest issue.";
+      detailInstruction =
+        "Keep the `analysis_highlighting` and `actionable_feedback` very concise (max 2 sentences each). Focus only on the single biggest issue.";
       break;
     case "Deep":
-      detailInstruction = "Provide an in-depth analysis. In `actionable_feedback`, explain the 'Why' behind every suggestion. The `improved_version` should be very detailed.";
+      detailInstruction =
+        "Provide an in-depth analysis. In `actionable_feedback`, explain the 'Why' behind every suggestion. The `improved_version` should be very detailed.";
       break;
     default: // Standard
-      detailInstruction = "Provide a balanced analysis. Cover the main strengths and weaknesses without being overly verbose.";
+      detailInstruction =
+        "Provide a balanced analysis. Cover the main strengths and weaknesses without being overly verbose.";
   }
-
-  // 3. Configure Emphasis
+  // Configure emphasis area
   switch (emphasize) {
     case "Clarity":
-      emphasizeInstruction = "PRIMARY FOCUS: Communication style. Penalize rambling, jargon overuse, or unstructured thoughts. The 'improved_version' must be extremely concise and easy to follow.";
+      emphasizeInstruction =
+        "PRIMARY FOCUS: Communication style. Penalize rambling, jargon overuse, or unstructured thoughts. The 'improved_version' must be extremely concise and easy to follow.";
       break;
     case "Storytelling":
-      emphasizeInstruction = "PRIMARY FOCUS: Narrative arc. Ensure the candidate paints a picture of the problem and the resolution. Look for emotional intelligence and engaging delivery.";
+      emphasizeInstruction =
+        "PRIMARY FOCUS: Narrative arc. Ensure the candidate paints a picture of the problem and the resolution. Look for emotional intelligence and engaging delivery.";
       break;
     case "Confidence":
-      emphasizeInstruction = "PRIMARY FOCUS: Authority and presence. Flag any hedging words (maybe, kind of, I think). Encourage strong action verbs and ownership of results.";
+      emphasizeInstruction =
+        "PRIMARY FOCUS: Authority and presence. Flag any hedging words (maybe, kind of, I think). Encourage strong action verbs and ownership of results.";
       break;
     case "Technical Depth":
-      emphasizeInstruction = "PRIMARY FOCUS: Engineering rigour. If the candidate glosses over technical implementation, penalize them heavily. Demand specific technologies, algorithms, and trade-off discussions.";
+      emphasizeInstruction =
+        "PRIMARY FOCUS: Engineering rigour. If the candidate glosses over technical implementation, penalize them heavily. Demand specific technologies, algorithms, and trade-off discussions.";
       break;
     default: // Balance
-      emphasizeInstruction = "Maintain a holistic view. Weight communication, technical accuracy, and structure equally.";
+      emphasizeInstruction =
+        "Maintain a holistic view. Weight communication, technical accuracy, and structure equally.";
   }
 
-return `
+  return `
 You are an expert Technical Interview Coach and Behavior Advisor specialized in preparing candidates for engineering and technical roles at top-tier technology companies (like Google, Meta, Amazon, etc.).
 
 ${toneInstruction}
