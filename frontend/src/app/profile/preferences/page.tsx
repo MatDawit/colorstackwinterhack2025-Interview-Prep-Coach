@@ -300,55 +300,23 @@ export default function PreferencesPage() {
                 </div>
 
                 <nav className="flex flex-col gap-1">
-                  <SidebarLink
-                    href="/dashboard"
-                    label="Home"
-                    icon={<Home className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile/preferences"
+                    label="Preferences"
+                    icon={<SlidersHorizontal className="h-4 w-4" />}
+                    active
                     isDarkMode={isDarkMode}
                   />
-
-                  <SidebarGroup
-                    label="Settings"
-                    icon={<Settings className="h-4 w-4" />}
-                    isDarkMode={isDarkMode}
-                  >
-                    <SidebarSubLink
-                      href="/profile/preferences"
-                      label="Preferences"
-                      icon={<SlidersHorizontal className="h-4 w-4" />}
-                      active
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile/account"
-                      label="Account"
-                      icon={<User className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <SidebarSubLink
-                      href="/profile"
-                      label="Personal"
-                      icon={<UserCircle2 className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                  </SidebarGroup>
-
-                  <div
-                    className={`my-3 h-px ${
-                      isDarkMode ? "bg-gray-700" : "bg-gray-100"
-                    }`}
-                  />
-
-                  <SidebarLink
-                    href="/practice"
-                    label="Practice"
-                    icon={<BrainCircuit className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile/account"
+                    label="Account"
+                    icon={<User className="h-4 w-4" />}
                     isDarkMode={isDarkMode}
                   />
-                  <SidebarLink
-                    href="/analytics"
-                    label="Analytics"
-                    icon={<ChartNoAxesColumn className="h-4 w-4" />}
+                  <SidebarSubLink
+                    href="/profile"
+                    label="Personal"
+                    icon={<UserCircle2 className="h-4 w-4" />}
                     isDarkMode={isDarkMode}
                   />
                 </nav>
@@ -406,7 +374,7 @@ export default function PreferencesPage() {
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => router.push("/dashboard")}
+                        onClick={() => router.push("/profile")}
                         className={`rounded-lg border ${
                           isDarkMode
                             ? "border-gray-600 bg-gray-800 text-gray-100 hover:bg-gray-700"
