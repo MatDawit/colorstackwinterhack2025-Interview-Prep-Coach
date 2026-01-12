@@ -27,13 +27,12 @@ model User {
   githubId    String? @unique
   githubLogin String?
 
-  targetRole      String?
-  experienceLevel String?
   bio             String?
   location        String?
   avatarUrl       String?
   avatarShape     String?
   avatarBorder    String?
+  darkMode        Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
