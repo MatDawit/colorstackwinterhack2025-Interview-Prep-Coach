@@ -34,7 +34,7 @@ export async function signup(email: string, password: string, name: string) {
 
   // If password is too short, throw error
   if (password.length < 6) {
-    throw new Error("Password must be at least 6 characters long.");
+    throw new Error("Password must be at least 8 characters long.");
   }
 
   // check if someone with this email is already in the database
