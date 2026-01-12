@@ -24,13 +24,13 @@ const upload = multer({
 });
 
 /**
- * GET /profile/resume
+ * GET /
  * @summary Fetch the authenticated user's resume metadata
  * @description
  * Returns information about the user's uploaded resume (URL, filename, last updated), or null if none exists.
  */
 router.get(
-  "/profile/resume",
+  "/",
   requireAuth,
   async (req: Request, res: Response) => {
     try {
@@ -59,14 +59,14 @@ router.get(
 );
 
 /**
- * POST /profile/resume/upload
+ * POST /upload
  * @summary Upload or update a resume
  * @description
  * Accepts a PDF or Word document, replaces any existing resume in Supabase,
  * and stores metadata in the database.
  */
 router.post(
-  "/profile/resume/upload",
+  "/upload",
   requireAuth,
   upload.single("resume"),
   async (req: Request, res: Response) => {
@@ -152,13 +152,13 @@ router.post(
 );
 
 /**
- * GET /profile/resume/parse
+ * GET /parse
  * @summary Parse the user's uploaded resume
  * @description
  * Downloads the resume from Supabase storage and parses it into structured data using the resume parser service.
  */
 router.get(
-  "/profile/resume/parse",
+  "/parse",
   requireAuth,
   async (req: Request, res: Response) => {
     try {
@@ -217,13 +217,13 @@ router.get(
 );
 
 /**
- * DELETE /profile/resume
+ * DELETE /
  * @summary Delete the user's uploaded resume
  * @description
  * Removes the resume file from Supabase storage and deletes the corresponding database record.
  */
 router.delete(
-  "/profile/resume",
+  "/",
   requireAuth,
   async (req: Request, res: Response) => {
     try {

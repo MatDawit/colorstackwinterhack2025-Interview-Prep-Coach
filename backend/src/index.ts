@@ -17,6 +17,7 @@ import { configurePassport } from "./config/passport";
 import path from "path";
 import preferencesRouter from "./routes/preferences.routes";
 import resumeRoutes from "./routes/resume.routes";
+import resumeFeedbackRoutes from "./routes/resume_feedback.routes";
 
 // Load environment variables
 dotenv.config();
@@ -55,14 +56,19 @@ app.use("/api/analytics", analyticsRouter);
 // Profile endpoints
 app.use("/api/profile", profileRouter);
 
+// User preferences
 app.use("/api/profile/preferences", preferencesRouter);
+
+// Resume feedback (AI-powered)
+app.use("/api/resume", resumeFeedbackRoutes);
+
+// Resume routes (upload/parse) - CHANGE THIS LINE
+app.use("/api/profile/resume", resumeRoutes); // Changed from "/api"
 
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Backend is running!" });
 });
-
-app.use("/api", resumeRoutes);
 
 // Start server
 app.listen(PORT, () => {

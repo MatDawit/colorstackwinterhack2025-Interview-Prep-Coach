@@ -199,15 +199,16 @@ export default function AccountPage() {
       }
 
       const res = await fetch(
-        "http://localhost:5000/api/profile/resume/upload",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+              "http://localhost:5000/api/profile/resume/upload",  // <-- This line
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+              }
+            );
+
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");

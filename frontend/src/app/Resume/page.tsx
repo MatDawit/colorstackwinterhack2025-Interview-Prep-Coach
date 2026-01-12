@@ -8,8 +8,6 @@ import {
   Upload,
   FileText,
   Sparkles,
-  HelpCircle,
-  MessageSquareText,
   Save,
   RefreshCcw,
 } from "lucide-react";
@@ -47,14 +45,6 @@ type ParsedResume = {
   }>;
 };
 
-type ResumeQA = {
-  generatedQuestions: string[];
-  selectedQuestionIndex: number;
-  answerDraft: string;
-  critique: string;
-  tips: string[];
-};
-
 export default function ResumePage() {
   const { isDarkMode, mounted } = useTheme();
   const pageBg = !mounted
@@ -66,25 +56,11 @@ export default function ResumePage() {
   const [loading, setLoading] = useState(true);
   const [parsing, setParsing] = useState(false);
   const [meta, setMeta] = useState<ResumeMeta | null>(null);
-
-  // Parsed resume fields (editable) - Start with null instead of default
   const [parsed, setParsed] = useState<ParsedResume | null>(null);
 
-  // Q/A coaching UI state
-  const [qa, setQa] = useState<ResumeQA>({
-    generatedQuestions: [
-      "Tell me about a project where you used these skills: React + Node.",
-      "Walk me through a time you improved a process or system.",
-      "What's a technical challenge you faced and how did you solve it?",
-    ],
-    selectedQuestionIndex: 0,
-    answerDraft: "",
-    critique: "",
-    tips: [
-      "Use measurable impact (numbers) in at least 2–3 bullets per role/project.",
-      "Start bullets with strong action verbs and keep them concise.",
-    ],
-  });
+  // AI Feedback state
+  const [feedback, setFeedback] = useState<string>("");
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
 
   useEffect(() => {
     async function loadResume() {
@@ -146,7 +122,6 @@ export default function ResumePage() {
 
   const resumePreviewSrc = useMemo(() => {
     if (!meta?.resumeUrl) return null;
-    // Supabase URLs are full URLs, don't prepend localhost
     return meta.resumeUrl;
   }, [meta]);
 
@@ -182,42 +157,42 @@ export default function ResumePage() {
   }
 
   async function saveEdits() {
-    // Later: PATCH parsed fields back to backend for persistence
     alert("Save edits will call the backend later.");
   }
 
-  async function generateQuestions() {
-    if (!parsed) return;
-    
-    const skillLine = parsed.skills.slice(0, 5).join(", ");
-    const company = parsed.roles?.[0]?.company || "your experience";
-    setQa((prev) => ({
-      ...prev,
-      generatedQuestions: [
-        `Tell me about a time you used ${skillLine} to deliver results.`,
-        `Pick one accomplishment at ${company} and walk me through it using STAR.`,
-        `Which project best shows your strengths, and what would you improve if you had more time?`,
-      ],
-      selectedQuestionIndex: 0,
-      critique: "",
-    }));
-  }
-
-  async function critiqueAnswer() {
-    if (!qa.answerDraft.trim()) {
-      alert("Write an answer first.");
+  // Generate AI feedback
+  async function generateFeedback() {
+    if (!parsed) {
+      alert("No resume data to analyze");
       return;
     }
-    setQa((prev) => ({
-      ...prev,
-      critique:
-        "Good structure, but add measurable impact and clarify your specific contribution. Tighten the opening sentence and end with results.",
-      tips: [
-        "Add 1–2 concrete metrics (time saved, accuracy improved, users impacted).",
-        "Use STAR: Situation (1 sentence), Task (1), Action (2–3), Result (1).",
-        "Avoid vague verbs like 'helped'—use 'implemented', 'designed', 'optimized'.",
-      ],
-    }));
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      setLoadingFeedback(true);
+      const response = await fetch("http://localhost:5000/api/resume/feedback", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ parsedResume: parsed }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setFeedback(data.feedback);
+      } else {
+        alert("Failed to generate feedback");
+      }
+    } catch (error) {
+      console.error("Error generating feedback:", error);
+      alert("Error generating feedback");
+    } finally {
+      setLoadingFeedback(false);
+    }
   }
 
   return (
@@ -247,7 +222,7 @@ export default function ResumePage() {
                     Resume Studio
                   </h1>
                   <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    Parse your resume, verify/edit details, and practice questions tailored to your experience.
+                    Parse your resume, verify/edit details, and get AI-powered feedback.
                   </p>
                 </div>
               </div>
@@ -335,12 +310,12 @@ export default function ResumePage() {
                 <div>
                   <h2 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Parsed Resume Information</h2>
                   <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                    Verify and edit anything that looks off. These fields will power personalized questions.
+                    Verify and edit anything that looks off. These fields will power personalized feedback.
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 space-y-5">
+              <div className="mt-5 space-y-5 max-h-[640px] overflow-y-auto">
                 {parsed ? (
                   <>
                     <TextField
@@ -397,134 +372,163 @@ export default function ResumePage() {
             </section>
           </div>
 
-          {/* Q/A + Critique */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Questions */}
-            <section
-              className={`rounded-2xl border p-6 shadow-sm ${
-                isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className={`h-10 w-10 rounded-lg border flex items-center justify-center ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
-                    <HelpCircle className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} h-4 w-4`} />
-                  </div>
-                  <div>
-                    <h2 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Questions from your resume</h2>
-                    <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                      Generate interview questions based on your skills and experiences.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={generateQuestions}
-                  disabled={!parsed}
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Generate
-                </button>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {qa.generatedQuestions.map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setQa((p) => ({ ...p, selectedQuestionIndex: idx, critique: "" }))}
-                    className={[
-                      "w-full text-left rounded-xl border px-4 py-3 text-sm transition",
-                      idx === qa.selectedQuestionIndex
-                        ? "border-blue-600 bg-blue-600/10 text-blue-700"
-                        : isDarkMode
-                        ? "border-gray-700 bg-gray-900 text-gray-200 hover:bg-gray-800"
-                        : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50",
-                    ].join(" ")}
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Answer + Critique */}
-            <section
-              className={`rounded-2xl border p-6 shadow-sm ${
-                isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
-              }`}
-            >
+          {/* AI Resume Feedback Section */}
+          <section
+            className={`mt-6 rounded-2xl border p-6 shadow-sm ${
+              isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className={`h-10 w-10 rounded-lg border flex items-center justify-center ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
-                  <MessageSquareText className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} h-4 w-4`} />
+                <div className={`h-10 w-10 rounded-lg border flex items-center justify-center ${
+                  isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
+                }`}>
+                  <Sparkles className={`${isDarkMode ? "text-gray-200" : "text-gray-700"} h-5 w-5`} />
                 </div>
                 <div>
-                  <h2 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Answer & critique</h2>
+                  <h2 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                    AI Resume Review
+                  </h2>
                   <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                    Write an answer to the selected question and get structured feedback.
+                    Get personalized feedback on your resume from our AI career coach
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <p className={`text-xs font-semibold ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>Selected question</p>
-                <p className={`mt-1 text-sm ${isDarkMode ? "text-gray-200" : "text-gray-900"}`}>
-                  {qa.generatedQuestions[qa.selectedQuestionIndex]}
-                </p>
+              <button
+                onClick={generateFeedback}
+                disabled={!parsed || loadingFeedback}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <Sparkles className={`h-4 w-4 ${loadingFeedback ? 'animate-spin' : ''}`} />
+                {loadingFeedback ? "Analyzing..." : "Get Feedback"}
+              </button>
+            </div>
 
-                <div className="mt-4">
-                  <TextArea
-                    label="Your answer"
-                    value={qa.answerDraft}
-                    onChange={(v) => setQa((p) => ({ ...p, answerDraft: v }))}
-                    isDarkMode={isDarkMode}
-                    placeholder="Write a STAR-style response here..."
-                  />
-                </div>
-
-                <div className="mt-4 flex items-center gap-2">
-                  <button
-                    onClick={critiqueAnswer}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                  >
-                    Critique my answer
-                  </button>
-                  <button
-                    onClick={() => setQa((p) => ({ ...p, answerDraft: "", critique: "" }))}
-                    className={`rounded-lg border px-4 py-2 text-sm font-semibold ${
-                      isDarkMode
-                        ? "border-gray-600 bg-gray-700 text-white hover:bg-gray-600"
-                        : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
-                    }`}
-                  >
-                    Clear
-                  </button>
-                </div>
-
-                {/* Critique output */}
-                {qa.critique && (
-                  <div className={`mt-5 rounded-xl border p-4 ${
-                    isDarkMode ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-gray-50"
-                  }`}>
-                    <p className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Feedback</p>
-                    <p className={`mt-2 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>{qa.critique}</p>
-
-                    <p className={`mt-4 text-sm font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
-                      Resume tips
-                    </p>
-                    <ul className={`mt-2 space-y-1 text-sm ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
-                      {qa.tips.map((t, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                          <span>{t}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </section>
-          </div>
+            {/* Feedback Display */}
+{feedback ? (
+  <div className={`mt-6 rounded-lg border p-6 ${
+    isDarkMode ? "border-gray-700 bg-gray-900" : "border-gray-300 bg-white"
+  }`}>
+    <div className="space-y-6">
+      {feedback.split('\n\n').map((section, idx) => {
+        // Check if it's a header (starts with **)
+        if (section.startsWith('**') && section.includes(':**')) {
+          const title = section.replace(/\*\*/g, '').replace(':', '');
+          return (
+            <div key={idx}>
+              <h3 className={`text-lg font-bold mb-3 ${
+                isDarkMode ? 'text-blue-400' : 'text-blue-600'
+              }`}>
+                {title}
+              </h3>
+            </div>
+          );
+        }
+        
+        // Check if it's a numbered/bulleted list item
+        if (section.match(/^\d+\.|^\*/)) {
+          const items = section.split('\n').filter(line => line.trim());
+          return (
+            <div key={idx} className="space-y-4">
+              {items.map((item, itemIdx) => {
+                // Main bullet point
+                if (item.match(/^\d+\.|^\*   \*\*/)) {
+                  const cleanItem = item.replace(/^\d+\.\s*/, '').replace(/^\*\s*/, '').replace(/\*\*/g, '');
+                  return (
+                    <div key={itemIdx} className="ml-0">
+                      <div className={`flex gap-3 ${
+                        isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
+                        <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                          isDarkMode ? 'bg-blue-400' : 'bg-blue-600'
+                        }`} />
+                        <p className="font-semibold">{cleanItem}</p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Sub-items (Problem/Example)
+                if (item.includes('**Problem:**') || item.includes('**Example:**')) {
+                  const [label, ...rest] = item.split('**').filter(Boolean);
+                  const content = rest.join('').replace(/:/g, '').trim();
+                  const isExample = item.includes('**Example:**');
+                  
+                  return (
+                    <div key={itemIdx} className="ml-8 mt-2">
+                      <p className={`text-sm font-semibold mb-1 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {label.trim()}:
+                      </p>
+                      <p className={`text-sm ml-4 italic ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        {content}
+                      </p>
+                    </div>
+                  );
+                }
+                
+                // Regular sub-bullet
+                if (item.trim().startsWith('*')) {
+                  const cleanItem = item.replace(/^\*\s*/, '');
+                  return (
+                    <div key={itemIdx} className="ml-8 flex gap-2">
+                      <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${
+                        isDarkMode ? 'bg-gray-500' : 'bg-gray-400'
+                      }`} />
+                      <p className={`text-sm ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
+                        {cleanItem}
+                      </p>
+                    </div>
+                  );
+                }
+                
+                return null;
+              })}
+            </div>
+          );
+        }
+        
+        // Regular paragraph
+        if (section.trim()) {
+          return (
+            <p key={idx} className={`text-sm leading-relaxed ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-800'
+            }`}>
+              {section}
+            </p>
+          );
+        }
+        
+        return null;
+      })}
+    </div>
+  </div>
+) : (
+  <div className={`mt-6 rounded-lg border-2 border-dashed p-12 text-center ${
+    isDarkMode ? "border-gray-700" : "border-gray-300"
+  }`}>
+    <Sparkles className={`mx-auto h-12 w-12 ${
+      isDarkMode ? "text-gray-600" : "text-gray-400"
+    }`} />
+    <p className={`mt-4 text-sm font-medium ${
+      isDarkMode ? "text-gray-300" : "text-gray-700"
+    }`}>
+      No feedback yet
+    </p>
+    <p className={`mt-1 text-sm ${
+      isDarkMode ? "text-gray-500" : "text-gray-600"
+    }`}>
+      Click "Get Feedback" to receive AI-powered resume insights
+    </p>
+  </div>
+)}
+          </section>
 
           <div className="h-10" />
         </div>
