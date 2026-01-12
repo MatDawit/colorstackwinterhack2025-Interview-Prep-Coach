@@ -7,6 +7,13 @@ import { prisma } from "../db_connection";
 
 const router = Router();
 
+/**
+ * POST /next
+ * @summary Advance to the next interview question
+ * @description
+ * Determines the next unattempted question for the session or completes
+ * the session when the maximum number of questions is reached.
+ */
 router.post("/next", async (req: Request, res: Response): Promise<void> => {
   try {
     const { sessionId } = req.body;
@@ -150,6 +157,12 @@ router.post("/next", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+/**
+ * GET /session/:sessionId
+ * @summary Fetch current practice session state
+ * @description
+ * Returns the session status and current question metadata.
+ */
 router.get(
   "/session/:sessionId",
   async (req: Request, res: Response): Promise<void> => {

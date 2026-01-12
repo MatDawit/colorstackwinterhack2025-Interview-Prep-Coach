@@ -75,7 +75,9 @@ function ConfirmAndThrow(message: string): never {
 
 /**
  * POST /profile/signout
- * Signs out the user (frontend removes token).
+ * @summary Sign out the authenticated user
+ * @description
+ * Invalidates the frontend session (JWT is removed on the client).
  */
 router.post("/signout", async (req: Request, res: Response) => {
   try {
@@ -93,7 +95,9 @@ router.post("/signout", async (req: Request, res: Response) => {
 
 /**
  * DELETE /profile/delete
- * Permanently deletes the user's account and all associated data.
+ * @summary Delete the authenticated user's account
+ * @description
+ * Permanently deletes the user and all associated sessions, attempts, and data.
  */
 router.delete("/delete", async (req: Request, res: Response) => {
   try {
@@ -124,6 +128,12 @@ router.delete("/delete", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /profile/resume
+ * @summary Fetch the user's resume
+ * @description
+ * Returns metadata and URL for the authenticated user's uploaded resume, if any.
+ */
 router.get("/resume", async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromRequest(req);
@@ -143,6 +153,12 @@ router.get("/resume", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /profile/resume
+ * @summary Upload or replace the user's resume
+ * @description
+ * Accepts a PDF file, replaces any existing resume, and returns metadata for the saved file.
+ */
 router.post(
   "/resume",
   requireAuth,
@@ -202,6 +218,12 @@ router.post(
   }
 );
 
+/**
+ * DELETE /profile/resume
+ * @summary Delete the user's uploaded resume
+ * @description
+ * Removes the resume file and corresponding database record for the authenticated user.
+ */
 router.delete("/resume", async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromRequest(req);
@@ -229,8 +251,11 @@ router.delete("/resume", async (req: Request, res: Response) => {
   }
 });
 
-/* GET /profile
- * Returns the current user's profile (safe fields only).
+/**
+ * GET /profile
+ * @summary Fetch the authenticated user's profile
+ * @description
+ * Returns profile information with safe fields; email is included but not editable.
  */
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -266,7 +291,9 @@ router.get("/", async (req: Request, res: Response) => {
 
 /**
  * PATCH /profile/onboarding
- * Marks onboarding as completed for the current user.
+ * @summary Mark onboarding as completed
+ * @description
+ * Updates the authenticated user's profile to indicate onboarding has been finished.
  */
 router.patch("/onboarding", async (req: Request, res: Response) => {
   try {
@@ -284,8 +311,9 @@ router.patch("/onboarding", async (req: Request, res: Response) => {
 
 /**
  * PATCH /profile
- * Updates editable profile fields.
- * Email is intentionally not included.
+ * @summary Update the authenticated user's profile
+ * @description
+ * Updates editable profile fields such as name, bio, location, avatar, and dark mode. Email is not editable.
  */
 router.patch("/", async (req: Request, res: Response) => {
   try {

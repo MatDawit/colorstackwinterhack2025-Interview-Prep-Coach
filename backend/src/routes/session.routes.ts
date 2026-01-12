@@ -9,6 +9,13 @@ import jwt from "jsonwebtoken";
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 
+/**
+ * POST /start
+ * @summary Start a new interview session for the authenticated user
+ * @description
+ * Creates a new session, closes any in-progress sessions for the user,
+ * applies focus preferences if available, and selects the first question.
+ */
 router.post("/start", async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
@@ -89,7 +96,6 @@ router.post("/start", async (req: Request, res: Response) => {
         );
       }
     }
-    // -------------------------------------------------------------
 
     // Select the question
     const count = await prisma.question.count({ where: whereCondition });
@@ -117,6 +123,13 @@ router.post("/start", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * POST /end
+ * @summary End a session and calculate the final score
+ * @description
+ * Aggregates all attempts for the session, calculates the best score per question,
+ * computes total duration, and updates the session as COMPLETED.
+ */
 router.post("/end", async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.body;
@@ -175,6 +188,12 @@ router.post("/end", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /stats
+ * @summary Fetch session statistics for the authenticated user
+ * @description
+ * Returns the total number of completed sessions and the average score across all completed sessions.
+ */
 router.get("/stats", async (req: Request, res: Response) => {
   try {
     // Verify token and get user id
@@ -230,6 +249,13 @@ router.get("/stats", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /:id/attempts
+ * @summary List attempts for a given session
+ * @description
+ * Returns all attempts for the session, selecting only the best attempt per question.
+ * Tie-breakers favor the most recent attempt if scores are equal.
+ */
 router.get("/:id/attempts", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;

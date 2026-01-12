@@ -15,6 +15,13 @@ function formatDuration(totalSeconds: number): string {
   return `${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
+/**
+ * GET /
+ * @summary Fetch analytics-ready session summaries for the current user
+ * @description
+ * Returns aggregated data for completed interview sessions, including
+ * checklist failure counts used for dashboard visualizations.
+ */
 router.get("/", async (req: Request, res: Response) => {
   try {
     // 1. Auth Check

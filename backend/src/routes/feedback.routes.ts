@@ -20,6 +20,13 @@ const transcription_ai = new GoogleGenAI({
   apiKey: process.env.FAD_GEMINI_API_KEY,
 });
 
+/**
+ * POST /submit
+ * @summary Submit an interview answer for AI feedback
+ * @description
+ * Transcribes recorded audio or processes text input, generates AI feedback,
+ * and persists the session attempt.
+ */
 router.post(
   "/submit",
   upload.single("audio"),
@@ -156,6 +163,12 @@ router.post(
   }
 );
 
+/**
+ * GET /attempt/:id
+ * @summary Fetch a specific session attempt
+ * @description
+ * Returns the persisted attempt along with question metadata and attempt order.
+ */
 router.get(
   "/attempt/:id",
   async (req: Request, res: Response): Promise<void> => {

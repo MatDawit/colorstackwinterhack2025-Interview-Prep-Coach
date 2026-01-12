@@ -7,6 +7,12 @@ import { prisma } from "../db_connection";
 
 const router = Router();
 
+/**
+ * GET /
+ * @summary Fetch interview questions
+ * @description
+ * Returns all interview questions stored in the database.
+ */
 router.get("/", async (req: Request, res: Response) => {
   try {
     const questions = await prisma.question.findMany();

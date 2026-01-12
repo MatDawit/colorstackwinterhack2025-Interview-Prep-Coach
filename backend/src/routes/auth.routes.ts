@@ -14,6 +14,12 @@ const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET!;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
+/**
+ * POST /signup
+ * @summary Register a new user
+ * @description
+ * Creates a new user account using email, password, and name credentials.
+ */
 router.post("/signup", async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
@@ -25,7 +31,12 @@ router.post("/signup", async (req: Request, res: Response) => {
     return;
   }
 });
-
+/**
+ * POST /login
+ * @summary Authenticate an existing user
+ * @description
+ * Validates user credentials and returns a signed JWT on success.
+ */
 router.post("/login", async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -37,7 +48,12 @@ router.post("/login", async (req: Request, res: Response) => {
     return;
   }
 });
-
+/**
+ * GET /google
+ * @summary Initiate Google OAuth authentication
+ * @description
+ * Redirects the user to Google’s OAuth consent screen.
+ */
 router.get(
   "/google",
   passport.authenticate("google", {
@@ -46,6 +62,12 @@ router.get(
   })
 );
 
+/**
+ * GET /google/callback
+ * @summary Handle Google OAuth callback
+ * @description
+ * Exchanges Google OAuth credentials for a JWT and redirects to the frontend.
+ */
 router.get(
   "/google/callback",
   passport.authenticate("google", {
@@ -61,7 +83,12 @@ router.get(
   }
 );
 
-//github auth
+/**
+ * GET /github
+ * @summary Initiate GitHub OAuth authentication
+ * @description
+ * Redirects the user to GitHub’s OAuth consent screen.
+ */
 router.get(
   "/github",
   passport.authenticate("github", {
@@ -70,7 +97,12 @@ router.get(
   })
 );
 
-//github callback
+/**
+ * GET /github/callback
+ * @summary Handle GitHub OAuth callback
+ * @description
+ * Exchanges GitHub OAuth credentials for a JWT and redirects to the frontend.
+ */
 router.get(
   "/github/callback",
   passport.authenticate("github", {
@@ -85,6 +117,12 @@ router.get(
   }
 );
 
+/**
+ * PATCH /password
+ * @summary Update authenticated user password
+ * @description
+ * Updates the user’s password after validating the current password.
+ */
 router.patch(
   "/password",
   authenticateJWT,

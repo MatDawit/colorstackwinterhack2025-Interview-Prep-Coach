@@ -28,7 +28,13 @@ function getUserIdFromRequest(req: Request): string {
   return payload.userId;
 }
 
-// GET /api/profile/preferences
+/**
+ * GET /
+ * @summary Fetch user preferences
+ * @description
+ * Retrieves the authenticated user’s practice and feedback preferences,
+ * creating default preferences if none exist.
+ */
 router.get("/", async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromRequest(req);
@@ -43,7 +49,13 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /api/profile/preferences
+/**
+ * PATCH /
+ * @summary Update user preferences
+ * @description
+ * Updates the authenticated user’s practice and feedback preferences
+ * and marks onboarding as completed.
+ */
 router.patch("/", async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromRequest(req);
