@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import Navbar from "../components/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, X, Play, RotateCcw } from "lucide-react";
@@ -32,7 +32,7 @@ function formatTime(seconds: number) {
   }${remainingSeconds}`;
 }
 
-export default function Practice() {
+function PracticeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isDarkMode } = useTheme();
@@ -1002,5 +1002,22 @@ export default function Practice() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Practice() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+            <p className="text-gray-600">Loading practice session...</p>
+          </div>
+        </div>
+      }
+    >
+      <PracticeContent />
+    </Suspense>
   );
 }
