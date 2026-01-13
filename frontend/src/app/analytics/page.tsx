@@ -46,6 +46,8 @@ const LABEL_MAP: Record<string, string> = {
   "Too Concise": "Length",
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function AnalyticsPage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
@@ -83,7 +85,7 @@ export default function AnalyticsPage() {
         return;
       }
       try {
-        const res = await fetch("http://localhost:5000/api/analytics", {
+        const res = await fetch(`${API_URL}/api/analytics`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

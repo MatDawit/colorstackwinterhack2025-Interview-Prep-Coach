@@ -9,6 +9,9 @@ import { useTheme } from "../context/ThemeContext";
  * Handles user registration via email/password and OAuth providers
  * Includes form validation and "Remember Me" functionality
  */
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Signup() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
@@ -56,7 +59,7 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/signup", {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -96,12 +99,12 @@ export default function Signup() {
 
   // Redirect to Google OAuth endpoint
   const handleGoogleAuth = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   // Redirect to GitHub OAuth endpoint
   const handleGitHubAuth = () => {
-    window.location.href = "http://localhost:5000/api/auth/github";
+    window.location.href = `${API_URL}/api/auth/github`;
   };
 
   // Submit on Enter key press

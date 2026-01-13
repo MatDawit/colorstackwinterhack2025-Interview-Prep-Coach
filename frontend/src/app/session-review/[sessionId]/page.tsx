@@ -20,6 +20,8 @@ interface AttemptSummary {
   createdAt: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function SessionReview() {
   const params = useParams();
   const router = useRouter();
@@ -33,9 +35,7 @@ export default function SessionReview() {
   useEffect(() => {
     const fetchAttempts = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/session/${sessionId}/attempts`
-        );
+        const res = await fetch(`${API_URL}/api/session/${sessionId}/attempts`);
         if (res.ok) {
           const data = await res.json();
           setAttempts(data.attempts || []);

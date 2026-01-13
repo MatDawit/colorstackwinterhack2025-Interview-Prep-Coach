@@ -11,6 +11,8 @@ import { useTheme } from "../context/ThemeContext";
  * Collects role, difficulty, feedback style, and practice flow settings
  */
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 type Preferences = {
   defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
@@ -73,7 +75,7 @@ export default function SetupPage() {
     }
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/profile", {
+        const res = await fetch(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) {
@@ -114,7 +116,7 @@ export default function SetupPage() {
     setSaveStatus("saving");
 
     try {
-      const res = await fetch("http://localhost:5000/api/profile/preferences", {
+      const res = await fetch(`${API_URL}/api/profile/preferences`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -164,7 +166,7 @@ export default function SetupPage() {
       return;
     }
     try {
-      await fetch("http://localhost:5000/api/profile/onboarding", {
+      await fetch(`${API_URL}/api/profile/onboarding`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
       });

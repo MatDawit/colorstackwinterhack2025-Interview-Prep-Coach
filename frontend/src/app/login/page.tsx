@@ -10,6 +10,9 @@ import { useTheme } from "../context/ThemeContext";
  * Handles user authentication via email/password and OAuth providers
  * Includes onboarding status check and "Remember Me" functionality
  */
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Login() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
@@ -40,7 +43,7 @@ export default function Login() {
     if (!token) return;
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/profile", {
+        const res = await fetch(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -78,7 +81,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -100,7 +103,7 @@ export default function Login() {
 
         // Check onboarding status and redirect accordingly
         try {
-          const prof = await fetch("http://localhost:5000/api/profile", {
+          const prof = await fetch(`${API_URL}/api/profile`, {
             headers: { Authorization: `Bearer ${data.token}` },
           }).then((r) => r.json());
           if (prof?.user?.onboardingCompleted) {
@@ -131,12 +134,12 @@ export default function Login() {
 
   // Redirect to Google OAuth endpoint
   const handleGoogleAuth = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = `${API_URL}/api/auth/google`;
   };
 
   // Redirect to GitHub OAuth endpoint
   const handleGitHubAuth = () => {
-    window.location.href = "http://localhost:5000/api/auth/github";
+    window.location.href = `${API_URL}/api/auth/github`;
   };
 
   // Submit on Enter key press

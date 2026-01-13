@@ -11,6 +11,8 @@ import { useTheme } from "../context/ThemeContext";
  * Supports real-time silence detection, session management, and analysis submission
  */
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 type Mode = "record" | "type";
 type RecordingState = "idle" | "recording" | "stopped";
 type MicPermission = "granted" | "denied" | "unknown";
@@ -102,15 +104,13 @@ export default function Practice() {
   // Load user preferences from backend
   useEffect(() => {
     const fetchPrefs = async () => {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/profile/preferences",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch(`${API_URL}/api/profile/preferences`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const data = await res.json();
           const p = data.preferences;
@@ -140,9 +140,7 @@ export default function Practice() {
   const fetchSessionDetails = async (id: string) => {
     setLoadingQuestion(true);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/practice/session/${id}`
-      );
+      const res = await fetch(`${API_URL}/api/practice/session/${id}`);
       if (res.ok) {
         const sessionData = await res.json();
 
@@ -182,13 +180,14 @@ export default function Practice() {
     setQId("");
 
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
       }
 
-      const res = await fetch("http://localhost:5000/api/session/start", {
+      const res = await fetch(`${API_URL}/api/session/start`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -231,7 +230,8 @@ export default function Practice() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
@@ -353,7 +353,8 @@ export default function Practice() {
     setSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         showError("Authentication Error", "Please log in.");
         setSubmitting(false);
@@ -406,7 +407,7 @@ export default function Practice() {
       // Append calculated duration for backend analysis
       form.append("duration", String(finalDuration));
 
-      const res = await fetch("http://localhost:5000/api/feedback/submit", {
+      const res = await fetch(`${API_URL}/api/feedback/submit`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,

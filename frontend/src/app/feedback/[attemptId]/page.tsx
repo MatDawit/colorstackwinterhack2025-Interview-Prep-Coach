@@ -45,6 +45,8 @@ interface AttemptData {
   };
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 const PracticeFeedback = () => {
   const params = useParams();
   const router = useRouter();
@@ -67,15 +69,13 @@ const PracticeFeedback = () => {
   // Load user preferences
   useEffect(() => {
     const fetchPrefs = async () => {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/profile/preferences",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch(`${API_URL}/api/profile/preferences`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const json = await res.json();
           const p = json.preferences;
@@ -97,9 +97,7 @@ const PracticeFeedback = () => {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/feedback/attempt/${attemptId}`
-        );
+        const res = await fetch(`${API_URL}/api/feedback/attempt/${attemptId}`);
         if (!res.ok) throw new Error("Failed to load results");
 
         const jsonData = await res.json();
@@ -226,7 +224,7 @@ const PracticeFeedback = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/practice/next`, {
+      const res = await fetch(`${API_URL}/api/practice/next`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: data.sessionId }),

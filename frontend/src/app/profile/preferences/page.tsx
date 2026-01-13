@@ -23,6 +23,8 @@ import { useTheme } from "../../context/ThemeContext";
  * feedback style, and practice session settings
  */
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 type Preferences = {
   defaultRole: "Software Engineering" | "Product Management" | "Data Science";
   defaultDifficulty: "Basic" | "Intermediate" | "Advanced";
@@ -77,7 +79,8 @@ export default function PreferencesPage() {
 
   // Check authentication status and redirect if needed
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
@@ -87,19 +90,17 @@ export default function PreferencesPage() {
   // Load user preferences from backend
   useEffect(() => {
     async function loadPrefs() {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         router.push("/login");
         return;
       }
 
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/profile/preferences",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch(`${API_URL}/api/profile/preferences`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         // Handle Token Expiry
         if (res.status === 401) {
@@ -163,7 +164,8 @@ export default function PreferencesPage() {
 
   // Save user preferences to backend with validation
   async function savePreferences() {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
@@ -181,7 +183,7 @@ export default function PreferencesPage() {
     setSaveStatus("saving");
 
     try {
-      const res = await fetch("http://localhost:5000/api/profile/preferences", {
+      const res = await fetch(`${API_URL}/api/profile/preferences`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

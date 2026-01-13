@@ -8,6 +8,8 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function AuthCallbackPage() {
   const router = useRouter();
   const params = useSearchParams();
@@ -23,7 +25,7 @@ export default function AuthCallbackPage() {
     localStorage.setItem("token", token);
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/profile", {
+        const res = await fetch(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();

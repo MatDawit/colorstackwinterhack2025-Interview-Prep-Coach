@@ -39,6 +39,8 @@ type AccountData = {
   resumeUpdatedAt?: string | null;
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function AccountPage() {
   const router = useRouter();
 
@@ -93,7 +95,7 @@ export default function AccountPage() {
 
       try {
         // Fetch user profile for email and OAuth provider info
-        const profileRes = await fetch("http://localhost:5000/api/profile", {
+        const profileRes = await fetch(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -102,12 +104,9 @@ export default function AccountPage() {
           throw new Error(profileData.error || "Failed to load profile");
 
         // Fetch resume metadata
-        const resumeRes = await fetch(
-          "http://localhost:5000/api/profile/resume",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const resumeRes = await fetch(`${API_URL}/api/profile/resume`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const resumeData = await resumeRes.json();
         if (!resumeRes.ok)
@@ -191,16 +190,13 @@ export default function AccountPage() {
         setResumePreviewUrl(localUrl);
       }
 
-      const res = await fetch(
-        "http://localhost:5000/api/profile/resume/upload", // <-- This line
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const res = await fetch(`${API_URL}/api/profile/resume/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
@@ -240,7 +236,7 @@ export default function AccountPage() {
         localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) throw new Error("Not signed in");
 
-      const res = await fetch("http://localhost:5000/api/auth/password", {
+      const res = await fetch(`${API_URL}/api/auth/password`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -272,7 +268,7 @@ export default function AccountPage() {
         localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) throw new Error("Not authenticated");
 
-      const res = await fetch("http://localhost:5000/api/profile/resume", {
+      const res = await fetch(`${API_URL}/api/profile/resume`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -301,12 +297,12 @@ export default function AccountPage() {
 
   // Initiate Google OAuth connection
   function connectGoogle() {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = `${API_URL}/api/auth/google`;
   }
 
   // Initiate GitHub OAuth connection
   function connectGithub() {
-    window.location.href = "http://localhost:5000/api/auth/github";
+    window.location.href = `${API_URL}/api/auth/github`;
   }
 
   // Disconnect OAuth provider
@@ -781,8 +777,7 @@ export default function AccountPage() {
                           title="Resume Preview"
                           className="h-full w-full"
                           src={
-                            resumePreviewUrl ||
-                            `http://localhost:5000${account.resumeUrl}`
+                            resumePreviewUrl || `${API_URL}${account.resumeUrl}`
                           }
                         />
                       </div>

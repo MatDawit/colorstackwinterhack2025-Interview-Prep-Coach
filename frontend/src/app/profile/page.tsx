@@ -39,6 +39,8 @@ type ProfileForm = {
   bio: string;
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function ProfilePage() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
@@ -98,21 +100,23 @@ export default function ProfilePage() {
 
   // Check authentication status
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     setIsSignedIn(!!token);
   }, []);
 
   // Load user profile data from backend
   useEffect(() => {
     async function loadProfile() {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         setLoading(false);
         return;
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/profile", {
+        const res = await fetch(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -177,14 +181,15 @@ export default function ProfilePage() {
   async function saveProfile() {
     setSaveStatus("saving");
 
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
       setSaveStatus("error");
       return;
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/profile", {
+      const res = await fetch(`${API_URL}/api/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -225,11 +230,12 @@ export default function ProfilePage() {
 
   // Sign out user and clear authentication token
   async function handleSignOut() {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
 
     try {
-      await fetch("http://localhost:5000/api/profile/signout", {
+      await fetch(`${API_URL}/api/profile/signout`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -251,11 +257,12 @@ export default function ProfilePage() {
 
   // Delete user account and associated data
   async function handleDeleteAccount() {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/profile/delete", {
+      const res = await fetch(`${API_URL}/api/profile/delete`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

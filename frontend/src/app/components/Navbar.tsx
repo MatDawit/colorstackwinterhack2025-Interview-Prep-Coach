@@ -19,6 +19,8 @@ import {
  * Displays main navigation links and user profile avatar
  * Includes mobile menu toggle and responsive layout
  */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Navbar() {
   const { isDarkMode } = useTheme();
 
@@ -43,7 +45,7 @@ export default function Navbar() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/profile", {
+        const res = await fetch(`${API_URL}/api/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

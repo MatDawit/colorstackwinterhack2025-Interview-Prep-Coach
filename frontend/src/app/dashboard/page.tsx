@@ -15,6 +15,8 @@ interface SessionStats {
   totalSessions: number;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function Dashboard() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
@@ -40,7 +42,7 @@ export default function Dashboard() {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/session/stats",
+          `${API_URL}/api/session/stats`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

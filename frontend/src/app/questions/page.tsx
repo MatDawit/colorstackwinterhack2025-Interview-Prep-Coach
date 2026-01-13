@@ -21,6 +21,8 @@ type Question = {
   focus?: string; // Optional based on your schema updates
 };
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function QuestionBank() {
   const router = useRouter();
   const { isDarkMode } = useTheme();
@@ -53,7 +55,7 @@ export default function QuestionBank() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/questions", {
+        const res = await fetch(`${API_URL}/api/questions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
