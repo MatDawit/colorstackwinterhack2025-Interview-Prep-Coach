@@ -9,6 +9,7 @@ import { prisma } from "../db_connection";
 import { getFeedbackPrompt } from "../config/prompts";
 import { jsonrepair } from "jsonrepair";
 import fs from "fs/promises";
+import { sendQuotaAlertSMS } from "../sms";
 
 const router = Router();
 const upload = multer({ dest: "uploads/" });
@@ -19,6 +20,25 @@ const generation_ai = new GoogleGenAI({
 const transcription_ai = new GoogleGenAI({
   apiKey: process.env.FAD_GEMINI_API_KEY,
 });
+
+async function handleGeminiError(error: any, context: string) {
+  const errorMsg = error.toString();
+
+  // Check for 429 (Too Many Requests) or Quota errors
+  if (
+    errorMsg.includes("429") ||
+    errorMsg.includes("Resource has been exhausted") ||
+    errorMsg.includes("Quota exceeded")
+  ) {
+    // TRIGGER THE SMS
+    await sendQuotaAlertSMS(
+      context,
+      "Gemini API responded with 429/Quota Exceeded."
+    );
+    return true;
+  }
+  return false;
+}
 
 /**
  * POST /submit
@@ -86,18 +106,35 @@ router.post(
         const fileBuffer = await fs.readFile(req.file.path);
         const base64Audio = fileBuffer.toString("base64");
 
-        const transResult = await transcription_ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: [
-            {
-              role: "user",
-              parts: [
-                { text: "Transcribe verbatim." },
-                { inlineData: { mimeType: "audio/webm", data: base64Audio } },
-              ],
-            },
-          ],
-        });
+        let transResult;
+        try {
+          transResult = await transcription_ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  { text: "Transcribe verbatim." },
+                  { inlineData: { mimeType: "audio/webm", data: base64Audio } },
+                ],
+              },
+            ],
+          });
+        } catch (error: any) {
+          // Check for Quota Error on Generation API Key
+          const isQuota = await handleGeminiError(
+            error,
+            "TRANSCRIPTION Generation (FAD Key)"
+          );
+          if (isQuota) {
+            res.status(503).json({
+              error:
+                "Service temporarily unavailable (Capacity). Please try again later.",
+            });
+            return;
+          }
+          throw error;
+        }
 
         finalAnswerText = transResult.text || "";
         finalAnswerText = finalAnswerText.trim();
@@ -106,23 +143,40 @@ router.post(
       }
 
       // Generate AI feedback
-      const analysis = await generation_ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        config: {
-          systemInstruction: getFeedbackPrompt(emphasize, tone, detail),
-          responseMimeType: "application/json",
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: `Question: ${questionRecord.question}\nAnswer: ${finalAnswerText}`,
-              },
-            ],
+      let analysis;
+      try {
+        analysis = await generation_ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          config: {
+            systemInstruction: getFeedbackPrompt(emphasize, tone, detail),
+            responseMimeType: "application/json",
           },
-        ],
-      });
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Question: ${questionRecord.question}\nAnswer: ${finalAnswerText}`,
+                },
+              ],
+            },
+          ],
+        });
+      } catch (error: any) {
+        // Check for Quota Error on Generation API Key
+        const isQuota = await handleGeminiError(
+          error,
+          "Feedback Generation (MATT Key)"
+        );
+        if (isQuota) {
+          res.status(503).json({
+            error:
+              "Service temporarily unavailable (Capacity). Please try again later.",
+          });
+          return;
+        }
+        throw error;
+      }
 
       // Parse AI response
       const rawText = analysis.text || "{}";
