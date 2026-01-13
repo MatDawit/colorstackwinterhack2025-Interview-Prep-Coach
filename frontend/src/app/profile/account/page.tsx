@@ -81,7 +81,8 @@ export default function AccountPage() {
 
   // Load account data on component mount
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     setIsSignedIn(!!token);
 
     async function loadAccount() {
@@ -176,18 +177,10 @@ export default function AccountPage() {
     setResumeUploading(true);
 
     try {
-      // TODO: Implement backend upload:
-      // POST http://localhost:5000/api/profile/resume (multipart/form-data)
-      // const token = localStorage.getItem("token");
-      // const formData = new FormData();
-      // formData.append("resume", file);
-      // const res = await fetch("http://localhost:5000/api/profile/resume", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData });
-      // const data = await res.json();
-      // setAccount(prev => ({ ...prev, resumeFileName: data.fileName, resumeUpdatedAt: data.updatedAt }));
-
       // UI-only simulation
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) throw new Error("Not authenticated");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) throw new Error("Not authenticated");
 
       const formData = new FormData();
       formData.append("resume", file);
@@ -199,16 +192,15 @@ export default function AccountPage() {
       }
 
       const res = await fetch(
-              "http://localhost:5000/api/profile/resume/upload",  // <-- This line
-              {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-                body: formData,
-              }
-            );
-
+        "http://localhost:5000/api/profile/resume/upload", // <-- This line
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
@@ -243,9 +235,10 @@ export default function AccountPage() {
 
     setPwSaving(true);
 
-  try {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) throw new Error("Not signed in");
+    try {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) throw new Error("Not signed in");
 
       const res = await fetch("http://localhost:5000/api/auth/password", {
         method: "PATCH",
@@ -273,11 +266,11 @@ export default function AccountPage() {
     }
   }
 
-
-async function removeResume() {
-  try {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) throw new Error("Not authenticated");
+  async function removeResume() {
+    try {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) throw new Error("Not authenticated");
 
       const res = await fetch("http://localhost:5000/api/profile/resume", {
         method: "DELETE",
@@ -1028,7 +1021,6 @@ async function removeResume() {
                   <div className="mt-4">
                     <button
                       onClick={() => {
-                        // TODO: Implement delete account flow
                         const confirmed = confirm(
                           "Are you sure you want to delete your account? This action cannot be undone."
                         );

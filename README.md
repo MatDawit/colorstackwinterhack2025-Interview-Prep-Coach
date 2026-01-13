@@ -164,7 +164,7 @@ Frontend runs on `http://localhost:3000`
 
 ### 2. **Onboarding & Preferences** ([frontend/src/app/setup/page.tsx](frontend/src/app/setup/page.tsx))
 
-- Select default role: Software Engineering, Product Management, Data Science
+- Select role: Software Engineering, Product Management, Data Science
 - Choose difficulty: Basic, Intermediate, Advanced
 - Configure AI feedback preferences:
   - Emphasis (Balance, Clarity, Storytelling, etc.)
@@ -178,7 +178,7 @@ Frontend runs on `http://localhost:3000`
   - **Voice Recording**: Record audio answers with real-time silence detection
   - **Text Input**: Type responses directly
 - **Smart session management**: 4 questions per session, locked settings during active practice
-- **Real-time feedback**: Timer, recording status, audio level visualization
+- **Real-time feedback**: Timer, recording status, audio level
 - See: [backend/src/routes/feedback.routes.ts](backend/src/routes/feedback.routes.ts)
 
 ### 4. **AI Feedback & Analysis** ([frontend/src/app/feedback/[attemptId]/page.tsx](frontend/src/app/feedback/[attemptId]/page.tsx))
@@ -234,7 +234,6 @@ Each submission receives:
 - Browse 100+ curated behavioral questions
 - Filter by category (Behavioral, Technical, System Design)
 - Filter by difficulty (Basic, Intermediate, Advanced)
-- Start practice directly from any question
 
 ## 🧠 How Our Project Solves Interview Preparation Challenges
 
@@ -277,65 +276,57 @@ Each submission receives:
 
 ## 👥 Team Members & Contributions
 
-<!-- Add your team members here -->
-
-- **[Team Member 1]** - [Role/Contributions]
-- **[Team Member 2]** - [Role/Contributions]
-- **[Team Member 3]** - [Role/Contributions]
-- **[Team Member 4]** - [Role/Contributions]
+- **Mathew Dawit** - [Role/Contributions]
+- **Prince Michael Kemani** - [Role/Contributions]
+- **Fadlulah Omitogun** - [Role/Contributions]
 
 ## 🎥 Demo Video & Screenshots
 
 ### Demo Video
 
-<!-- Add your demo video link here -->
-
 🎬 [Watch Demo Video](your-video-link-here)
 
 ### Screenshots
 
-<!-- Add your screenshots here -->
-
 #### Dashboard
 
-![Dashboard Screenshot](path/to/dashboard-screenshot.png)
+![Dashboard Screenshot](frontend/public/dashboard.png)
 _Main dashboard showing session statistics and progress_
 
 #### Practice Session
 
-![Practice Screenshot](path/to/practice-screenshot.png)
+![Practice Screenshot](frontend/public/practice.png)
 _Live interview practice with recording or typing mode_
 
 #### AI Feedback
 
-![Feedback Screenshot](path/to/feedback-screenshot.png)
+![Feedback Screenshot](frontend/public/feedback.png)
 _Detailed STAR structure analysis with highlighted transcript_
 
 #### Analytics
 
-![Analytics Screenshot](path/to/analytics-screenshot.png)
+![Analytics Screenshot](frontend/public/analytics.png)
 _Performance trends and improvement areas visualization_
 
 #### Resume Parser
 
-![Resume Screenshot](path/to/resume-screenshot.png)
+![Resume Screenshot](frontend/public/resume.png)
 _AI-powered resume parsing and question generation_
 
 ---
 
-## 📄 License
+<!-- ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for details
+MIT License - see [LICENSE](LICENSE) file for details -->
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/yourusername/colorstackwinterhack2025-Interview-Prep-Coach/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/MatDawit/colorstackwinterhack2025-Interview-Prep-Coach/issues).
 
 ## 🌟 Acknowledgments
 
 - ColorStack for organizing the Winter Hackathon 2025
 - Google Gemini AI for powerful language models
-- The interview preparation community for inspiration
 
 ---
 
