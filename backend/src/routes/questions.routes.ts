@@ -13,7 +13,7 @@ const router = Router();
  * @description
  * Returns all interview questions stored in the database.
  */
-router.get("/", async (req: Request, res: Response) => {
+router.get("/", async (_req: Request, res: Response) => {
   try {
     const questions = await prisma.question.findMany();
 

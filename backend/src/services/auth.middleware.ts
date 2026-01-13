@@ -21,25 +21,31 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return res.status(401).json({ error: "Missing Authorization header." });
+      res.status(401).json({ error: "Missing Authorization header." });
+      return;
     }
     const [scheme, token] = authHeader.split(" ");
     if (scheme !== "Bearer" || !token) {
-      return res.status(401).json({ error: "Invalid Authorization format." });
+      res.status(401).json({ error: "Invalid Authorization format." });
+      return;
     }
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      return res.status(500).json({ error: "JWT_SECRET not set on server." });
+      res.status(500).json({ error: "JWT_SECRET not set on server." });
+      return;
     }
     const payload = jwt.verify(token, secret) as any;
     const userId = payload.userId ?? payload.id;
     if (!userId) {
-      return res.status(401).json({ error: "Token payload missing user id." });
+      res.status(401).json({ error: "Token payload missing user id." });
+      return;
     }
     req.authenticatedUser = { id: userId, email: payload.email };
     next();
+    return;
   } catch (err) {
-    return res.status(401).json({ error: "Invalid or expired token." });
+    res.status(401).json({ error: "Invalid or expired token." });
+    return;
   }
 }
 

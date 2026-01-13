@@ -20,7 +20,8 @@ router.post("/start", async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Unauthorized: No token provided" });
+      res.status(401).json({ error: "Unauthorized: No token provided" });
+      return;
     }
 
     const token = authHeader.split(" ")[1];
@@ -30,7 +31,8 @@ router.post("/start", async (req: Request, res: Response) => {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       userId = decoded.userId;
     } catch (err) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token" });
+      res.status(401).json({ error: "Unauthorized: Invalid token" });
+      return;
     }
 
     const { interviewType, difficulty } = req.body;
@@ -120,6 +122,7 @@ router.post("/start", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error starting session:", error);
     res.status(500).json({ error: error.message });
+    return;
   }
 });
 
@@ -134,7 +137,10 @@ router.post("/end", async (req: Request, res: Response) => {
   try {
     const { sessionId } = req.body;
 
-    if (!sessionId) return res.status(400).json({ error: "Missing sessionId" });
+    if (!sessionId) {
+      res.status(400).json({ error: "Missing sessionId" });
+      return;
+    }
 
     // Get all attempts for this session
     const attempts = await prisma.sessionAttempt.findMany({
@@ -181,10 +187,12 @@ router.post("/end", async (req: Request, res: Response) => {
       },
     });
 
-    return res.json({ success: true, finalScore });
+    res.json({ success: true, finalScore });
+    return;
   } catch (error: any) {
     console.error("Error ending session:", error);
-    return res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+    return;
   }
 });
 
@@ -199,7 +207,8 @@ router.get("/stats", async (req: Request, res: Response) => {
     // Verify token and get user id
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Unauthorized: No token provided" });
+      res.status(401).json({ error: "Unauthorized: No token provided" });
+      return;
     }
 
     const token = authHeader.split(" ")[1];
@@ -209,7 +218,8 @@ router.get("/stats", async (req: Request, res: Response) => {
       const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
       userId = decoded.userId;
     } catch (err) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token" });
+      res.status(401).json({ error: "Unauthorized: Invalid token" });
+      return;
     }
 
     // Get completed sessions with scores
@@ -243,9 +253,11 @@ router.get("/stats", async (req: Request, res: Response) => {
       averageScore,
       totalSessions,
     });
+    return;
   } catch (error: any) {
     console.error("Error fetching session stats:", error);
     res.status(500).json({ error: error.message });
+    return;
   }
 });
 
@@ -307,9 +319,11 @@ router.get("/:id/attempts", async (req: Request, res: Response) => {
     );
 
     res.json({ attempts: uniqueAttempts });
+    return;
   } catch (error: any) {
     console.error("Error fetching session attempts:", error);
     res.status(500).json({ error: error.message });
+    return;
   }
 });
 export default router;

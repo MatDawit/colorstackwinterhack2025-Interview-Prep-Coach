@@ -29,34 +29,33 @@ const upload = multer({
  * @description
  * Returns information about the user's uploaded resume (URL, filename, last updated), or null if none exists.
  */
-router.get(
-  "/",
-  requireAuth,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = req.authenticatedUser!.id;
+router.get("/", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.authenticatedUser!.id;
 
-      const resume = await prisma.resume.findUnique({
-        where: { userId },
-      });
+    const resume = await prisma.resume.findUnique({
+      where: { userId },
+    });
 
-      if (!resume) {
-        return res.json({ resume: null });
-      }
-
-      res.json({
-        resume: {
-          resumeUrl: resume.resumeUrl,
-          resumeFileName: resume.resumeFileName,
-          resumeUpdatedAt: resume.resumeUpdatedAt.toISOString(),
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching resume:", error);
-      res.status(500).json({ error: "Failed to fetch resume" });
+    if (!resume) {
+      res.json({ resume: null });
+      return;
     }
+
+    res.json({
+      resume: {
+        resumeUrl: resume.resumeUrl,
+        resumeFileName: resume.resumeFileName,
+        resumeUpdatedAt: resume.resumeUpdatedAt.toISOString(),
+      },
+    });
+    return;
+  } catch (error) {
+    console.error("Error fetching resume:", error);
+    res.status(500).json({ error: "Failed to fetch resume" });
+    return;
   }
-);
+});
 
 /**
  * POST /upload
@@ -75,7 +74,8 @@ router.post(
       const file = req.file;
 
       if (!file) {
-        return res.status(400).json({ error: "No file uploaded" });
+        res.status(400).json({ error: "No file uploaded" });
+        return;
       }
 
       console.log("Uploading resume for user:", userId);
@@ -144,9 +144,11 @@ router.post(
           resumeUpdatedAt: resume.resumeUpdatedAt.toISOString(),
         },
       });
+      return;
     } catch (error) {
       console.error("Error uploading resume:", error);
       res.status(500).json({ error: "Failed to upload resume" });
+      return;
     }
   }
 );
@@ -157,64 +159,62 @@ router.post(
  * @description
  * Downloads the resume from Supabase storage and parses it into structured data using the resume parser service.
  */
-router.get(
-  "/parse",
-  requireAuth,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = req.authenticatedUser!.id;
+router.get("/parse", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.authenticatedUser!.id;
 
-      console.log("Parsing resume for user:", userId);
+    console.log("Parsing resume for user:", userId);
 
-      // Get resume metadata from database
-      const resume = await prisma.resume.findUnique({
-        where: { userId },
-      });
+    // Get resume metadata from database
+    const resume = await prisma.resume.findUnique({
+      where: { userId },
+    });
 
-      if (!resume) {
-        return res
-          .status(404)
-          .json({ error: "No resume found. Please upload a resume first." });
-      }
-
-      console.log("Fetching resume from Supabase:", resume.resumeUrl);
-
-      // Extract file path from URL
-      const urlParts = resume.resumeUrl.split("/resumes/");
-      const filePath = urlParts.length > 1 ? urlParts[1] : null;
-
-      if (!filePath) {
-        return res.status(404).json({ error: "Invalid resume URL" });
-      }
-
-      // Download file from Supabase
-      const { data: fileData, error: downloadError } = await supabase.storage
-        .from("resumes")
-        .download(filePath);
-
-      if (downloadError || !fileData) {
-        console.error("Error downloading from Supabase:", downloadError);
-        return res.status(404).json({ error: "Resume file not found" });
-      }
-
-      // Convert Blob to Buffer
-      const arrayBuffer = await fileData.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      console.log("Downloaded resume, size:", buffer.length, "bytes");
-
-      // Parse the PDF from buffer
-      const parsed = await parseResumeFromBuffer(buffer);
-
-      console.log("Resume parsed successfully for user:", userId);
-
-      res.json({ parsed });
-    } catch (error) {
-      console.error("Error parsing resume:", error);
-      res.status(500).json({ error: "Failed to parse resume" });
+    if (!resume) {
+      return res
+        .status(404)
+        .json({ error: "No resume found. Please upload a resume first." });
     }
+
+    console.log("Fetching resume from Supabase:", resume.resumeUrl);
+
+    // Extract file path from URL
+    const urlParts = resume.resumeUrl.split("/resumes/");
+    const filePath = urlParts.length > 1 ? urlParts[1] : null;
+
+    if (!filePath) {
+      return res.status(404).json({ error: "Invalid resume URL" });
+    }
+
+    // Download file from Supabase
+    const { data: fileData, error: downloadError } = await supabase.storage
+      .from("resumes")
+      .download(filePath);
+
+    if (downloadError || !fileData) {
+      console.error("Error downloading from Supabase:", downloadError);
+      return res.status(404).json({ error: "Resume file not found" });
+    }
+
+    // Convert Blob to Buffer
+    const arrayBuffer = await fileData.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    console.log("Downloaded resume, size:", buffer.length, "bytes");
+
+    // Parse the PDF from buffer
+    const parsed = await parseResumeFromBuffer(buffer);
+
+    console.log("Resume parsed successfully for user:", userId);
+
+    res.json({ parsed });
+    return;
+  } catch (error) {
+    console.error("Error parsing resume:", error);
+    res.status(500).json({ error: "Failed to parse resume" });
+    return;
   }
-);
+});
 
 /**
  * DELETE /
@@ -222,39 +222,38 @@ router.get(
  * @description
  * Removes the resume file from Supabase storage and deletes the corresponding database record.
  */
-router.delete(
-  "/",
-  requireAuth,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = req.authenticatedUser!.id;
+router.delete("/", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.authenticatedUser!.id;
 
-      const resume = await prisma.resume.findUnique({
-        where: { userId },
-      });
+    const resume = await prisma.resume.findUnique({
+      where: { userId },
+    });
 
-      if (!resume) {
-        return res.status(404).json({ error: "No resume found" });
-      }
-
-      // Delete from Supabase Storage
-      const urlParts = resume.resumeUrl.split("/resumes/");
-      const filePath = urlParts.length > 1 ? urlParts[1] : null;
-      if (filePath) {
-        await supabase.storage.from("resumes").remove([filePath]);
-      }
-
-      // Delete from database
-      await prisma.resume.delete({
-        where: { userId },
-      });
-
-      res.json({ message: "Resume deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting resume:", error);
-      res.status(500).json({ error: "Failed to delete resume" });
+    if (!resume) {
+      res.status(404).json({ error: "No resume found" });
+      return;
     }
+
+    // Delete from Supabase Storage
+    const urlParts = resume.resumeUrl.split("/resumes/");
+    const filePath = urlParts.length > 1 ? urlParts[1] : null;
+    if (filePath) {
+      await supabase.storage.from("resumes").remove([filePath]);
+    }
+
+    // Delete from database
+    await prisma.resume.delete({
+      where: { userId },
+    });
+
+    res.json({ message: "Resume deleted successfully" });
+    return;
+  } catch (error) {
+    console.error("Error deleting resume:", error);
+    res.status(500).json({ error: "Failed to delete resume" });
+    return;
   }
-);
+});
 
 export default router;
