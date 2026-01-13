@@ -24,14 +24,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// --- 1. CORS MUST BE FIRST ---
 // This handles the "OPTIONS" preflight check before anything else runs.
 app.use(
   cors({
     // Allow both your local environment and your production Vercel app
     origin: [
       "http://localhost:3000",
-      "https://colorstackwinterhack2025-interview-gamma.vercel.app/login",
+      "https://colorstackwinterhack2025-interview-gamma.vercel.app",
       process.env.FRONTEND_URL || "",
     ],
     credentials: true, // Allows cookies/headers to be sent
@@ -40,15 +39,10 @@ app.use(
   })
 );
 
-// Explicitly handle pre-flight requests for all routes
-app.options("*", cors());
-
-// --- 2. Request Parsing (Moved Up) ---
 // Increased limits to handle resume uploads/images
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// --- 3. Passport Config (After Body Parsing) ---
 configurePassport();
 app.use(passport.initialize());
 
