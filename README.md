@@ -2,6 +2,9 @@
 
 An AI-powered behavioral interview preparation platform that helps candidates master the STAR method through real-time feedback, personalized coaching, and responsible AI guidance.
 
+### Live Site
+[App](colorstackwinterhack2025-interview.vercel.app)
+
 ## 📋 Description
 
 Interview Prep Coach is a comprehensive web application designed to revolutionize how job seekers prepare for behavioral interviews. The platform uses AI to provide structured feedback on interview responses, helping users refine their communication skills, build confidence, and present their experiences effectively using the STAR (Situation, Task, Action, Result) framework.
