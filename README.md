@@ -94,7 +94,7 @@ Our project directly addresses the **Responsible AI** theme through:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/colorstackwinterhack2025-Interview-Prep-Coach.git
+git clone https://github.com/MatDawit/colorstackwinterhack2025-Interview-Prep-Coach.git
 cd colorstackwinterhack2025-Interview-Prep-Coach
 ```
 
@@ -276,15 +276,15 @@ Each submission receives:
 
 ## 👥 Team Members & Contributions
 
-- **Mathew Dawit** - [Role/Contributions]
-- **Prince Michael Kemani** - [Role/Contributions]
-- **Fadlulah Omitogun** - [Role/Contributions]
+- **Mathew Dawit** - [Frontend, Feedback, Analytics, Backend, Database, Integration]
+- **Prince Michael Kemani** - [Resume, Authentication, Backend, Register, Database]
+- **Fadlulah Omitogun** - [Frontend, Authentication, Practice, Feedback, Register, Profile]
 
 ## 🎥 Demo Video & Screenshots
 
 ### Demo Video
 
-🎬 [Watch Demo Video](your-video-link-here)
+🎬 [Watch Demo Video](https://www.youtube.com/watch?v=SFvH_qcGKZI)
 
 ### Screenshots
 
@@ -315,9 +315,9 @@ _AI-powered resume parsing and question generation_
 
 ---
 
-<!-- ## 📄 License
+## Live Link
 
-MIT License - see [LICENSE](LICENSE) file for details -->
+(https://docs.google.com/presentation/d/1QJHM2BoW1oQepDvGOpKAbDm-AMxWiIjL3z9IDz9432A/edit?usp=sharing)
 
 ## 🤝 Contributing
 
