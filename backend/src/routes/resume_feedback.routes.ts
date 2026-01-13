@@ -11,11 +11,11 @@ router.post("/feedback", requireAuth, async (req, res): Promise<void> => {
     console.log("User:", req.authenticatedUser);
     console.log("Body:", req.body);
 
-    const _userId = req.authenticatedUser!.id;
     const { parsedResume } = req.body;
 
     if (!parsedResume) {
-      return res.status(400).json({ error: "Parsed resume data required" });
+      res.status(400).json({ error: "Parsed resume data required" });
+      return;
     }
 
     const feedback = await generateResumeFeedback(parsedResume);

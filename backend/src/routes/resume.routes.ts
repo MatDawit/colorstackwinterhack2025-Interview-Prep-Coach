@@ -12,7 +12,7 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     const allowedTypes = [".pdf", ".doc", ".docx"];
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedTypes.includes(ext)) {
@@ -101,7 +101,7 @@ router.post(
 
       console.log("Uploading to Supabase path:", filePath);
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from("resumes")
         .upload(filePath, file.buffer, {
           contentType: file.mimetype,
