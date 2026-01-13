@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
           { key: "Access-Control-Allow-Credentials", value: "true" },
           {
             key: "Access-Control-Allow-Origin",
-            value: "colorstackwinterhack2025-interview-gamma.vercel.app",
+            value: "colorstackwinterhack2025-interview.vercel.app",
           },
           {
             key: "Access-Control-Allow-Methods",
