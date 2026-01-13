@@ -87,7 +87,7 @@ router.post(
         const base64Audio = fileBuffer.toString("base64");
 
         const transResult = await transcription_ai.models.generateContent({
-          model: "gemini-2.5-flash-lite",
+          model: "gemini-2.5-flash",
           contents: [
             {
               role: "user",
@@ -107,7 +107,7 @@ router.post(
 
       // Generate AI feedback
       const analysis = await generation_ai.models.generateContent({
-        model: "gemini-2.5-flash-lite",
+        model: "gemini-2.5-flash",
         config: {
           systemInstruction: getFeedbackPrompt(emphasize, tone, detail),
           responseMimeType: "application/json",
